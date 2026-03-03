@@ -52,9 +52,10 @@ const HeroSection = () => {
   const headerOpacity = useTransform(scrollYProgress, [0.3, 0.45], [0, 1]);
   const headerY = useTransform(scrollYProgress, [0.3, 0.45], [40, 0]);
 
-  // ── Phase B: Hero bottle descends to center of showcase (0.15 → 0.5) ──
-  const bottleY = useTransform(scrollYProgress, [0.1, 0.35, 0.5], [0, 120, 220]);
-  const bottleScale = useTransform(scrollYProgress, [0.1, 0.5], [1, 0.75]);
+  // ── Phase B: Hero bottle descends to align with flanking bottles (0.15 → 0.5) ──
+  // Bottle starts above (negative Y), settles to 0 (aligned with flanking row)
+  const bottleY = useTransform(scrollYProgress, [0, 0.15, 0.45], [-300, -150, 0]);
+  const bottleScale = useTransform(scrollYProgress, [0, 0.45], [1.1, 0.85]);
 
   // ── Phase B: Flanking bottles slide in (0.35 → 0.55) ──
   const flankOpacity = useTransform(scrollYProgress, [0.35, 0.5], [0, 1]);
