@@ -20,16 +20,6 @@ const products = [
   { name: "Non-Dairy", image: coconutOil, href: "/non-dairy" },
 ];
 
-// Flanking bottles: 2 left, 2 right — the hero bottle lands in the center
-const leftBottles = [
-  { name: "Paneer", image: paneer },
-  { name: "Ghee", image: ghee },
-];
-const rightBottles = [
-  { name: "Curd", image: curd },
-  { name: "Coconut Oil", image: coconutOil },
-];
-
 const HeroSection = () => {
   const containerRef = useRef<HTMLDivElement>(null);
   const { scrollYProgress } = useScroll({
@@ -37,54 +27,50 @@ const HeroSection = () => {
     offset: ["start start", "end start"],
   });
 
-  // Hero content fades out
-  const heroTextOpacity = useTransform(scrollYProgress, [0, 0.25], [1, 0]);
-  const heroTextY = useTransform(scrollYProgress, [0, 0.25], [0, -80]);
+  // ── Phase A: Hero (0 → 0.3) ──
+  const heroTextOpacity = useTransform(scrollYProgress, [0, 0.2], [1, 0]);
+  const heroTextY = useTransform(scrollYProgress, [0, 0.2], [0, -60]);
+  const bgScale = useTransform(scrollYProgress, [0, 0.4], [1, 1.15]);
+  const bgOpacity = useTransform(scrollYProgress, [0.15, 0.35], [1, 0]);
 
-  // Background zooms in slightly and fades
-  const bgScale = useTransform(scrollYProgress, [0, 0.5], [1, 1.15]);
-  const bgOpacity = useTransform(scrollYProgress, [0.2, 0.5], [1, 0]);
+  // ── Phase A→B: Bottle descends into pour corridor (0.15 → 0.55) ──
+  // Bottle starts at top-center hero, moves down into the "stage" area
+  const bottleY = useTransform(scrollYProgress, [0.1, 0.35, 0.55], [0, 180, 320]);
+  const bottleScale = useTransform(scrollYProgress, [0.1, 0.35, 0.55, 0.7], [1, 0.85, 0.7, 0.65]);
 
-  // Bottle moves down from hero center to land between flanking bottles
-  const bottleY = useTransform(scrollYProgress, [0, 0.3, 0.55, 0.75], [0, 200, 400, 500]);
-  const bottleScale = useTransform(scrollYProgress, [0, 0.3, 0.55, 0.75], [1, 0.9, 0.7, 0.55]);
-  const bottleOpacity = useTransform(scrollYProgress, [0.7, 0.85], [1, 0]);
+  // ── Phase A: Milk stream grows downward (0.25 → 0.6) ──
+  const streamHeight = useTransform(scrollYProgress, [0.25, 0.6], [0, 100]);
+  const streamHeightPx = useTransform(streamHeight, (v) => `${v}%`);
+  const streamOpacity = useTransform(scrollYProgress, [0.25, 0.3], [0, 1]);
 
-  // "From Our Farm to Your Table" section appears
-  const productsHeaderOpacity = useTransform(scrollYProgress, [0.4, 0.55], [0, 1]);
-  const productsHeaderY = useTransform(scrollYProgress, [0.4, 0.55], [60, 0]);
+  // ── Phase A: Milk pool expands at bottom of stage (0.45 → 0.65) ──
+  const poolScale = useTransform(scrollYProgress, [0.45, 0.65], [0, 1]);
+  const poolOpacity = useTransform(scrollYProgress, [0.45, 0.55], [0, 0.7]);
 
-  // Flanking bottles slide in from sides and fade in
-  const flankOpacity = useTransform(scrollYProgress, [0.35, 0.55], [0, 1]);
-  const leftFlankX = useTransform(scrollYProgress, [0.35, 0.55], [-120, 0]);
-  const rightFlankX = useTransform(scrollYProgress, [0.35, 0.55], [120, 0]);
-  const flankScale = useTransform(scrollYProgress, [0.35, 0.55], [0.7, 1]);
+  // ── Phase B: Header + products reveal (0.55 → 0.75) ──
+  const headerOpacity = useTransform(scrollYProgress, [0.35, 0.5], [0, 1]);
+  const headerY = useTransform(scrollYProgress, [0.35, 0.5], [40, 0]);
+  const productsOpacity = useTransform(scrollYProgress, [0.6, 0.75], [0, 1]);
+  const productsY = useTransform(scrollYProgress, [0.6, 0.75], [40, 0]);
 
-  // Product cards staggered reveal
-  const productsOpacity = useTransform(scrollYProgress, [0.5, 0.65], [0, 1]);
-  const productsY = useTransform(scrollYProgress, [0.5, 0.65], [80, 0]);
+  // ── Phase C: Bottle exits (0.75 → 0.9) ──
+  const bottleExitOpacity = useTransform(scrollYProgress, [0.75, 0.9], [1, 0]);
+  const bottleExitY = useTransform(scrollYProgress, [0.75, 0.9], [0, -80]);
 
-  // Milk reflection surface
-  const reflectionOpacity = useTransform(scrollYProgress, [0.3, 0.5], [0, 0.6]);
+  // ── Phase C: Pool becomes section bg (0.85 → 1) ──
+  const poolBgOpacity = useTransform(scrollYProgress, [0.8, 0.95], [0.7, 0]);
 
   return (
-    <div ref={containerRef} className="relative h-[350vh]">
-      <div className="sticky top-0 h-screen overflow-hidden">
-        {/* Background image layer */}
-        <motion.div className="absolute inset-0" style={{ scale: bgScale, opacity: bgOpacity }}>
-          <img
-            src={heroBg}
-            alt="Premium kitchen setting"
-            className="w-full h-full object-cover"
-            loading="eager"
-          />
+    <div ref={containerRef} className="relative h-[400vh]" id="productsShowcase">
+      <div className="sticky top-0 h-screen overflow-hidden flex flex-col">
+        {/* ═══ BACKGROUND LAYERS ═══ */}
+        <motion.div className="absolute inset-0 z-0" style={{ scale: bgScale, opacity: bgOpacity }}>
+          <img src={heroBg} alt="Premium kitchen setting" className="w-full h-full object-cover" loading="eager" />
           <div className="absolute inset-0 bg-foreground/10" />
         </motion.div>
+        <div className="absolute inset-0 bg-background -z-[1]" />
 
-        {/* Solid background that appears as bg fades */}
-        <div className="absolute inset-0 bg-background -z-0" />
-
-        {/* Hero text — fades up and out on scroll */}
+        {/* ═══ HERO TEXT — fades out in Phase A ═══ */}
         <motion.div
           className="absolute inset-0 flex flex-col items-center justify-start pt-28 md:pt-32 z-10 px-4 text-center"
           style={{ opacity: heroTextOpacity, y: heroTextY }}
@@ -97,23 +83,21 @@ const HeroSection = () => {
             <br />
             <span className="text-primary">No shortcuts.</span>
           </h1>
-          <p
-            className="text-base md:text-lg text-foreground/80 max-w-xl leading-relaxed"
-            style={{ textShadow: "0 1px 20px rgba(255,255,255,0.6)" }}
-          >
+          <p className="text-base md:text-lg text-foreground/80 max-w-xl leading-relaxed"
+            style={{ textShadow: "0 1px 20px rgba(255,255,255,0.6)" }}>
             At Astra Dairy, nothing gets in the way of producing the freshest, most natural dairy products.
             <br className="hidden md:block" />
             No hormones. No preservatives. No factory farms. Just pure goodness.
           </p>
         </motion.div>
 
-        {/* "From Our Farm to Your Table" header — appears after scroll */}
+        {/* ═══ PRODUCTS HEADER — appears in Phase B ═══ */}
         <motion.div
-          className="absolute inset-x-0 top-0 flex flex-col items-center z-10 px-4"
-          style={{ opacity: productsHeaderOpacity, y: productsHeaderY }}
+          className="absolute inset-x-0 top-0 z-10 flex justify-center pt-16 md:pt-20"
+          style={{ opacity: headerOpacity, y: headerY }}
         >
-          <div className="pt-20 md:pt-24 text-center">
-            <p className="text-sm font-bold uppercase tracking-[0.3em] text-accent mb-3">
+          <div className="text-center">
+            <p className="text-sm font-bold uppercase tracking-[0.3em] text-accent mb-2">
               From Our Farm to Your Table
             </p>
             <h2 className="text-4xl md:text-5xl lg:text-6xl font-black text-foreground tracking-tight">
@@ -122,72 +106,80 @@ const HeroSection = () => {
           </div>
         </motion.div>
 
-        {/* Flanking bottles + hero bottle in center — the "showcase row" */}
-        <div className="absolute inset-x-0 top-[35%] z-20 flex items-end justify-center gap-2 md:gap-6 px-4">
-          {/* Left bottles — slide in from left */}
-          <motion.div
-            className="flex items-end gap-2 md:gap-4"
-            style={{ opacity: flankOpacity, x: leftFlankX, scale: flankScale }}
+        {/* ═══ TOP STAGE: Pour Corridor (55vh desktop / 45vh mobile) ═══ */}
+        <div className="relative flex-1 min-h-[45vh] md:min-h-[55vh]">
+          {/* Centered milk lane — the invisible corridor */}
+          <div
+            className="absolute left-1/2 -translate-x-1/2 top-0 bottom-3 z-10 flex flex-col items-center"
+            style={{ width: "clamp(110px, 12vw, 180px)" }}
           >
-            {leftBottles.map((b) => (
-              <div key={b.name} className="flex flex-col items-center">
-                <img
-                  src={b.image}
-                  alt={b.name}
-                  className="w-16 md:w-28 lg:w-36 h-auto object-contain drop-shadow-lg"
-                />
-                <span className="text-[10px] md:text-xs font-bold text-foreground/70 mt-2 uppercase tracking-wider">
-                  {b.name}
-                </span>
-              </div>
-            ))}
-          </motion.div>
-
-          {/* Center hero bottle — animates down into this position */}
-          <motion.div
-            className="flex flex-col items-center relative"
-            style={{
-              y: bottleY,
-              scale: bottleScale,
-              opacity: bottleOpacity,
-            }}
-          >
-            <img
-              src={bottleBanner}
-              alt="Astra Dairy farm fresh milk in glass bottle"
-              className="w-24 md:w-40 lg:w-48 h-auto drop-shadow-[0_20px_60px_rgba(0,0,0,0.25)]"
-              loading="eager"
-            />
-            {/* Reflection under bottle */}
+            {/* Bottle — starts centered, descends */}
             <motion.div
-              className="absolute -bottom-6 left-1/2 -translate-x-1/2 w-20 md:w-32 h-6 bg-foreground/8 rounded-full blur-xl"
-              style={{ opacity: reflectionOpacity }}
-            />
-          </motion.div>
-
-          {/* Right bottles — slide in from right */}
-          <motion.div
-            className="flex items-end gap-2 md:gap-4"
-            style={{ opacity: flankOpacity, x: rightFlankX, scale: flankScale }}
-          >
-            {rightBottles.map((b) => (
-              <div key={b.name} className="flex flex-col items-center">
+              className="relative z-20 flex-shrink-0"
+              style={{
+                y: bottleY,
+                scale: bottleScale,
+                opacity: bottleExitOpacity,
+              }}
+            >
+              <motion.div style={{ y: bottleExitY }}>
                 <img
-                  src={b.image}
-                  alt={b.name}
-                  className="w-16 md:w-28 lg:w-36 h-auto object-contain drop-shadow-lg"
+                  src={bottleBanner}
+                  alt="Astra Dairy farm fresh milk in glass bottle"
+                  className="w-28 md:w-44 lg:w-52 h-auto drop-shadow-[0_20px_60px_rgba(0,0,0,0.25)]"
+                  loading="eager"
                 />
-                <span className="text-[10px] md:text-xs font-bold text-foreground/70 mt-2 uppercase tracking-wider">
-                  {b.name}
-                </span>
-              </div>
-            ))}
-          </motion.div>
+              </motion.div>
+            </motion.div>
+
+            {/* Milk stream SVG — clipped to lane, grows downward */}
+            <motion.div
+              className="absolute left-0 right-0 overflow-hidden z-[9]"
+              style={{
+                top: "30%",
+                height: streamHeightPx,
+                opacity: streamOpacity,
+              }}
+            >
+              <svg
+                viewBox="0 0 100 400"
+                preserveAspectRatio="none"
+                className="w-full h-full"
+                style={{ filter: "blur(1px)" }}
+              >
+                <defs>
+                  <linearGradient id="milkStreamGrad" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="hsl(0 0% 100%)" stopOpacity="0.95" />
+                    <stop offset="60%" stopColor="hsl(40 20% 97%)" stopOpacity="0.85" />
+                    <stop offset="100%" stopColor="hsl(40 20% 97%)" stopOpacity="0.5" />
+                  </linearGradient>
+                </defs>
+                <path
+                  d="M 35 0 C 35 80, 30 160, 38 240 C 42 300, 35 340, 50 400 L 65 400 C 65 340, 58 300, 62 240 C 70 160, 65 80, 65 0 Z"
+                  fill="url(#milkStreamGrad)"
+                />
+              </svg>
+            </motion.div>
+          </div>
+
+          {/* Milk pool — expands at bottom of stage, stops above product strip */}
+          <motion.div
+            className="absolute bottom-3 left-1/2 -translate-x-1/2 z-[8]"
+            style={{
+              scale: poolScale,
+              opacity: poolOpacity,
+              width: "clamp(200px, 40vw, 500px)",
+              height: "clamp(30px, 4vh, 50px)",
+              background: "radial-gradient(ellipse at center, hsl(40 20% 97% / 0.9) 0%, hsl(40 20% 97% / 0) 70%)",
+              borderRadius: "50%",
+              filter: "blur(12px)",
+            }}
+          />
         </div>
 
-        {/* Product grid — appears below */}
+        {/* ═══ BOTTOM STRIP: Product Categories (never overlaps pour zone) ═══ */}
         <motion.div
-          className="absolute inset-x-0 bottom-0 z-10 px-4 pb-12 md:pb-16"
+          className="relative z-10 flex-shrink-0 pt-6 pb-6 md:pb-10 px-4"
           style={{ opacity: productsOpacity, y: productsY }}
         >
           <div className="grid grid-cols-3 md:grid-cols-6 gap-3 md:gap-6 max-w-5xl mx-auto">
