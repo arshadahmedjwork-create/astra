@@ -81,23 +81,36 @@ const HeroSection = () => {
 
         {/* ═══ HERO TEXT — fades out in Phase A ═══ */}
         <motion.div
-          className="absolute inset-0 flex flex-col items-center justify-start pt-28 md:pt-32 z-10 px-4 text-center"
+          className="absolute inset-0 flex flex-col items-center justify-center z-10 px-4 text-center"
           style={{ opacity: heroTextOpacity, y: heroTextY }}
         >
           <h1
-            className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl xl:text-9xl font-black text-foreground leading-[0.95] tracking-tighter mb-6"
+            className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl xl:text-9xl font-black text-foreground leading-[0.95] tracking-tighter mb-4"
             style={{ textShadow: "0 2px 40px rgba(255,255,255,0.5)" }}
           >
             Pure, fresh milk.
             <br />
             <span className="text-primary">No shortcuts.</span>
           </h1>
-          <p className="text-base md:text-lg text-foreground/80 max-w-xl leading-relaxed"
+          <p className="text-base md:text-lg text-foreground/80 max-w-xl leading-relaxed mt-2"
             style={{ textShadow: "0 1px 20px rgba(255,255,255,0.6)" }}>
             At Astra Dairy, nothing gets in the way of producing the freshest, most natural dairy products.
             <br className="hidden md:block" />
             No hormones. No preservatives. No factory farms. Just pure goodness.
           </p>
+        </motion.div>
+
+        {/* ═══ HERO BOTTLE — sits on the counter, visible from start ═══ */}
+        <motion.div
+          className="absolute inset-0 flex items-end justify-center z-20 pb-[8vh] md:pb-[5vh] pointer-events-none"
+          style={{ opacity: heroTextOpacity }}
+        >
+          <img
+            src={bottleBanner}
+            alt="Astra Dairy farm fresh milk"
+            className="h-40 md:h-56 lg:h-64 w-auto drop-shadow-[0_20px_60px_rgba(0,0,0,0.3)]"
+            loading="eager"
+          />
         </motion.div>
 
         {/* ═══ SHOWCASE SECTION (header + bottles + products) ═══ */}
