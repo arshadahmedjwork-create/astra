@@ -20,6 +20,16 @@ const products = [
   { name: "Non-Dairy", image: coconutOil, href: "/non-dairy" },
 ];
 
+// Flanking bottles: 2 left, 2 right — the hero bottle lands in the center
+const leftBottles = [
+  { name: "Paneer", image: paneer },
+  { name: "Ghee", image: ghee },
+];
+const rightBottles = [
+  { name: "Curd", image: curd },
+  { name: "Coconut Oil", image: coconutOil },
+];
+
 const HeroSection = () => {
   const containerRef = useRef<HTMLDivElement>(null);
   const { scrollYProgress } = useScroll({
