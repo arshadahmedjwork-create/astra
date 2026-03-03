@@ -23,7 +23,7 @@ const products = [
   { name: "Homogenised Milk", image: homogenizedMilk, tags: ["Glass bottled", "Uniform texture"], href: "/products/cow-milk" },
   { name: "Chocolate Milk", image: chocolateMilk, tags: ["Flavoured", "Kids favourite"], href: "/products/flavoured-milk" },
   { name: "Curd / Dahi", image: curd, tags: ["Earthen pot", "Natural culture"], href: "/products/curd" },
-  { name: "Malai Kulfi", image: kulfi, tags: ["No added colors", "Natural"], href: "/products/kulfi" },
+  
   { name: "Coconut Oil", image: coconutOil, tags: ["Cold pressed", "Virgin"], href: "/non-dairy" },
   { name: "Sesame Oil", image: sesameOil, tags: ["Cold pressed", "Natural"], href: "/non-dairy" },
   { name: "Butter Milk", image: buttermilk, tags: ["Traditional", "Refreshing"], href: "/products/cow-milk" },
