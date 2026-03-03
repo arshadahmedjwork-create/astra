@@ -11,6 +11,12 @@ import ghee from "@/assets/product-ghee.png";
 import curd from "@/assets/product-curd.png";
 import coconutOil from "@/assets/product-coconut-oil.png";
 
+// Flanking bottle images
+import bottlePasteurised from "@/assets/bottle-pasteurised.png";
+import bottleHomogenised from "@/assets/bottle-homogenised.png";
+import bottleSesameOil from "@/assets/bottle-sesame-oil.png";
+import bottleCoconutOil from "@/assets/bottle-coconut-oil.png";
+
 const products = [
   { name: "Milk", image: pasteurizedMilk, href: "/products/cow-milk" },
   { name: "Paneer", image: paneer, href: "/products/paneer" },
@@ -20,6 +26,15 @@ const products = [
   { name: "Non-Dairy", image: coconutOil, href: "/non-dairy" },
 ];
 
+const leftBottles = [
+  { name: "Pasteurised", image: bottlePasteurised },
+  { name: "Homogenised", image: bottleHomogenised },
+];
+const rightBottles = [
+  { name: "Sesame Oil", image: bottleSesameOil },
+  { name: "Coconut Oil", image: bottleCoconutOil },
+];
+
 const HeroSection = () => {
   const containerRef = useRef<HTMLDivElement>(null);
   const { scrollYProgress } = useScroll({
@@ -27,38 +42,31 @@ const HeroSection = () => {
     offset: ["start start", "end start"],
   });
 
-  // ── Phase A: Hero (0 → 0.3) ──
+  // ── Phase A: Hero text + bg (0 → 0.25) ──
   const heroTextOpacity = useTransform(scrollYProgress, [0, 0.2], [1, 0]);
   const heroTextY = useTransform(scrollYProgress, [0, 0.2], [0, -60]);
   const bgScale = useTransform(scrollYProgress, [0, 0.4], [1, 1.15]);
   const bgOpacity = useTransform(scrollYProgress, [0.15, 0.35], [1, 0]);
 
-  // ── Phase A→B: Bottle descends into pour corridor (0.15 → 0.55) ──
-  // Bottle starts at top-center hero, moves down into the "stage" area
-  const bottleY = useTransform(scrollYProgress, [0.1, 0.35, 0.55], [0, 180, 320]);
-  const bottleScale = useTransform(scrollYProgress, [0.1, 0.35, 0.55, 0.7], [1, 0.85, 0.7, 0.65]);
+  // ── Phase A→B: Header appears (0.3 → 0.45) ──
+  const headerOpacity = useTransform(scrollYProgress, [0.3, 0.45], [0, 1]);
+  const headerY = useTransform(scrollYProgress, [0.3, 0.45], [40, 0]);
 
-  // ── Phase A: Milk stream grows downward (0.25 → 0.6) ──
-  const streamHeight = useTransform(scrollYProgress, [0.25, 0.6], [0, 100]);
-  const streamHeightPx = useTransform(streamHeight, (v) => `${v}%`);
-  const streamOpacity = useTransform(scrollYProgress, [0.25, 0.3], [0, 1]);
+  // ── Phase B: Hero bottle descends to center of showcase (0.15 → 0.5) ──
+  const bottleY = useTransform(scrollYProgress, [0.1, 0.35, 0.5], [0, 120, 220]);
+  const bottleScale = useTransform(scrollYProgress, [0.1, 0.5], [1, 0.75]);
 
-  // ── Phase A: Milk pool expands at bottom of stage (0.45 → 0.65) ──
-  const poolScale = useTransform(scrollYProgress, [0.45, 0.65], [0, 1]);
-  const poolOpacity = useTransform(scrollYProgress, [0.45, 0.55], [0, 0.7]);
+  // ── Phase B: Flanking bottles slide in (0.35 → 0.55) ──
+  const flankOpacity = useTransform(scrollYProgress, [0.35, 0.5], [0, 1]);
+  const leftFlankX = useTransform(scrollYProgress, [0.35, 0.55], [-200, 0]);
+  const rightFlankX = useTransform(scrollYProgress, [0.35, 0.55], [200, 0]);
 
-  // ── Phase B: Header + products reveal (0.55 → 0.75) ──
-  const headerOpacity = useTransform(scrollYProgress, [0.35, 0.5], [0, 1]);
-  const headerY = useTransform(scrollYProgress, [0.35, 0.5], [40, 0]);
-  const productsOpacity = useTransform(scrollYProgress, [0.6, 0.75], [0, 1]);
-  const productsY = useTransform(scrollYProgress, [0.6, 0.75], [40, 0]);
+  // ── Phase C: Products reveal (0.55 → 0.7) ──
+  const productsOpacity = useTransform(scrollYProgress, [0.55, 0.7], [0, 1]);
+  const productsY = useTransform(scrollYProgress, [0.55, 0.7], [50, 0]);
 
-  // ── Phase C: Bottle exits (0.75 → 0.9) ──
-  const bottleExitOpacity = useTransform(scrollYProgress, [0.75, 0.9], [1, 0]);
-  const bottleExitY = useTransform(scrollYProgress, [0.75, 0.9], [0, -80]);
-
-  // ── Phase C: Pool becomes section bg (0.85 → 1) ──
-  const poolBgOpacity = useTransform(scrollYProgress, [0.8, 0.95], [0.7, 0]);
+  // ── Phase D: Everything exits (0.8 → 0.95) ──
+  const showcaseOpacity = useTransform(scrollYProgress, [0.85, 0.95], [1, 0]);
 
   return (
     <div ref={containerRef} className="relative h-[400vh]" id="productsShowcase">
@@ -91,118 +99,111 @@ const HeroSection = () => {
           </p>
         </motion.div>
 
-        {/* ═══ PRODUCTS HEADER — appears in Phase B ═══ */}
-        <motion.div
-          className="absolute inset-x-0 top-0 z-10 flex justify-center pt-16 md:pt-20"
-          style={{ opacity: headerOpacity, y: headerY }}
-        >
-          <div className="text-center">
-            <p className="text-sm font-bold uppercase tracking-[0.3em] text-accent mb-2">
-              From Our Farm to Your Table
-            </p>
-            <h2 className="text-4xl md:text-5xl lg:text-6xl font-black text-foreground tracking-tight">
-              Products
-            </h2>
-          </div>
-        </motion.div>
-
-        {/* ═══ TOP STAGE: Pour Corridor (55vh desktop / 45vh mobile) ═══ */}
-        <div className="relative flex-1 min-h-[45vh] md:min-h-[55vh]">
-          {/* Centered milk lane — the invisible corridor */}
-          <div
-            className="absolute left-1/2 -translate-x-1/2 top-0 bottom-3 z-10 flex flex-col items-center"
-            style={{ width: "clamp(110px, 12vw, 180px)" }}
+        {/* ═══ SHOWCASE SECTION (header + bottles + products) ═══ */}
+        <motion.div className="absolute inset-0 flex flex-col z-10" style={{ opacity: showcaseOpacity }}>
+          {/* Products Header */}
+          <motion.div
+            className="flex-shrink-0 flex justify-center pt-16 md:pt-20"
+            style={{ opacity: headerOpacity, y: headerY }}
           >
-            {/* Bottle — starts centered, descends */}
-            <motion.div
-              className="relative z-20 flex-shrink-0"
-              style={{
-                y: bottleY,
-                scale: bottleScale,
-                opacity: bottleExitOpacity,
-              }}
-            >
-              <motion.div style={{ y: bottleExitY }}>
+            <div className="text-center">
+              <p className="text-sm font-bold uppercase tracking-[0.3em] text-accent mb-2">
+                From Our Farm to Your Table
+              </p>
+              <h2 className="text-4xl md:text-5xl lg:text-6xl font-black text-foreground tracking-tight">
+                Products
+              </h2>
+            </div>
+          </motion.div>
+
+          {/* ═══ BOTTLE SHOWCASE ROW — center stage ═══ */}
+          <div className="flex-1 flex items-center justify-center px-4 md:px-8">
+            <div className="flex items-end justify-center gap-3 md:gap-8 lg:gap-12 max-w-4xl w-full">
+              {/* Left 2 bottles — slide in from left */}
+              <motion.div
+                className="flex items-end gap-2 md:gap-6"
+                style={{ opacity: flankOpacity, x: leftFlankX }}
+              >
+                {leftBottles.map((b, i) => (
+                  <div key={b.name} className="flex flex-col items-center">
+                    <img
+                      src={b.image}
+                      alt={b.name}
+                      className="h-28 md:h-44 lg:h-56 w-auto object-contain drop-shadow-lg"
+                      style={{ transform: i === 0 ? "scale(0.85)" : "scale(0.95)" }}
+                    />
+                    <span className="text-[9px] md:text-xs font-bold text-muted-foreground mt-2 uppercase tracking-wider">
+                      {b.name}
+                    </span>
+                  </div>
+                ))}
+              </motion.div>
+
+              {/* Center hero bottle — descends from hero into this spot */}
+              <motion.div
+                className="flex flex-col items-center relative"
+                style={{ y: bottleY, scale: bottleScale }}
+              >
                 <img
                   src={bottleBanner}
                   alt="Astra Dairy farm fresh milk in glass bottle"
-                  className="w-28 md:w-44 lg:w-52 h-auto drop-shadow-[0_20px_60px_rgba(0,0,0,0.25)]"
+                  className="h-36 md:h-56 lg:h-72 w-auto drop-shadow-[0_20px_60px_rgba(0,0,0,0.25)]"
                   loading="eager"
                 />
+                <span className="text-[9px] md:text-xs font-bold text-accent mt-2 uppercase tracking-wider">
+                  Farm Fresh
+                </span>
               </motion.div>
-            </motion.div>
 
-            {/* Milk stream SVG — clipped to lane, grows downward */}
-            <motion.div
-              className="absolute left-0 right-0 overflow-hidden z-[9]"
-              style={{
-                top: "30%",
-                height: streamHeightPx,
-                opacity: streamOpacity,
-              }}
-            >
-              <svg
-                viewBox="0 0 100 400"
-                preserveAspectRatio="none"
-                className="w-full h-full"
-                style={{ filter: "blur(1px)" }}
+              {/* Right 2 bottles — slide in from right */}
+              <motion.div
+                className="flex items-end gap-2 md:gap-6"
+                style={{ opacity: flankOpacity, x: rightFlankX }}
               >
-                <defs>
-                  <linearGradient id="milkStreamGrad" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="hsl(0 0% 100%)" stopOpacity="0.95" />
-                    <stop offset="60%" stopColor="hsl(40 20% 97%)" stopOpacity="0.85" />
-                    <stop offset="100%" stopColor="hsl(40 20% 97%)" stopOpacity="0.5" />
-                  </linearGradient>
-                </defs>
-                <path
-                  d="M 35 0 C 35 80, 30 160, 38 240 C 42 300, 35 340, 50 400 L 65 400 C 65 340, 58 300, 62 240 C 70 160, 65 80, 65 0 Z"
-                  fill="url(#milkStreamGrad)"
-                />
-              </svg>
-            </motion.div>
-          </div>
-
-          {/* Milk pool — expands at bottom of stage, stops above product strip */}
-          <motion.div
-            className="absolute bottom-3 left-1/2 -translate-x-1/2 z-[8]"
-            style={{
-              scale: poolScale,
-              opacity: poolOpacity,
-              width: "clamp(200px, 40vw, 500px)",
-              height: "clamp(30px, 4vh, 50px)",
-              background: "radial-gradient(ellipse at center, hsl(40 20% 97% / 0.9) 0%, hsl(40 20% 97% / 0) 70%)",
-              borderRadius: "50%",
-              filter: "blur(12px)",
-            }}
-          />
-        </div>
-
-        {/* ═══ BOTTOM STRIP: Product Categories (never overlaps pour zone) ═══ */}
-        <motion.div
-          className="relative z-10 flex-shrink-0 pt-6 pb-6 md:pb-10 px-4"
-          style={{ opacity: productsOpacity, y: productsY }}
-        >
-          <div className="grid grid-cols-3 md:grid-cols-6 gap-3 md:gap-6 max-w-5xl mx-auto">
-            {products.map((product) => (
-              <Link key={product.name} to={product.href} className="group block text-center">
-                <div className="relative bg-card/80 backdrop-blur-sm rounded-2xl border border-border p-3 md:p-5 transition-all duration-500 hover:shadow-2xl hover:-translate-y-2 overflow-hidden">
-                  <div className="absolute inset-0 bg-gradient-to-t from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-2xl" />
-                  <div className="aspect-square flex items-center justify-center relative mb-2">
+                {rightBottles.map((b, i) => (
+                  <div key={b.name} className="flex flex-col items-center">
                     <img
-                      src={product.image}
-                      alt={product.name}
-                      className="w-full h-full object-contain p-1 transition-transform duration-700 group-hover:scale-110"
-                      loading="lazy"
+                      src={b.image}
+                      alt={b.name}
+                      className="h-28 md:h-44 lg:h-56 w-auto object-contain drop-shadow-lg"
+                      style={{ transform: i === 1 ? "scale(0.85)" : "scale(0.95)" }}
                     />
-                    <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-3/4 h-3 bg-foreground/5 rounded-full blur-md" />
+                    <span className="text-[9px] md:text-xs font-bold text-muted-foreground mt-2 uppercase tracking-wider">
+                      {b.name}
+                    </span>
                   </div>
-                  <h3 className="text-xs md:text-sm font-black text-foreground relative z-10 tracking-tight">
-                    {product.name}
-                  </h3>
-                </div>
-              </Link>
-            ))}
+                ))}
+              </motion.div>
+            </div>
           </div>
+
+          {/* ═══ BOTTOM STRIP: Product Category Cards ═══ */}
+          <motion.div
+            className="flex-shrink-0 px-4 pb-6 md:pb-10"
+            style={{ opacity: productsOpacity, y: productsY }}
+          >
+            <div className="grid grid-cols-3 md:grid-cols-6 gap-3 md:gap-5 max-w-5xl mx-auto">
+              {products.map((product) => (
+                <Link key={product.name} to={product.href} className="group block text-center">
+                  <div className="relative bg-card/80 backdrop-blur-sm rounded-2xl border border-border p-3 md:p-4 transition-all duration-500 hover:shadow-2xl hover:-translate-y-2 overflow-hidden">
+                    <div className="absolute inset-0 bg-gradient-to-t from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-2xl" />
+                    <div className="aspect-square flex items-center justify-center relative mb-2">
+                      <img
+                        src={product.image}
+                        alt={product.name}
+                        className="w-full h-full object-contain p-1 transition-transform duration-700 group-hover:scale-110"
+                        loading="lazy"
+                      />
+                      <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-3/4 h-3 bg-foreground/5 rounded-full blur-md" />
+                    </div>
+                    <h3 className="text-xs md:text-sm font-black text-foreground relative z-10 tracking-tight">
+                      {product.name}
+                    </h3>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </motion.div>
         </motion.div>
       </div>
     </div>
