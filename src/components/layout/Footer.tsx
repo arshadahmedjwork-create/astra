@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import { MapPin, Phone, Mail } from "lucide-react";
 import astraLogo from "@/assets/astra-logo.png";
 
 const productLinks = [
@@ -91,12 +92,12 @@ const Footer = () => {
           {/* Delivering Cities */}
           <div>
             <h4 className="font-semibold mb-4 text-accent">Delivering In</h4>
+            <img src={astraLogo} alt="Astra Dairy" className="h-16 w-16 object-contain brightness-0 invert mb-4" />
             <p className="text-sm text-primary-foreground/60 mb-4">Chennai & surrounding areas</p>
             <div className="space-y-2 text-sm text-primary-foreground/60">
-              <p>📍 No. 60, Satyamurthy Nagar,</p>
-              <p>Medavakkam, Chennai – 600100</p>
-              <p className="pt-2">📞 +91 44 4856 2222</p>
-              <p>✉️ hello@astradairy.in</p>
+              <p className="flex items-start gap-2"><MapPin className="w-4 h-4 mt-0.5 shrink-0 text-accent" /> No. 60, Satyamurthy Nagar, Medavakkam, Chennai – 600100</p>
+              <p className="flex items-center gap-2"><Phone className="w-4 h-4 shrink-0 text-accent" /> +91 44 4856 2222</p>
+              <p className="flex items-center gap-2"><Mail className="w-4 h-4 shrink-0 text-accent" /> hello@astradairy.in</p>
             </div>
           </div>
         </div>
