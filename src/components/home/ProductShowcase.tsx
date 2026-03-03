@@ -13,6 +13,7 @@ import curd from "@/assets/product-curd.png";
 import kulfi from "@/assets/product-kulfi.png";
 import coconutOil from "@/assets/product-coconut-oil.png";
 import sesameOil from "@/assets/product-sesame-oil.png";
+import buttermilk from "@/assets/product-buttermilk.png";
 
 const products = [
   { name: "Fresh Paneer", image: paneer, tags: ["Farm fresh", "In whey water"], href: "/products/paneer" },
@@ -25,12 +26,12 @@ const products = [
   { name: "Malai Kulfi", image: kulfi, tags: ["No added colors", "Natural"], href: "/products/kulfi" },
   { name: "Coconut Oil", image: coconutOil, tags: ["Cold pressed", "Virgin"], href: "/non-dairy" },
   { name: "Sesame Oil", image: sesameOil, tags: ["Cold pressed", "Natural"], href: "/non-dairy" },
+  { name: "Butter Milk", image: buttermilk, tags: ["Traditional", "Refreshing"], href: "/products/cow-milk" },
 ];
 
 const ProductShowcase = () => {
   return (
     <section className="py-20 lg:py-28 bg-background relative overflow-hidden">
-      {/* Decorative background */}
       <div className="absolute -bottom-32 -left-32 w-[400px] h-[400px] rounded-full bg-primary/3 blur-3xl" />
 
       <div className="container mx-auto px-4 lg:px-8">
@@ -52,7 +53,7 @@ const ProductShowcase = () => {
           </p>
         </motion.div>
 
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 lg:gap-6">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 lg:gap-6">
           {products.map((product, i) => (
             <motion.div
               key={product.name}
@@ -63,7 +64,6 @@ const ProductShowcase = () => {
             >
               <Link to={product.href} className="group block">
                 <div className="relative bg-card rounded-2xl border border-border p-4 transition-all duration-500 hover:shadow-2xl hover:-translate-y-2 hover:border-primary/20 overflow-hidden">
-                  {/* Hover gradient overlay */}
                   <div className="absolute inset-0 bg-gradient-to-t from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-2xl" />
 
                   <div className="aspect-square rounded-xl overflow-hidden bg-sage/20 mb-4 relative">
@@ -88,7 +88,6 @@ const ProductShowcase = () => {
                     ))}
                   </div>
 
-                  {/* Arrow indicator on hover */}
                   <div className="absolute bottom-4 right-4 w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 translate-y-2 group-hover:translate-y-0">
                     <ArrowRight className="w-4 h-4 text-primary" />
                   </div>
