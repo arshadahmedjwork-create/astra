@@ -150,9 +150,12 @@ const HeroSection = () => {
                   className="h-36 md:h-56 lg:h-72 w-auto drop-shadow-[0_20px_60px_rgba(0,0,0,0.25)]"
                   loading="eager"
                 />
-                <span className="text-[9px] md:text-xs font-bold text-accent mt-2 uppercase tracking-wider">
+                <motion.span
+                  className="text-[9px] md:text-xs font-bold text-accent mt-2 uppercase tracking-wider"
+                  style={{ opacity: flankOpacity }}
+                >
                   Farm Fresh
-                </span>
+                </motion.span>
               </motion.div>
 
               {/* Right 2 bottles — slide in from right */}
