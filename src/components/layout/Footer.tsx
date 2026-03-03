@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import { MapPin, Phone, Mail } from "lucide-react";
 import astraLogo from "@/assets/astra-logo.png";
 
 const productLinks = [
