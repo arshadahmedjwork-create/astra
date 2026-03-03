@@ -52,10 +52,9 @@ const HeroSection = () => {
   const headerOpacity = useTransform(scrollYProgress, [0.3, 0.45], [0, 1]);
   const headerY = useTransform(scrollYProgress, [0.3, 0.45], [40, 0]);
 
-  // ── Hero bottle: starts centered on table (high positive Y), moves up to showcase row (0) ──
-  const bottleY = useTransform(scrollYProgress, [0, 0.15, 0.45], [120, 60, 0]);
+  // ── Single bottle: starts on counter (positive Y), rises to showcase row (0) ──
+  const bottleY = useTransform(scrollYProgress, [0, 0.15, 0.45], [180, 80, 0]);
   const bottleScale = useTransform(scrollYProgress, [0, 0.45], [1.3, 0.85]);
-  const bottleOpacityInHero = useTransform(scrollYProgress, [0, 0.1], [1, 1]);
 
   // ── Phase B: Flanking bottles slide in (0.35 → 0.55) ──
   const flankOpacity = useTransform(scrollYProgress, [0.35, 0.5], [0, 1]);
@@ -79,9 +78,9 @@ const HeroSection = () => {
         </motion.div>
         <div className="absolute inset-0 bg-background -z-[1]" />
 
-        {/* ═══ HERO TEXT — fades out in Phase A ═══ */}
+        {/* ═══ HERO TEXT — fades out in Phase A, layered OVER bottle ═══ */}
         <motion.div
-          className="absolute inset-0 flex flex-col items-center justify-center z-10 px-4 text-center"
+          className="absolute inset-0 flex flex-col items-center justify-center z-30 px-4 text-center pointer-events-none"
           style={{ opacity: heroTextOpacity, y: heroTextY }}
         >
           <h1
@@ -98,19 +97,6 @@ const HeroSection = () => {
             <br className="hidden md:block" />
             No hormones. No preservatives. No factory farms. Just pure goodness.
           </p>
-        </motion.div>
-
-        {/* ═══ HERO BOTTLE — sits on the counter, visible from start ═══ */}
-        <motion.div
-          className="absolute inset-0 flex items-end justify-center z-20 pb-[8vh] md:pb-[5vh] pointer-events-none"
-          style={{ opacity: heroTextOpacity }}
-        >
-          <img
-            src={bottleBanner}
-            alt="Astra Dairy farm fresh milk"
-            className="h-40 md:h-56 lg:h-64 w-auto drop-shadow-[0_20px_60px_rgba(0,0,0,0.3)]"
-            loading="eager"
-          />
         </motion.div>
 
         {/* ═══ SHOWCASE SECTION (header + bottles + products) ═══ */}
