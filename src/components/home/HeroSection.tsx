@@ -133,33 +133,31 @@ const HeroSection = () => {
 
             {/* Milk stream SVG — clipped to lane, grows downward */}
             <motion.div
-              className="absolute left-1/2 -translate-x-1/2 w-full overflow-hidden z-[9]"
+              className="absolute left-0 right-0 overflow-hidden z-[9]"
               style={{
                 top: "30%",
-                height: streamHeight.get ? undefined : "0%",
+                height: useTransform(streamHeight, (v) => `${v}%`),
                 opacity: streamOpacity,
               }}
             >
-              <motion.div style={{ height: useTransform(streamHeight, (v) => `${v}%`) }}>
-                <svg
-                  viewBox="0 0 100 400"
-                  preserveAspectRatio="none"
-                  className="w-full h-full"
-                  style={{ filter: "blur(1px)" }}
-                >
-                  <defs>
-                    <linearGradient id="milkStreamGrad" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="hsl(0 0% 100%)" stopOpacity="0.95" />
-                      <stop offset="60%" stopColor="hsl(40 20% 97%)" stopOpacity="0.85" />
-                      <stop offset="100%" stopColor="hsl(40 20% 97%)" stopOpacity="0.5" />
-                    </linearGradient>
-                  </defs>
-                  <path
-                    d="M 35 0 C 35 80, 30 160, 38 240 C 42 300, 35 340, 50 400 L 65 400 C 65 340, 58 300, 62 240 C 70 160, 65 80, 65 0 Z"
-                    fill="url(#milkStreamGrad)"
-                  />
-                </svg>
-              </motion.div>
+              <svg
+                viewBox="0 0 100 400"
+                preserveAspectRatio="none"
+                className="w-full h-full"
+                style={{ filter: "blur(1px)" }}
+              >
+                <defs>
+                  <linearGradient id="milkStreamGrad" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="hsl(0 0% 100%)" stopOpacity="0.95" />
+                    <stop offset="60%" stopColor="hsl(40 20% 97%)" stopOpacity="0.85" />
+                    <stop offset="100%" stopColor="hsl(40 20% 97%)" stopOpacity="0.5" />
+                  </linearGradient>
+                </defs>
+                <path
+                  d="M 35 0 C 35 80, 30 160, 38 240 C 42 300, 35 340, 50 400 L 65 400 C 65 340, 58 300, 62 240 C 70 160, 65 80, 65 0 Z"
+                  fill="url(#milkStreamGrad)"
+                />
+              </svg>
             </motion.div>
           </div>
 
