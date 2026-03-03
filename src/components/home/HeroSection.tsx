@@ -20,6 +20,16 @@ const products = [
   { name: "Non-Dairy", image: coconutOil, href: "/non-dairy" },
 ];
 
+// Flanking bottles: 2 left, 2 right — the hero bottle lands in the center
+const leftBottles = [
+  { name: "Paneer", image: paneer },
+  { name: "Ghee", image: ghee },
+];
+const rightBottles = [
+  { name: "Curd", image: curd },
+  { name: "Coconut Oil", image: coconutOil },
+];
+
 const HeroSection = () => {
   const containerRef = useRef<HTMLDivElement>(null);
   const { scrollYProgress } = useScroll({
@@ -35,14 +45,20 @@ const HeroSection = () => {
   const bgScale = useTransform(scrollYProgress, [0, 0.5], [1, 1.15]);
   const bgOpacity = useTransform(scrollYProgress, [0.2, 0.5], [1, 0]);
 
-  // Bottle moves down from hero center to products section center
+  // Bottle moves down from hero center to land between flanking bottles
   const bottleY = useTransform(scrollYProgress, [0, 0.3, 0.55, 0.75], [0, 200, 400, 500]);
-  const bottleScale = useTransform(scrollYProgress, [0, 0.3, 0.55, 0.75], [1, 0.9, 0.7, 0.5]);
+  const bottleScale = useTransform(scrollYProgress, [0, 0.3, 0.55, 0.75], [1, 0.9, 0.7, 0.55]);
   const bottleOpacity = useTransform(scrollYProgress, [0.7, 0.85], [1, 0]);
 
   // "From Our Farm to Your Table" section appears
   const productsHeaderOpacity = useTransform(scrollYProgress, [0.4, 0.55], [0, 1]);
   const productsHeaderY = useTransform(scrollYProgress, [0.4, 0.55], [60, 0]);
+
+  // Flanking bottles slide in from sides and fade in
+  const flankOpacity = useTransform(scrollYProgress, [0.35, 0.55], [0, 1]);
+  const leftFlankX = useTransform(scrollYProgress, [0.35, 0.55], [-120, 0]);
+  const rightFlankX = useTransform(scrollYProgress, [0.35, 0.55], [120, 0]);
+  const flankScale = useTransform(scrollYProgress, [0.35, 0.55], [0.7, 1]);
 
   // Product cards staggered reveal
   const productsOpacity = useTransform(scrollYProgress, [0.5, 0.65], [0, 1]);
@@ -91,32 +107,9 @@ const HeroSection = () => {
           </p>
         </motion.div>
 
-        {/* The bottle — starts centered in hero, moves down through scroll */}
-        <motion.div
-          className="absolute left-1/2 -translate-x-1/2 z-20"
-          style={{
-            top: "35%",
-            y: bottleY,
-            scale: bottleScale,
-            opacity: bottleOpacity,
-          }}
-        >
-          <img
-            src={bottleBanner}
-            alt="Astra Dairy farm fresh milk in glass bottle"
-            className="w-40 md:w-56 lg:w-64 h-auto drop-shadow-[0_20px_60px_rgba(0,0,0,0.25)]"
-            loading="eager"
-          />
-          {/* Reflection under bottle */}
-          <motion.div
-            className="absolute -bottom-6 left-1/2 -translate-x-1/2 w-32 md:w-44 h-6 bg-foreground/8 rounded-full blur-xl"
-            style={{ opacity: reflectionOpacity }}
-          />
-        </motion.div>
-
         {/* "From Our Farm to Your Table" header — appears after scroll */}
         <motion.div
-          className="absolute inset-0 flex flex-col items-center z-10 px-4"
+          className="absolute inset-x-0 top-0 flex flex-col items-center z-10 px-4"
           style={{ opacity: productsHeaderOpacity, y: productsHeaderY }}
         >
           <div className="pt-20 md:pt-24 text-center">
@@ -129,7 +122,70 @@ const HeroSection = () => {
           </div>
         </motion.div>
 
-        {/* Product grid — appears below the header */}
+        {/* Flanking bottles + hero bottle in center — the "showcase row" */}
+        <div className="absolute inset-x-0 top-[35%] z-20 flex items-end justify-center gap-2 md:gap-6 px-4">
+          {/* Left bottles — slide in from left */}
+          <motion.div
+            className="flex items-end gap-2 md:gap-4"
+            style={{ opacity: flankOpacity, x: leftFlankX, scale: flankScale }}
+          >
+            {leftBottles.map((b) => (
+              <div key={b.name} className="flex flex-col items-center">
+                <img
+                  src={b.image}
+                  alt={b.name}
+                  className="w-16 md:w-28 lg:w-36 h-auto object-contain drop-shadow-lg"
+                />
+                <span className="text-[10px] md:text-xs font-bold text-foreground/70 mt-2 uppercase tracking-wider">
+                  {b.name}
+                </span>
+              </div>
+            ))}
+          </motion.div>
+
+          {/* Center hero bottle — animates down into this position */}
+          <motion.div
+            className="flex flex-col items-center relative"
+            style={{
+              y: bottleY,
+              scale: bottleScale,
+              opacity: bottleOpacity,
+            }}
+          >
+            <img
+              src={bottleBanner}
+              alt="Astra Dairy farm fresh milk in glass bottle"
+              className="w-24 md:w-40 lg:w-48 h-auto drop-shadow-[0_20px_60px_rgba(0,0,0,0.25)]"
+              loading="eager"
+            />
+            {/* Reflection under bottle */}
+            <motion.div
+              className="absolute -bottom-6 left-1/2 -translate-x-1/2 w-20 md:w-32 h-6 bg-foreground/8 rounded-full blur-xl"
+              style={{ opacity: reflectionOpacity }}
+            />
+          </motion.div>
+
+          {/* Right bottles — slide in from right */}
+          <motion.div
+            className="flex items-end gap-2 md:gap-4"
+            style={{ opacity: flankOpacity, x: rightFlankX, scale: flankScale }}
+          >
+            {rightBottles.map((b) => (
+              <div key={b.name} className="flex flex-col items-center">
+                <img
+                  src={b.image}
+                  alt={b.name}
+                  className="w-16 md:w-28 lg:w-36 h-auto object-contain drop-shadow-lg"
+                />
+                <span className="text-[10px] md:text-xs font-bold text-foreground/70 mt-2 uppercase tracking-wider">
+                  {b.name}
+                </span>
+              </div>
+            ))}
+          </motion.div>
+        </div>
+
+        {/* Product grid — appears below */}
         <motion.div
           className="absolute inset-x-0 bottom-0 z-10 px-4 pb-12 md:pb-16"
           style={{ opacity: productsOpacity, y: productsY }}
