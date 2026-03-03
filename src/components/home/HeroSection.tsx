@@ -6,18 +6,23 @@ import heroBg from "@/assets/hero-kitchen-bg.jpg";
 
 import paneer from "@/assets/product-paneer.png";
 import carrotMilk from "@/assets/product-carrot-milk.png";
-import pasteurizedMilk from "@/assets/product-pasteurized-milk.png";
 import ghee from "@/assets/product-ghee.png";
 import curd from "@/assets/product-curd.png";
 import coconutOil from "@/assets/product-coconut-oil.png";
+import buttermilk from "@/assets/product-buttermilk.png";
 
-const products = [
-  { name: "Milk", image: pasteurizedMilk, href: "/products/cow-milk" },
-  { name: "Paneer", image: paneer, href: "/products/paneer" },
-  { name: "Ghee", image: ghee, href: "/products/ghee" },
-  { name: "Curd", image: curd, href: "/products/curd" },
-  { name: "Flavoured Milk", image: carrotMilk, href: "/products/flavoured-milk" },
-  { name: "Non-Dairy", image: coconutOil, href: "/non-dairy" },
+// Left 2, Right 2 — the center is reserved for the hero bottle landing
+const leftProducts = [
+  { name: "Paneer", image: paneer, href: "/products/paneer", height: "h-28 md:h-44" },
+  { name: "Ghee", image: ghee, href: "/products/ghee", height: "h-24 md:h-36" },
+];
+const rightProducts = [
+  { name: "Curd", image: curd, href: "/products/curd", height: "h-24 md:h-36" },
+  { name: "Flavoured Milk", image: carrotMilk, href: "/products/flavoured-milk", height: "h-28 md:h-44" },
+];
+const outerProducts = [
+  { name: "Non-Dairy", image: coconutOil, href: "/non-dairy", side: "left" as const },
+  { name: "Buttermilk", image: buttermilk, href: "/products/cow-milk", side: "right" as const },
 ];
 
 const HeroSection = () => {
@@ -27,50 +32,48 @@ const HeroSection = () => {
     offset: ["start start", "end start"],
   });
 
-  // Hero content fades out
-  const heroTextOpacity = useTransform(scrollYProgress, [0, 0.25], [1, 0]);
-  const heroTextY = useTransform(scrollYProgress, [0, 0.25], [0, -80]);
+  // Hero text fades out
+  const heroTextOpacity = useTransform(scrollYProgress, [0, 0.2], [1, 0]);
+  const heroTextY = useTransform(scrollYProgress, [0, 0.2], [0, -80]);
 
-  // Background zooms in slightly and fades
-  const bgScale = useTransform(scrollYProgress, [0, 0.5], [1, 1.15]);
-  const bgOpacity = useTransform(scrollYProgress, [0.2, 0.5], [1, 0]);
+  // Background zooms and fades
+  const bgScale = useTransform(scrollYProgress, [0, 0.4], [1, 1.15]);
+  const bgOpacity = useTransform(scrollYProgress, [0.15, 0.4], [1, 0]);
 
-  // Bottle moves down from hero center to products section center
-  const bottleY = useTransform(scrollYProgress, [0, 0.3, 0.55, 0.75], [0, 200, 400, 500]);
-  const bottleScale = useTransform(scrollYProgress, [0, 0.3, 0.55, 0.75], [1, 0.9, 0.7, 0.5]);
-  const bottleOpacity = useTransform(scrollYProgress, [0.7, 0.85], [1, 0]);
+  // Bottle moves down from hero to land between the flanking products
+  const bottleY = useTransform(scrollYProgress, [0, 0.25, 0.5, 0.65], [0, 150, 350, 420]);
+  const bottleScale = useTransform(scrollYProgress, [0, 0.25, 0.5, 0.65], [1, 0.85, 0.6, 0.55]);
+  const bottleOpacity = useTransform(scrollYProgress, [0, 0.65, 0.85], [1, 1, 0]);
 
-  // "From Our Farm to Your Table" section appears
-  const productsHeaderOpacity = useTransform(scrollYProgress, [0.4, 0.55], [0, 1]);
-  const productsHeaderY = useTransform(scrollYProgress, [0.4, 0.55], [60, 0]);
+  // Header appears
+  const headerOpacity = useTransform(scrollYProgress, [0.3, 0.45], [0, 1]);
+  const headerY = useTransform(scrollYProgress, [0.3, 0.45], [50, 0]);
 
-  // Product cards staggered reveal
-  const productsOpacity = useTransform(scrollYProgress, [0.5, 0.65], [0, 1]);
-  const productsY = useTransform(scrollYProgress, [0.5, 0.65], [80, 0]);
+  // Flanking products slide in from sides
+  const leftX = useTransform(scrollYProgress, [0.4, 0.6], [-120, 0]);
+  const rightX = useTransform(scrollYProgress, [0.4, 0.6], [120, 0]);
+  const productsOpacity = useTransform(scrollYProgress, [0.4, 0.6], [0, 1]);
 
-  // Milk reflection surface
-  const reflectionOpacity = useTransform(scrollYProgress, [0.3, 0.5], [0, 0.6]);
+  // Outer products appear last
+  const outerOpacity = useTransform(scrollYProgress, [0.55, 0.7], [0, 1]);
+  const outerLeftX = useTransform(scrollYProgress, [0.55, 0.7], [-80, 0]);
+  const outerRightX = useTransform(scrollYProgress, [0.55, 0.7], [80, 0]);
 
   return (
-    <div ref={containerRef} className="relative h-[350vh]">
+    <div ref={containerRef} className="relative h-[400vh]">
       <div className="sticky top-0 h-screen overflow-hidden">
-        {/* Background image layer */}
-        <motion.div className="absolute inset-0" style={{ scale: bgScale, opacity: bgOpacity }}>
-          <img
-            src={heroBg}
-            alt="Premium kitchen setting"
-            className="w-full h-full object-cover"
-            loading="eager"
-          />
+        {/* Solid bg behind everything */}
+        <div className="absolute inset-0 bg-background" />
+
+        {/* Background image */}
+        <motion.div className="absolute inset-0 z-[1]" style={{ scale: bgScale, opacity: bgOpacity }}>
+          <img src={heroBg} alt="Premium kitchen" className="w-full h-full object-cover" loading="eager" />
           <div className="absolute inset-0 bg-foreground/10" />
         </motion.div>
 
-        {/* Solid background that appears as bg fades */}
-        <div className="absolute inset-0 bg-background -z-0" />
-
-        {/* Hero text — fades up and out on scroll */}
+        {/* Hero text */}
         <motion.div
-          className="absolute inset-0 flex flex-col items-center justify-start pt-28 md:pt-32 z-10 px-4 text-center"
+          className="absolute inset-0 flex flex-col items-center justify-start pt-28 md:pt-32 z-[5] px-4 text-center"
           style={{ opacity: heroTextOpacity, y: heroTextY }}
         >
           <h1
@@ -91,15 +94,10 @@ const HeroSection = () => {
           </p>
         </motion.div>
 
-        {/* The bottle — starts centered in hero, moves down through scroll */}
+        {/* The hero bottle — descends into center */}
         <motion.div
-          className="absolute left-1/2 -translate-x-1/2 z-20"
-          style={{
-            top: "35%",
-            y: bottleY,
-            scale: bottleScale,
-            opacity: bottleOpacity,
-          }}
+          className="absolute left-1/2 -translate-x-1/2 z-[15]"
+          style={{ top: "30%", y: bottleY, scale: bottleScale, opacity: bottleOpacity }}
         >
           <img
             src={bottleBanner}
@@ -107,55 +105,114 @@ const HeroSection = () => {
             className="w-40 md:w-56 lg:w-64 h-auto drop-shadow-[0_20px_60px_rgba(0,0,0,0.25)]"
             loading="eager"
           />
-          {/* Reflection under bottle */}
-          <motion.div
-            className="absolute -bottom-6 left-1/2 -translate-x-1/2 w-32 md:w-44 h-6 bg-foreground/8 rounded-full blur-xl"
-            style={{ opacity: reflectionOpacity }}
-          />
         </motion.div>
 
-        {/* "From Our Farm to Your Table" header — appears after scroll */}
+        {/* "From Our Farm to Your Table" header */}
         <motion.div
-          className="absolute inset-0 flex flex-col items-center z-10 px-4"
-          style={{ opacity: productsHeaderOpacity, y: productsHeaderY }}
+          className="absolute inset-x-0 top-0 flex flex-col items-center z-[10] px-4 pt-20 md:pt-24"
+          style={{ opacity: headerOpacity, y: headerY }}
         >
-          <div className="pt-20 md:pt-24 text-center">
-            <p className="text-sm font-bold uppercase tracking-[0.3em] text-accent mb-3">
-              From Our Farm to Your Table
-            </p>
-            <h2 className="text-4xl md:text-5xl lg:text-6xl font-black text-foreground tracking-tight">
-              Products
-            </h2>
-          </div>
+          <p className="text-sm font-bold uppercase tracking-[0.3em] text-accent mb-3">
+            From Our Farm to Your Table
+          </p>
+          <h2 className="text-4xl md:text-5xl lg:text-6xl font-black text-foreground tracking-tight">
+            Products
+          </h2>
         </motion.div>
 
-        {/* Product grid — appears below the header */}
-        <motion.div
-          className="absolute inset-x-0 bottom-0 z-10 px-4 pb-12 md:pb-16"
-          style={{ opacity: productsOpacity, y: productsY }}
-        >
-          <div className="grid grid-cols-3 md:grid-cols-6 gap-3 md:gap-6 max-w-5xl mx-auto">
-            {products.map((product) => (
-              <Link key={product.name} to={product.href} className="group block text-center">
-                <div className="relative bg-card/80 backdrop-blur-sm rounded-2xl border border-border p-3 md:p-5 transition-all duration-500 hover:shadow-2xl hover:-translate-y-2 overflow-hidden">
-                  <div className="absolute inset-0 bg-gradient-to-t from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-2xl" />
-                  <div className="aspect-square flex items-center justify-center relative mb-2">
+        {/* Product lineup — Shatto style: products flanking center, bottle lands in middle */}
+        <div className="absolute inset-x-0 bottom-0 z-[10] px-4 pb-8 md:pb-16">
+          <div className="max-w-4xl mx-auto flex items-end justify-center gap-2 md:gap-4 relative">
+            {/* Far left outer product */}
+            <motion.div
+              style={{ opacity: outerOpacity, x: outerLeftX }}
+              className="flex-shrink-0"
+            >
+              <Link to={outerProducts[0].href} className="group block text-center">
+                <div className="w-20 md:w-28 transition-transform duration-500 group-hover:-translate-y-2">
+                  <img
+                    src={outerProducts[0].image}
+                    alt={outerProducts[0].name}
+                    className="w-full h-20 md:h-32 object-contain drop-shadow-lg transition-transform duration-500 group-hover:scale-105"
+                    loading="lazy"
+                  />
+                  <p className="text-[10px] md:text-xs font-bold text-foreground mt-2 uppercase tracking-wider">
+                    {outerProducts[0].name}
+                  </p>
+                </div>
+              </Link>
+            </motion.div>
+
+            {/* Left 2 products */}
+            {leftProducts.map((product, i) => (
+              <motion.div
+                key={product.name}
+                style={{ opacity: productsOpacity, x: leftX }}
+                className="flex-shrink-0"
+              >
+                <Link to={product.href} className="group block text-center">
+                  <div className="w-24 md:w-36 transition-transform duration-500 group-hover:-translate-y-2">
                     <img
                       src={product.image}
                       alt={product.name}
-                      className="w-full h-full object-contain p-1 transition-transform duration-700 group-hover:scale-110"
+                      className={`w-full ${product.height} object-contain drop-shadow-lg transition-transform duration-500 group-hover:scale-105`}
                       loading="lazy"
                     />
-                    <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-3/4 h-3 bg-foreground/5 rounded-full blur-md" />
+                    <p className="text-[10px] md:text-xs font-bold text-foreground mt-2 uppercase tracking-wider">
+                      {product.name}
+                    </p>
                   </div>
-                  <h3 className="text-xs md:text-sm font-black text-foreground relative z-10 tracking-tight">
-                    {product.name}
-                  </h3>
+                </Link>
+              </motion.div>
+            ))}
+
+            {/* Center gap — the bottle lands here */}
+            <div className="w-28 md:w-40 flex-shrink-0" />
+
+            {/* Right 2 products */}
+            {rightProducts.map((product) => (
+              <motion.div
+                key={product.name}
+                style={{ opacity: productsOpacity, x: rightX }}
+                className="flex-shrink-0"
+              >
+                <Link to={product.href} className="group block text-center">
+                  <div className="w-24 md:w-36 transition-transform duration-500 group-hover:-translate-y-2">
+                    <img
+                      src={product.image}
+                      alt={product.name}
+                      className={`w-full ${product.height} object-contain drop-shadow-lg transition-transform duration-500 group-hover:scale-105`}
+                      loading="lazy"
+                    />
+                    <p className="text-[10px] md:text-xs font-bold text-foreground mt-2 uppercase tracking-wider">
+                      {product.name}
+                    </p>
+                  </div>
+                </Link>
+              </motion.div>
+            ))}
+
+            {/* Far right outer product */}
+            <motion.div
+              style={{ opacity: outerOpacity, x: outerRightX }}
+              className="flex-shrink-0"
+            >
+              <Link to={outerProducts[1].href} className="group block text-center">
+                <div className="w-20 md:w-28 transition-transform duration-500 group-hover:-translate-y-2">
+                  <img
+                    src={outerProducts[1].image}
+                    alt={outerProducts[1].name}
+                    className="w-full h-20 md:h-32 object-contain drop-shadow-lg transition-transform duration-500 group-hover:scale-105"
+                    loading="lazy"
+                  />
+                  <p className="text-[10px] md:text-xs font-bold text-foreground mt-2 uppercase tracking-wider">
+                    {outerProducts[1].name}
+                  </p>
                 </div>
               </Link>
-            ))}
+            </motion.div>
           </div>
-        </motion.div>
+        </div>
       </div>
     </div>
   );
