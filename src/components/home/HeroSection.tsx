@@ -137,7 +137,7 @@ const HeroSection = () => {
               className="absolute left-0 right-0 overflow-hidden z-[9]"
               style={{
                 top: "30%",
-                height: useTransform(streamHeight, (v) => `${v}%`),
+                height: streamHeightPx,
                 opacity: streamOpacity,
               }}
             >
