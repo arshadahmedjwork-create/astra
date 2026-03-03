@@ -39,7 +39,8 @@ const HeroSection = () => {
   const bottleScale = useTransform(scrollYProgress, [0.1, 0.35, 0.55, 0.7], [1, 0.85, 0.7, 0.65]);
 
   // ── Phase A: Milk stream grows downward (0.25 → 0.6) ──
-  const streamHeight = useTransform(scrollYProgress, [0.25, 0.6], [0, 100]); // percentage
+  const streamHeight = useTransform(scrollYProgress, [0.25, 0.6], [0, 100]);
+  const streamHeightPx = useTransform(streamHeight, (v) => `${v}%`);
   const streamOpacity = useTransform(scrollYProgress, [0.25, 0.3], [0, 1]);
 
   // ── Phase A: Milk pool expands at bottom of stage (0.45 → 0.65) ──
