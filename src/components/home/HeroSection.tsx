@@ -2,7 +2,7 @@ import { useRef } from "react";
 import { motion, useScroll, useTransform } from "framer-motion";
 import { Link } from "react-router-dom";
 import bottleBanner from "@/assets/bottle-banner.png";
-import heroBg from "@/assets/hero-kitchen-bg.jpg";
+import heroBg from "@/assets/hero-misty-farm-bg.jpg";
 
 import paneer from "@/assets/product-paneer.png";
 import carrotMilk from "@/assets/product-carrot-milk.png";
