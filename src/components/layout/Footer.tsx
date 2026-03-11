@@ -107,6 +107,9 @@ const Footer = () => {
             © {new Date().getFullYear()} Astra Dairy. All rights reserved.
           </p>
           <div className="flex items-center gap-4">
+            <Link to="/admin/login" className="text-xs text-accent font-semibold hover:text-accent/80 transition-colors">
+              Admin Portal
+            </Link>
             <Link to="/terms" className="text-xs text-primary-foreground/40 hover:text-primary-foreground/60 transition-colors">
               Terms
             </Link>

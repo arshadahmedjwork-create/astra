@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { motion, AnimatePresence } from "framer-motion";
 import { ShoppingCart } from "lucide-react";
@@ -24,12 +25,12 @@ const FloatingBuyNow = () => {
           exit={{ opacity: 0, y: 20, scale: 0.9 }}
           className="fixed bottom-6 right-6 z-40"
         >
-          <a href="https://erp.astradairy.in" target="_blank" rel="noopener noreferrer">
+          <Link to="/erp/login">
             <Button variant="pill" size="lg" className="shadow-2xl gap-2">
               <ShoppingCart className="w-4 h-4" />
-              Buy Now
+              Login
             </Button>
-          </a>
+          </Link>
         </motion.div>
       )}
     </AnimatePresence>

@@ -1,4 +1,5 @@
 import { motion } from "framer-motion";
+import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { MapPin, ArrowRight } from "lucide-react";
 
@@ -44,11 +45,11 @@ const DeliveryCTA = () => {
               We deliver fresh milk and dairy every morning between 5:00–7:30 AM.
               Glass bottles collected. No plastic. No waste.
             </p>
-            <a href="https://erp.astradairy.in" target="_blank" rel="noopener noreferrer">
+            <Link to="/erp/login">
               <Button variant="hero" size="lg" className="text-base px-10 py-7 mt-4">
                 Start Your Subscription <ArrowRight className="w-5 h-5 ml-2" />
               </Button>
-            </a>
+            </Link>
           </motion.div>
         </div>
       </div>

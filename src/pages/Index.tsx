@@ -4,7 +4,6 @@ import FloatingBuyNow from "@/components/layout/FloatingBuyNow";
 import HeroSection from "@/components/home/HeroSection";
 import StorySection from "@/components/home/StorySection";
 import DeliveryCTA from "@/components/home/DeliveryCTA";
-import NewsletterSection from "@/components/home/NewsletterSection";
 import FarmTourCTA from "@/components/home/FarmTourCTA";
 
 const Index = () => {
@@ -14,7 +13,6 @@ const Index = () => {
       <HeroSection />
       <StorySection />
       <DeliveryCTA />
-      <NewsletterSection />
       <FarmTourCTA />
       <Footer />
       <FloatingBuyNow />

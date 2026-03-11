@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { lazy, Suspense } from "react";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
+import ProtectedRoute from "./components/erp/ProtectedRoute";
 
 const About = lazy(() => import("./pages/About"));
 const Products = lazy(() => import("./pages/Products"));
@@ -19,6 +20,28 @@ const Contact = lazy(() => import("./pages/Contact"));
 const Environment = lazy(() => import("./pages/Environment"));
 const Terms = lazy(() => import("./pages/Terms"));
 const Privacy = lazy(() => import("./pages/Privacy"));
+
+// ERP Pages
+const ERPLogin = lazy(() => import("./pages/erp/Login"));
+const ERPRegister = lazy(() => import("./pages/erp/Register"));
+const ERPDashboard = lazy(() => import("./pages/erp/Dashboard"));
+const ERPMyProducts = lazy(() => import("./pages/erp/MyProducts"));
+const ERPRequestSample = lazy(() => import("./pages/erp/RequestSample"));
+const ERPRenewSubscription = lazy(() => import("./pages/erp/RenewSubscription"));
+const ERPPaymentHistory = lazy(() => import("./pages/erp/PaymentHistory"));
+const ERPMyProfile = lazy(() => import("./pages/erp/MyProfile"));
+
+// Admin Pages
+import AdminLayout from "./components/admin/AdminLayout";
+import AdminProtectedRoute from "./components/admin/AdminProtectedRoute";
+const AdminLogin = lazy(() => import("./pages/admin/AdminLogin"));
+const AdminDashboard = lazy(() => import("./pages/admin/AdminDashboard"));
+const AdminInventory = lazy(() => import("./pages/admin/AdminInventory"));
+const AdminOrders = lazy(() => import("./pages/admin/AdminOrders"));
+const AdminCustomers = lazy(() => import("./pages/admin/AdminCustomers"));
+const AdminSubscriptions = lazy(() => import("./pages/admin/AdminSubscriptions"));
+const AdminSamples = lazy(() => import("./pages/admin/AdminSamples"));
+const AdminPayments = lazy(() => import("./pages/admin/AdminPayments"));
 
 const queryClient = new QueryClient();
 
@@ -49,6 +72,32 @@ const App = () => (
             <Route path="/environment" element={<Environment />} />
             <Route path="/terms" element={<Terms />} />
             <Route path="/privacy" element={<Privacy />} />
+
+            {/* ERP Portal Routes */}
+            <Route path="/erp/login" element={<ERPLogin />} />
+            <Route path="/erp/register" element={<ERPRegister />} />
+            <Route path="/erp/dashboard" element={<ProtectedRoute><ERPDashboard /></ProtectedRoute>} />
+            <Route path="/erp/products" element={<ProtectedRoute><ERPMyProducts /></ProtectedRoute>} />
+            <Route path="/erp/request-sample" element={<ProtectedRoute><ERPRequestSample /></ProtectedRoute>} />
+            <Route path="/erp/subscription" element={<ProtectedRoute><ERPRenewSubscription /></ProtectedRoute>} />
+            <Route path="/erp/payments" element={<ProtectedRoute><ERPPaymentHistory /></ProtectedRoute>} />
+            <Route path="/erp/profile" element={<ProtectedRoute><ERPMyProfile /></ProtectedRoute>} />
+
+            {/* Admin Portal Routes */}
+            <Route path="/admin/login" element={<AdminLogin />} />
+            <Route path="/admin" element={<AdminProtectedRoute />}>
+              <Route element={<AdminLayout />}>
+                <Route index element={<AdminDashboard />} />
+                <Route path="dashboard" element={<AdminDashboard />} />
+                <Route path="inventory" element={<AdminInventory />} />
+                <Route path="orders" element={<AdminOrders />} />
+                <Route path="customers" element={<AdminCustomers />} />
+                <Route path="subscriptions" element={<AdminSubscriptions />} />
+                <Route path="samples" element={<AdminSamples />} />
+                <Route path="payments" element={<AdminPayments />} />
+              </Route>
+            </Route>
+
             <Route path="*" element={<NotFound />} />
           </Routes>
         </Suspense>

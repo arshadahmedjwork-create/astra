@@ -4,6 +4,8 @@ import { Menu, X, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { motion, AnimatePresence } from "framer-motion";
 import astraLogo from "@/assets/astra-logo.png";
+import { useCartStore } from "@/stores/useCartStore";
+import { CartSheet } from "./CartSheet";
 
 const productsMenu = [
   { name: "Cow Milk", href: "/products/cow-milk" },
@@ -55,11 +57,10 @@ const Header = () => {
 
   return (
     <header
-      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
-        isScrolled
-          ? "bg-card/95 backdrop-blur-md shadow-sm py-2"
-          : "bg-transparent py-4"
-      }`}
+      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${isScrolled
+        ? "bg-card/95 backdrop-blur-md shadow-sm py-2"
+        : "bg-transparent py-4"
+        }`}
     >
       <div className="container mx-auto flex items-center justify-between px-4 lg:px-8">
         {/* Logo */}
@@ -81,11 +82,10 @@ const Header = () => {
             >
               <Link
                 to={item.href}
-                className={`px-3 py-2 text-sm font-medium rounded-lg transition-colors flex items-center gap-1 ${
-                  location.pathname === item.href
-                    ? "text-primary bg-primary/5"
-                    : "text-foreground/70 hover:text-primary hover:bg-primary/5"
-                }`}
+                className={`px-3 py-2 text-sm font-medium rounded-lg transition-colors flex items-center gap-1 ${location.pathname === item.href
+                  ? "text-primary bg-primary/5"
+                  : "text-foreground/70 hover:text-primary hover:bg-primary/5"
+                  }`}
               >
                 {item.name}
                 {item.megaMenu && <ChevronDown className="w-3 h-3" />}
@@ -119,12 +119,13 @@ const Header = () => {
 
         {/* Desktop CTAs */}
         <div className="hidden lg:flex items-center gap-3">
-          <a href="https://erp.astradairy.in" target="_blank" rel="noopener noreferrer">
+          <CartSheet />
+          <Link to="/erp/login">
             <Button variant="hero-outline" size="sm">Take a Trial</Button>
-          </a>
-          <a href="https://erp.astradairy.in" target="_blank" rel="noopener noreferrer">
-            <Button variant="hero" size="sm">Buy Now</Button>
-          </a>
+          </Link>
+          <Link to="/erp/login">
+            <Button variant="hero" size="sm">Login</Button>
+          </Link>
         </div>
 
         {/* Mobile Toggle */}
@@ -188,12 +189,12 @@ const Header = () => {
                 </div>
               ))}
               <div className="pt-4 flex flex-col gap-2">
-                <a href="https://erp.astradairy.in" target="_blank" rel="noopener noreferrer">
-                  <Button variant="hero" className="w-full">Buy Now</Button>
-                </a>
-                <a href="https://erp.astradairy.in" target="_blank" rel="noopener noreferrer">
+                <Link to="/erp/login">
+                  <Button variant="hero" className="w-full">Login</Button>
+                </Link>
+                <Link to="/erp/login">
                   <Button variant="hero-outline" className="w-full">Take a Trial</Button>
-                </a>
+                </Link>
               </div>
             </div>
           </motion.div>

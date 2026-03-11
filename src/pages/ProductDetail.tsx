@@ -9,6 +9,8 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
+import { Check, ShoppingCart } from "lucide-react";
+import { useCartStore } from "@/stores/useCartStore";
 
 import rawMilk from "@/assets/product-raw-milk.png";
 import paneer from "@/assets/product-paneer.png";
@@ -174,12 +176,29 @@ const ProductDetail = () => {
                 </div>
                 {/* Sticky Purchase Bar */}
                 <div className="flex flex-wrap gap-3 sticky top-20 bg-card/95 backdrop-blur-sm p-4 rounded-2xl border border-border">
-                  <a href="https://erp.astradairy.in" target="_blank" rel="noopener noreferrer" className="flex-1">
-                    <Button variant="hero" className="w-full">Buy Now</Button>
-                  </a>
-                  <a href="https://erp.astradairy.in" target="_blank" rel="noopener noreferrer" className="flex-1">
+                  <Button
+                    variant={useCartStore((state) => state.isInCart(slug || "")) ? "outline" : "hero"}
+                    className="flex-1 gap-2"
+                    onClick={() => product && useCartStore.getState().addItem({
+                      id: slug,
+                      name: product.title,
+                      price: 0, // Should be fetched from product data if available
+                      image: product.image
+                    })}
+                  >
+                    {useCartStore((state) => state.isInCart(slug || "")) ? (
+                      <>
+                        <Check className="w-4 h-4" /> Added
+                      </>
+                    ) : (
+                      <>
+                        <ShoppingCart className="w-4 h-4" /> Add to Cart
+                      </>
+                    )}
+                  </Button>
+                  <Link to="/erp/login" className="flex-1 text-center">
                     <Button variant="hero-outline" className="w-full">Take a Trial</Button>
-                  </a>
+                  </Link>
                 </div>
               </div>
             </div>
