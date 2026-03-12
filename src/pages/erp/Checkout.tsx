@@ -41,9 +41,7 @@ const Checkout = () => {
                     customer_id: customer.id,
                     total_amount: total,
                     status: 'pending',
-                    delivery_date: new Date(Date.now() + 86400000).toISOString().split('T')[0], // Next day
-                    payment_status: 'pending',
-                    payment_method: paymentMethod
+                    delivery_date: new Date(Date.now() + 86400000).toISOString().split('T')[0] // Next day
                 }])
                 .select()
                 .single();
@@ -55,8 +53,7 @@ const Checkout = () => {
                 order_id: order.id,
                 product_id: item.id,
                 quantity: item.quantity,
-                unit_price: item.price,
-                total_price: item.price * item.quantity
+                unit_price: item.price
             }));
 
             const { error: itemsError } = await supabase
@@ -65,7 +62,20 @@ const Checkout = () => {
 
             if (itemsError) throw itemsError;
 
-            // 3. Success
+            // 3. Create Payment record
+            const { error: paymentError } = await supabase
+                .from('payments')
+                .insert([{
+                    order_id: order.id,
+                    customer_id: customer.id,
+                    amount: total,
+                    mode: paymentMethod === 'cod' ? 'cash' : 'upi',
+                    status: 'pending'
+                }]);
+
+            if (paymentError) throw paymentError;
+
+            // 4. Success
             setConfirmed(true);
             clearCart();
             toast({ title: 'Order Placed! 🎉', description: 'Your fresh dairy products are on the way.' });
