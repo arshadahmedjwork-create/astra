@@ -12,12 +12,12 @@ import {
 import { Check, ShoppingCart } from "lucide-react";
 import { useCartStore } from "@/stores/useCartStore";
 
-import rawMilk from "@/assets/product-raw-milk.png";
-import paneer from "@/assets/product-paneer.png";
-import ghee from "@/assets/product-ghee.png";
-import curd from "@/assets/product-curd.png";
-import kulfi from "@/assets/product-kulfi.png";
-import chocolateMilk from "@/assets/product-chocolate-milk.png";
+const rawMilk = "/assets/product-raw-milk.png";
+const paneer = "/assets/product-paneer.png";
+const ghee = "/assets/product-ghee.png";
+const curd = "/assets/product-curd.png";
+const kulfi = "/assets/product-kulfi.png";
+const chocolateMilk = "/assets/product-chocolate-milk.png";
 
 interface ProductData {
   title: string;

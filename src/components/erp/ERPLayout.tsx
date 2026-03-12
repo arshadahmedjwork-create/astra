@@ -12,13 +12,18 @@ import {
     Menu,
     X,
     ChevronRight,
+    Package,
+    ShoppingCart
 } from 'lucide-react';
 import { useAuthStore } from '@/stores/authStore';
+import { useCartStore } from '@/stores/useCartStore';
 import astraLogo from '@/assets/astra-logo.png';
 
 const sidebarItems = [
     { name: 'Dashboard', href: '/erp/dashboard', icon: LayoutDashboard },
     { name: 'My Products', href: '/erp/products', icon: ShoppingBag },
+    { name: 'My Subscriptions', href: '/erp/subscriptions', icon: RefreshCw },
+    { name: 'Order History', href: '/erp/orders', icon: Package },
     { name: 'Request Sample', href: '/erp/request-sample', icon: FlaskConical },
     { name: 'Renew Subscription', href: '/erp/subscription', icon: RefreshCw },
     { name: 'Payment History', href: '/erp/payments', icon: CreditCard },
@@ -34,6 +39,9 @@ const ERPLayout = ({ children }: ERPLayoutProps) => {
     const location = useLocation();
     const navigate = useNavigate();
     const { customer, logout } = useAuthStore();
+    const { items } = useCartStore();
+
+    const cartCount = items.reduce((sum, item) => sum + item.quantity, 0);
 
     const handleLogout = () => {
         logout();
@@ -115,9 +123,19 @@ const ERPLayout = ({ children }: ERPLayoutProps) => {
                             Astra<span className="text-accent">Dairy</span>
                         </span>
                     </Link>
-                    <button onClick={() => setSidebarOpen(!sidebarOpen)} className="p-2 text-foreground">
-                        {sidebarOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-                    </button>
+                    <div className="flex items-center gap-2">
+                        <Link to="/erp/cart" className="p-2 text-foreground relative mr-2">
+                            <ShoppingCart className="w-5 h-5" />
+                            {cartCount > 0 && (
+                                <span className="absolute top-0 right-0 bg-accent text-white text-[10px] font-black h-4 w-4 rounded-full flex items-center justify-center border border-white">
+                                    {cartCount}
+                                </span>
+                            )}
+                        </Link>
+                        <button onClick={() => setSidebarOpen(!sidebarOpen)} className="p-2 text-foreground border border-border rounded-lg">
+                            {sidebarOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+                        </button>
+                    </div>
                 </header>
 
                 {/* Mobile Sidebar Overlay */}
@@ -201,6 +219,17 @@ const ERPLayout = ({ children }: ERPLayoutProps) => {
                 </AnimatePresence>
 
                 {/* Main Content */}
+                <header className="hidden lg:flex items-center justify-end px-8 py-4 bg-card/50 backdrop-blur-sm border-b border-border">
+                    <Link to="/erp/cart" className="flex items-center gap-2 px-4 py-2 rounded-xl bg-primary/5 hover:bg-primary/10 border border-primary/10 transition-all group relative">
+                        <ShoppingCart className="w-4 h-4 text-primary group-hover:scale-110 transition-transform" />
+                        <span className="text-sm font-bold text-foreground">My Cart</span>
+                        {cartCount > 0 && (
+                            <span className="absolute -top-1.5 -right-1.5 bg-accent text-white text-[10px] font-black h-5 w-5 rounded-full flex items-center justify-center border-2 border-white shadow-sm">
+                                {cartCount}
+                            </span>
+                        )}
+                    </Link>
+                </header>
                 <main className="flex-1 p-4 md:p-6 lg:p-8 overflow-y-auto">
                     {children}
                 </main>

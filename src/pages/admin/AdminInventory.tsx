@@ -15,15 +15,15 @@ import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent } from '@/components/ui/card';
 
 const productImages: Record<string, string> = {
-    'Cow Milk': '/src/assets/product-raw-milk.png',
-    'Buffalo Milk': '/src/assets/product-pasteurized-milk.png',
-    'A2 Milk': '/src/assets/product-homogenized-milk.png',
-    'Paneer': '/src/assets/product-paneer.png',
-    'Ghee': '/src/assets/product-ghee.png',
-    'Curd': '/src/assets/product-curd.png',
-    'Buttermilk': '/src/assets/product-buttermilk.png',
-    'Flavoured Milk': '/src/assets/product-chocolate-milk.png',
-    'Natural Kulfi': '/src/assets/product-kulfi.png',
+    'Cow Milk': '/assets/product-raw-milk.png',
+    'Buffalo Milk': '/assets/product-pasteurized-milk.png',
+    'A2 Milk': '/assets/product-homogenized-milk.png',
+    'Paneer': '/assets/product-paneer.png',
+    'Ghee': '/assets/product-ghee.png',
+    'Curd': '/assets/product-curd.png',
+    'Buttermilk': '/assets/product-buttermilk.png',
+    'Flavoured Milk': '/assets/product-chocolate-milk.png',
+    'Natural Kulfi': '/assets/product-kulfi.png',
 };
 
 const AdminInventory = () => {

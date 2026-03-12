@@ -22,6 +22,8 @@
       "package": "com.astradairy.mobile",
       "permissions": [
         "ACCESS_COARSE_LOCATION",
+        "ACCESS_FINE_LOCATION",
+        "ACCESS_COARSE_LOCATION",
         "ACCESS_FINE_LOCATION"
       ],
       "adaptiveIcon": {
@@ -34,6 +36,18 @@
     },
     "web": {
       "favicon": "./assets/favicon.png"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "cacb3866-a5bf-42e9-819a-7217e77eb773"
+      }
+    },
+    "owner": "arshad26ahmed",
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/cacb3866-a5bf-42e9-819a-7217e77eb773"
     }
   }
 }

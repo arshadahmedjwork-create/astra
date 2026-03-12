@@ -30,6 +30,10 @@ const ERPRequestSample = lazy(() => import("./pages/erp/RequestSample"));
 const ERPRenewSubscription = lazy(() => import("./pages/erp/RenewSubscription"));
 const ERPPaymentHistory = lazy(() => import("./pages/erp/PaymentHistory"));
 const ERPMyProfile = lazy(() => import("./pages/erp/MyProfile"));
+const ERPCart = lazy(() => import("./pages/erp/Cart"));
+const ERPCheckout = lazy(() => import("./pages/erp/Checkout"));
+const ERPOrderHistory = lazy(() => import("./pages/erp/OrderHistory"));
+const ERPMySubscriptions = lazy(() => import("./pages/erp/MySubscriptions"));
 
 // Admin Pages
 import AdminLayout from "./components/admin/AdminLayout";
@@ -82,6 +86,10 @@ const App = () => (
             <Route path="/erp/subscription" element={<ProtectedRoute><ERPRenewSubscription /></ProtectedRoute>} />
             <Route path="/erp/payments" element={<ProtectedRoute><ERPPaymentHistory /></ProtectedRoute>} />
             <Route path="/erp/profile" element={<ProtectedRoute><ERPMyProfile /></ProtectedRoute>} />
+            <Route path="/erp/cart" element={<ProtectedRoute><ERPCart /></ProtectedRoute>} />
+            <Route path="/erp/checkout" element={<ProtectedRoute><ERPCheckout /></ProtectedRoute>} />
+            <Route path="/erp/orders" element={<ProtectedRoute><ERPOrderHistory /></ProtectedRoute>} />
+            <Route path="/erp/subscriptions" element={<ProtectedRoute><ERPMySubscriptions /></ProtectedRoute>} />
 
             {/* Admin Portal Routes */}
             <Route path="/admin/login" element={<AdminLogin />} />

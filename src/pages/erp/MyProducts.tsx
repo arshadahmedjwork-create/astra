@@ -1,10 +1,12 @@
 import { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
-import { ShoppingBag, Plus, Minus, ShoppingCart } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { ShoppingBag, Plus, Minus, ShoppingCart, ArrowRight } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import ERPLayout from '@/components/erp/ERPLayout';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/lib/supabase';
+import { useCartStore } from '@/stores/useCartStore';
 
 interface Product {
     id: string;
@@ -18,15 +20,15 @@ interface Product {
 }
 
 const productImages: Record<string, string> = {
-    'Cow Milk': '/src/assets/product-raw-milk.png',
-    'Buffalo Milk': '/src/assets/product-pasteurized-milk.png',
-    'A2 Milk': '/src/assets/product-homogenized-milk.png',
-    'Paneer': '/src/assets/product-paneer.png',
-    'Ghee': '/src/assets/product-ghee.png',
-    'Curd': '/src/assets/product-curd.png',
-    'Buttermilk': '/src/assets/product-buttermilk.png',
-    'Flavoured Milk': '/src/assets/product-chocolate-milk.png',
-    'Natural Kulfi': '/src/assets/product-kulfi.png',
+    'Cow Milk': '/assets/product-raw-milk.png',
+    'Buffalo Milk': '/assets/product-pasteurized-milk.png',
+    'A2 Milk': '/assets/product-homogenized-milk.png',
+    'Paneer': '/assets/product-paneer.png',
+    'Ghee': '/assets/product-ghee.png',
+    'Curd': '/assets/product-curd.png',
+    'Buttermilk': '/assets/product-buttermilk.png',
+    'Flavoured Milk': '/assets/product-chocolate-milk.png',
+    'Natural Kulfi': '/assets/product-kulfi.png',
 };
 
 const MyProducts = () => {
@@ -34,6 +36,10 @@ const MyProducts = () => {
     const [quantities, setQuantities] = useState<Record<string, number>>({});
     const [loading, setLoading] = useState(true);
     const { toast } = useToast();
+    const { addItem, items } = useCartStore();
+    const navigate = useNavigate();
+
+    const cartCount = items.reduce((sum, item) => sum + item.quantity, 0);
 
     useEffect(() => {
         const fetchProducts = async () => {
@@ -62,9 +68,16 @@ const MyProducts = () => {
     };
 
     const handleAddToCart = (product: Product) => {
+        addItem({
+            id: product.id,
+            name: product.name,
+            price: product.price,
+            quantity: quantities[product.id] || 1,
+            image: productImages[product.name] || '/assets/product-raw-milk.png'
+        });
         toast({
-            title: 'Added to subscription!',
-            description: `${quantities[product.id]}x ${product.name} added. Go to "Renew Subscription" to complete.`,
+            title: 'Added to cart!',
+            description: `${quantities[product.id]}x ${product.name} added to your cart.`,
         });
     };
 
@@ -101,7 +114,7 @@ const MyProducts = () => {
                             >
                                 <div className="aspect-square bg-sage/20 overflow-hidden relative">
                                     <img
-                                        src={productImages[product.name] || '/src/assets/product-raw-milk.png'}
+                                        src={productImages[product.name] || '/assets/product-raw-milk.png'}
                                         alt={product.name}
                                         className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                                     />
@@ -155,6 +168,35 @@ const MyProducts = () => {
                     </div>
                 )}
             </div>
+
+            {/* Floating Cart Button */}
+            <AnimatePresence>
+                {cartCount > 0 && (
+                    <motion.div
+                        initial={{ opacity: 0, scale: 0.8, y: 20 }}
+                        animate={{ opacity: 1, scale: 1, y: 0 }}
+                        exit={{ opacity: 0, scale: 0.8, y: 20 }}
+                        className="fixed bottom-8 right-8 z-50"
+                    >
+                        <Button
+                            onClick={() => navigate('/erp/cart')}
+                            className="h-16 px-6 rounded-2xl shadow-2xl forest-gradient border border-primary/20 flex items-center gap-4 group"
+                        >
+                            <div className="relative">
+                                <ShoppingCart className="w-6 h-6 text-primary-foreground" />
+                                <span className="absolute -top-3 -right-3 bg-accent text-white text-[10px] font-bold h-5 w-5 rounded-full flex items-center justify-center border-2 border-white shadow-sm">
+                                    {cartCount}
+                                </span>
+                            </div>
+                            <div className="text-left hidden sm:block">
+                                <p className="text-[10px] text-primary-foreground/70 font-semibold uppercase tracking-wider">Your Cart</p>
+                                <p className="text-sm font-bold text-primary-foreground">View Basket</p>
+                            </div>
+                            <ArrowRight className="w-4 h-4 text-primary-foreground group-hover:translate-x-1 transition-transform" />
+                        </Button>
+                    </motion.div>
+                )}
+            </AnimatePresence>
         </ERPLayout>
     );
 };
