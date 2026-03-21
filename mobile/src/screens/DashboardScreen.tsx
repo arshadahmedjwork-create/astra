@@ -90,7 +90,7 @@ export default function DashboardScreen({ navigation }: any) {
 
     return (
         <ScrollView className="flex-1 bg-gray-50">
-            {/* ... existing header ... */}
+            {/* Header */}
             <View className="bg-[#1B4D3E] pt-16 pb-6 px-6 rounded-b-[32px] shadow-lg">
                 <View className="flex-row justify-between items-center">
                     <View>
@@ -170,6 +170,13 @@ export default function DashboardScreen({ navigation }: any) {
                     onPress={() => navigation.navigate('Profile')}
                     className="bg-white p-5 rounded-3xl shadow-sm border border-gray-100 flex-row items-center"
                 >
+                    <View className="w-12 h-12 bg-[#1B4D3E]/10 rounded-full items-center justify-center mr-4">
+                        <User color="#1B4D3E" size={24} />
+                    </View>
+                    <View className="flex-1">
+                        <Text className="font-bold text-gray-900 text-lg">My Profile</Text>
+                        <Text className="text-gray-500 text-xs mt-0.5">Manage your personal information</Text>
+                    </View>
                 </TouchableOpacity>
             </View>
 
@@ -196,7 +203,7 @@ export default function DashboardScreen({ navigation }: any) {
                 <View className="px-6 mt-6">
                     <TouchableOpacity
                         onPress={() => navigation.navigate('Tracking', { orderId: activeOrder.id })}
-                        className="bg-primary p-6 rounded-[32px] shadow-lg shadow-primary/30 flex-row items-center overflow-hidden"
+                        className="bg-[#1B4D3E] p-6 rounded-[32px] shadow-lg shadow-primary/30 flex-row items-center overflow-hidden"
                     >
                         <View className="w-14 h-14 bg-white/20 rounded-2xl items-center justify-center mr-4">
                             <Navigation color="white" size={32} />
