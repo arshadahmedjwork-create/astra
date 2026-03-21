@@ -18,6 +18,7 @@ const AdminAllOrders = () => {
     const [selectedOrder, setSelectedOrder] = useState<any | null>(null);
     const [drivers, setDrivers] = useState<any[]>([]);
     const [isAssignModalOpen, setIsAssignModalOpen] = useState(false);
+    const [isAddDriverOpen, setIsAddDriverOpen] = useState(false);
     const [selectedDriverId, setSelectedDriverId] = useState<string>('');
     const [isAddingNewDriver, setIsAddingNewDriver] = useState(false);
     const [newDriverData, setNewDriverData] = useState({ full_name: '', phone: '', vehicle_no: '' });
