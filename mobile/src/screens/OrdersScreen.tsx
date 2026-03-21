@@ -186,15 +186,13 @@ export default function OrdersScreen({ navigation }: any) {
                                     </View>
                                 </View>
 
-                                {order.status === 'get_to_deliver' && (
-                                    <TouchableOpacity
-                                        onPress={() => navigation.navigate('Tracking', { orderId: order.id })}
-                                        className="mt-4 bg-[#1B4D3E] py-4 rounded-xl items-center flex-row justify-center shadow-md shadow-[#1B4D3E]/20"
-                                    >
-                                        <Navigation size={18} color="white" />
-                                        <Text className="text-white font-bold ml-2 uppercase">Track Live</Text>
-                                    </TouchableOpacity>
-                                )}
+                                <TouchableOpacity
+                                    onPress={() => navigation.navigate('Tracking', { orderId: order.id })}
+                                    className="mt-4 bg-[#1B4D3E] py-4 rounded-xl items-center flex-row justify-center shadow-md shadow-[#1B4D3E]/20"
+                                >
+                                    <Navigation size={18} color="white" />
+                                    <Text className="text-white font-bold ml-2 uppercase">Track Order</Text>
+                                </TouchableOpacity>
 
                                 {isCancellable(order) && (
                                     <TouchableOpacity

@@ -13,7 +13,8 @@ import {
     X,
     ChevronRight,
     Package,
-    ShoppingCart
+    ShoppingCart,
+    Navigation
 } from 'lucide-react';
 import { useAuthStore } from '@/stores/authStore';
 import { useCartStore } from '@/stores/useCartStore';
@@ -24,6 +25,7 @@ const sidebarItems = [
     { name: 'My Products', href: '/erp/products', icon: ShoppingBag },
     { name: 'My Subscriptions', href: '/erp/subscriptions', icon: RefreshCw },
     { name: 'Order History', href: '/erp/orders', icon: Package },
+    { name: 'Track Order', href: '/erp/track', icon: Navigation },
     { name: 'Request Sample', href: '/erp/request-sample', icon: FlaskConical },
     { name: 'Renew Subscription', href: '/erp/subscription', icon: RefreshCw },
     { name: 'Payment History', href: '/erp/payments', icon: CreditCard },

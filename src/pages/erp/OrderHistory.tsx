@@ -160,14 +160,12 @@ const OrderHistory = () => {
                                         ))}
                                     </div>
                                     <div className="flex items-center gap-2">
-                                        {order.status !== 'delivered' && order.status !== 'cancelled' && (
-                                            <Link to={`/erp/track/${order.id}`}>
-                                                <Button size="sm" className="bg-primary/10 text-primary hover:bg-primary/20 border-primary/20">
-                                                    <Truck className="w-4 h-4 mr-2" />
-                                                    Track Order
-                                                </Button>
-                                            </Link>
-                                        )}
+                                         <Link to={`/erp/track/${order.id}`}>
+                                             <Button size="sm" className="bg-primary/10 text-primary hover:bg-primary/20 border-primary/20">
+                                                 <Truck className="w-4 h-4 mr-2" />
+                                                 Track Order
+                                             </Button>
+                                         </Link>
                                         <Link to={`/erp/orders/${order.id}`}>
                                             <Button variant="ghost" size="sm" className="group-hover:text-primary">
                                                 Details <ChevronRight className="w-4 h-4 ml-1" />

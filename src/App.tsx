@@ -35,6 +35,7 @@ const ERPCheckout = lazy(() => import("./pages/erp/Checkout"));
 const ERPOrderHistory = lazy(() => import("./pages/erp/OrderHistory"));
 const ERPMySubscriptions = lazy(() => import("./pages/erp/MySubscriptions"));
 const ERPOrderTracking = lazy(() => import("./pages/erp/OrderTracking"));
+const ERPLiveTracking = lazy(() => import("./pages/erp/LiveTrackingSearch"));
 
 // Admin Pages
 import AdminLayout from "./components/admin/AdminLayout";
@@ -93,6 +94,7 @@ const App = () => (
             <Route path="/erp/checkout" element={<ProtectedRoute><ERPCheckout /></ProtectedRoute>} />
             <Route path="/erp/orders" element={<ProtectedRoute><ERPOrderHistory /></ProtectedRoute>} />
             <Route path="/erp/subscriptions" element={<ProtectedRoute><ERPMySubscriptions /></ProtectedRoute>} />
+            <Route path="/erp/track" element={<ProtectedRoute><ERPLiveTracking /></ProtectedRoute>} />
             <Route path="/erp/track/:orderId" element={<ProtectedRoute><ERPOrderTracking /></ProtectedRoute>} />
 
             {/* Admin Portal Routes */}
