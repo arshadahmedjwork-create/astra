@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
+import { useSearchParams } from 'react-router-dom';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -10,10 +11,14 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 const AdminOrders = () => {
+    const [searchParams] = useSearchParams();
+    const initialDate = searchParams.get('date') || new Date().toISOString().split('T')[0];
+    const initialId = searchParams.get('id') || '';
+
     const [orders, setOrders] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
-    const [selectedDate, setSelectedDate] = useState<string>(new Date().toISOString().split('T')[0]);
-    const [searchQuery, setSearchQuery] = useState('');
+    const [selectedDate, setSelectedDate] = useState<string>(initialDate);
+    const [searchQuery, setSearchQuery] = useState(initialId);
     const [drivers, setDrivers] = useState<any[]>([]);
     const [isAssignModalOpen, setIsAssignModalOpen] = useState(false);
     const [orderToAssign, setOrderToAssign] = useState<any>(null);

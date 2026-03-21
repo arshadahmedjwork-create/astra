@@ -4,6 +4,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Search, Loader2, Package, Calendar, Clock, CheckCircle2, XCircle, ChevronRight, Filter, Eye, Truck, Users, ChefHat } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
@@ -260,9 +261,11 @@ const AdminAllOrders = () => {
                                                         <Truck className="w-4 h-4" />
                                                     </Button>
                                                 )}
-                                                <Button variant="ghost" size="icon" className="h-8 w-8 text-primary hover:bg-primary/10" onClick={() => setSelectedOrder(order)}>
-                                                    <Eye className="w-4 h-4" />
-                                                </Button>
+                                                <Link to={`/admin/orders?date=${order.delivery_date}&id=${order.id}`}>
+                                                    <Button variant="ghost" size="icon" className="h-8 w-8 text-primary hover:bg-primary/10">
+                                                        <Eye className="w-4 h-4" />
+                                                    </Button>
+                                                </Link>
                                             </div>
                                         </td>
                                     </tr>
@@ -274,7 +277,7 @@ const AdminAllOrders = () => {
             </Card>
 
             <Dialog open={!!selectedOrder} onOpenChange={(open) => !open && setSelectedOrder(null)}>
-                <DialogContent className="sm:max-w-[500px]">
+                <DialogContent className="sm:max-w-[500px]" aria-describedby={undefined}>
                     <DialogHeader>
                         <DialogTitle>Order Details - #{selectedOrder?.id.slice(0, 8)}</DialogTitle>
                     </DialogHeader>
@@ -345,7 +348,7 @@ const AdminAllOrders = () => {
 
             {/* Assign Driver Dialog */}
             <Dialog open={isAssignModalOpen} onOpenChange={setIsAssignModalOpen}>
-                <DialogContent>
+                <DialogContent aria-describedby={undefined}>
                     <DialogHeader>
                         <DialogTitle>Assign Driver to Order</DialogTitle>
                     </DialogHeader>
@@ -378,7 +381,7 @@ const AdminAllOrders = () => {
 
             {/* Quick Add Driver Dialog */}
             <Dialog open={isAddDriverOpen} onOpenChange={setIsAddDriverOpen}>
-                <DialogContent className="sm:max-w-[400px]">
+                <DialogContent className="sm:max-w-[400px]" aria-describedby={undefined}>
                     <DialogHeader>
                         <DialogTitle>Add New Delivery Partner</DialogTitle>
                     </DialogHeader>
