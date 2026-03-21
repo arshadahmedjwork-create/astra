@@ -1,21 +1,56 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, TouchableOpacity, ScrollView, SafeAreaView, ActivityIndicator, Alert, Linking } from 'react-native';
 import { supabase } from '../lib/supabase';
-import { Package, Navigation, CheckCircle, MapPin, List, LogOut } from 'lucide-react-native';
+import { Package, Navigation, CheckCircle, MapPin, List, LogOut, ShieldAlert } from 'lucide-react-native';
 import * as Location from 'expo-location';
 import { startBackgroundLocation, stopBackgroundLocation } from '../backgroundLocation';
+import { useAuthStore } from '../stores/authStore';
 
 export default function DriverMode({ navigation }: any) {
     const [orders, setOrders] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [tracking, setTracking] = useState(false);
     const [driverId, setDriverId] = useState<string | null>(null);
+    const { customer } = useAuthStore();
+    const [isAuthorized, setIsAuthorized] = useState<boolean | null>(null);
+
+    const identifyDriver = async () => {
+        if (!customer?.mobile) {
+            setIsAuthorized(false);
+            setLoading(false);
+            return;
+        }
+
+        try {
+            const phone = customer.mobile;
+            const phoneRaw = phone.startsWith('+91') ? phone.slice(3) : phone;
+            const phoneFormatted = phone.startsWith('+91') ? phone : `+91${phone}`;
+
+            const { data, error } = await supabase
+                .from('drivers')
+                .select('id')
+                .or(`phone.eq.${phone},phone.eq.${phoneRaw},phone.eq.${phoneFormatted}`)
+                .single();
+
+            if (data) {
+                setDriverId(data.id);
+                setIsAuthorized(true);
+            } else {
+                setIsAuthorized(false);
+                setLoading(false);
+            }
+        } catch (error) {
+            setIsAuthorized(false);
+            setLoading(false);
+        }
+    };
 
     const fetchAssignedOrders = async () => {
-        // For simulation, we'll fetch orders with status 'get_to_deliver'
+        if (!driverId) return;
         const { data, error } = await supabase
             .from('orders')
             .select('*, customers(full_name, mobile, addresses(*))')
+            .eq('driver_id', driverId)
             .eq('status', 'get_to_deliver');
 
         if (data) setOrders(data);
@@ -23,9 +58,13 @@ export default function DriverMode({ navigation }: any) {
     };
 
     useEffect(() => {
-        fetchAssignedOrders();
-        // Mock driver identification (in a real app, this would be from auth)
-        setDriverId('b7a6f23c-4d5e-6f7a-8b9c-0d1e2f3a4b5c'); 
+        if (driverId) {
+            fetchAssignedOrders();
+        }
+    }, [driverId]);
+
+    useEffect(() => {
+        identifyDriver();
     }, []);
 
     const startTracking = async () => {
@@ -36,8 +75,10 @@ export default function DriverMode({ navigation }: any) {
         }
 
         setTracking(true);
-        const started = await startBackgroundLocation(driverId);
-        if (!started) setTracking(false);
+        if (driverId) {
+            const started = await startBackgroundLocation(driverId);
+            if (!started) setTracking(false);
+        }
     };
 
     const stopTracking = async () => {
@@ -65,7 +106,25 @@ export default function DriverMode({ navigation }: any) {
         }
     };
 
-    if (loading) {
+    if (isAuthorized === false) {
+        return (
+            <SafeAreaView className="flex-1 bg-white justify-center items-center px-6">
+                <ShieldAlert color="#b91c1c" size={64} />
+                <Text className="text-2xl font-bold text-gray-900 mt-6 text-center">Access Denied</Text>
+                <Text className="text-gray-500 text-center mt-2 mb-8">
+                    Your account is not registered as a delivery partner. Please contact management to get access.
+                </Text>
+                <TouchableOpacity
+                    onPress={() => navigation.goBack()}
+                    className="bg-[#1B4D3E] px-10 py-4 rounded-full w-full"
+                >
+                    <Text className="text-white font-bold text-center">Back to Dashboard</Text>
+                </TouchableOpacity>
+            </SafeAreaView>
+        );
+    }
+
+    if (loading || isAuthorized === null) {
         return (
             <View className="flex-1 justify-center items-center bg-gray-50">
                 <ActivityIndicator color="#1B4D3E" size="large" />

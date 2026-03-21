@@ -20,6 +20,7 @@ export default function DashboardScreen({ navigation }: any) {
     };
 
     const [nextDelivery, setNextDelivery] = React.useState<any>(null);
+    const [isDriver, setIsDriver] = React.useState(false);
     const [loading, setLoading] = React.useState(true);
 
     const fetchNextDelivery = async () => {
@@ -53,9 +54,29 @@ export default function DashboardScreen({ navigation }: any) {
         }
     };
 
+    const checkDriverStatus = async () => {
+        if (!customer?.mobile) return;
+        try {
+            const phone = customer.mobile;
+            const phoneRaw = phone.startsWith('+91') ? phone.slice(3) : phone;
+            const phoneFormatted = phone.startsWith('+91') ? phone : `+91${phone}`;
+
+            const { data, error } = await supabase
+                .from('drivers')
+                .select('id')
+                .or(`phone.eq.${phone},phone.eq.${phoneRaw},phone.eq.${phoneFormatted}`)
+                .single();
+
+            if (data) setIsDriver(true);
+        } catch (error) {
+            console.log('Error checking driver status:', error);
+        }
+    };
+
     React.useEffect(() => {
         fetchNextDelivery();
-    }, [customer?.id]);
+        checkDriverStatus();
+    }, [customer?.id, customer?.mobile]);
 
     return (
         <ScrollView className="flex-1 bg-gray-50">
@@ -142,21 +163,23 @@ export default function DashboardScreen({ navigation }: any) {
                 </TouchableOpacity>
             </View>
 
-            {/* Driver Mode Access */}
-            <View className="px-6 mt-6">
-                <TouchableOpacity
-                    onPress={() => navigation.navigate('Driver')}
-                    className="bg-[#1B4D3E]/5 p-5 rounded-3xl border border-[#1B4D3E]/10 flex-row items-center"
-                >
-                    <View className="w-12 h-12 bg-[#1B4D3E] rounded-full items-center justify-center mr-4">
-                        <Navigation color="white" size={24} />
-                    </View>
-                    <View className="flex-1">
-                        <Text className="font-bold text-[#1B4D3E] text-lg">Driver Mode</Text>
-                        <Text className="text-[#1B4D3E]/60 text-xs mt-0.5">Manage and deliver assigned orders</Text>
-                    </View>
-                </TouchableOpacity>
-            </View>
+            {/* Driver Mode Access - Only for registered drivers */}
+            {isDriver && (
+                <View className="px-6 mt-6">
+                    <TouchableOpacity
+                        onPress={() => navigation.navigate('Driver')}
+                        className="bg-[#1B4D3E]/5 p-5 rounded-3xl border border-[#1B4D3E]/10 flex-row items-center"
+                    >
+                        <View className="w-12 h-12 bg-[#1B4D3E] rounded-full items-center justify-center mr-4">
+                            <Navigation color="white" size={24} />
+                        </View>
+                        <View className="flex-1">
+                            <Text className="font-bold text-[#1B4D3E] text-lg">Driver Mode</Text>
+                            <Text className="text-[#1B4D3E]/60 text-xs mt-0.5">Manage and deliver assigned orders</Text>
+                        </View>
+                    </TouchableOpacity>
+                </View>
+            )}
 
             {/* Next Delivery Section */}
             <View className="px-6 mt-8 mb-8">
