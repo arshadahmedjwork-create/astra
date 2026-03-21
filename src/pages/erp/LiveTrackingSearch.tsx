@@ -126,15 +126,15 @@ const LiveTrackingSearch = () => {
                                                 </div>
                                                 <div>
                                                     <div className="flex items-center gap-2">
-                                                        <span className="font-mono text-xs font-bold text-muted-foreground uppercase">{order.id.slice(0, 8)}</span>
-                                                        <Badge variant={order.status === 'get_to_deliver' ? 'default' : 'secondary'} className="text-[10px] py-0">
-                                                            {order.status.replace(/_/g, ' ')}
+                                                        <span className="font-mono text-xs font-bold text-muted-foreground uppercase">{order?.id?.toString().slice(0, 8)}</span>
+                                                        <Badge variant={order?.status === 'get_to_deliver' ? 'default' : 'secondary'} className="text-[10px] py-0">
+                                                            {order?.status?.replace(/_/g, ' ') || 'Order'}
                                                         </Badge>
                                                     </div>
-                                                    <p className="font-bold text-foreground mt-0.5">₹{order.total_amount}</p>
+                                                    <p className="font-bold text-foreground mt-0.5">₹{order?.total_amount}</p>
                                                     <div className="flex items-center gap-1.5 text-xs text-muted-foreground mt-1">
                                                         <MapPin className="w-3 h-3" />
-                                                        <span>Scheduled for {new Date(order.delivery_date).toLocaleDateString()}</span>
+                                                        <span>Scheduled for {order?.delivery_date ? new Date(order.delivery_date).toLocaleDateString() : 'TBD'}</span>
                                                     </div>
                                                 </div>
                                             </div>

@@ -33,7 +33,7 @@ export default function TrackingScreen({ route, navigation }: any) {
                     longitude: addr.lng || 80.2707,
                 });
             }
-            if (data.drivers) {
+            if (data.drivers && data.drivers.current_lat && data.drivers.current_lng) {
                 setDriverLocation({
                     latitude: data.drivers.current_lat,
                     longitude: data.drivers.current_lng,
@@ -55,10 +55,12 @@ export default function TrackingScreen({ route, navigation }: any) {
                 table: 'drivers',
                 filter: order?.driver_id ? `id=eq.${order.driver_id}` : undefined,
             }, (payload) => {
-                setDriverLocation({
-                    latitude: payload.new.current_lat,
-                    longitude: payload.new.current_lng,
-                });
+                if (payload.new.current_lat && payload.new.current_lng) {
+                    setDriverLocation({
+                        latitude: payload.new.current_lat,
+                        longitude: payload.new.current_lng,
+                    });
+                }
             })
             .subscribe();
 
@@ -122,7 +124,7 @@ export default function TrackingScreen({ route, navigation }: any) {
                         <ChevronLeft color="#1B4D3E" size={24} />
                     </TouchableOpacity>
                     <View className="ml-4 bg-white/90 px-4 py-2 rounded-full shadow-lg">
-                        <Text className="text-[#1B4D3E] font-bold">Track Order #{orderId.slice(0, 8).toUpperCase()}</Text>
+                        <Text className="text-[#1B4D3E] font-bold">Track Order #{orderId?.toString().slice(0, 8).toUpperCase() || 'N/A'}</Text>
                     </View>
                 </View>
             </SafeAreaView>

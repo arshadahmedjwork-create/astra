@@ -27,12 +27,17 @@ const OrderTracking = () => {
     useEffect(() => {
         if (orderId) {
             fetchOrderDetails();
+        }
+    }, [orderId]);
+
+    useEffect(() => {
+        if (order?.driver_id) {
             const subscription = subscribeToDriverUpdates();
             return () => {
                 supabase.removeChannel(subscription);
             };
         }
-    }, [orderId]);
+    }, [order?.driver_id]);
 
     const fetchOrderDetails = async () => {
         try {
@@ -133,7 +138,7 @@ const OrderTracking = () => {
                             </div>
                             <div className="text-right">
                                 <p className="text-sm text-muted-foreground">Order ID</p>
-                                <p className="font-mono text-xs font-bold">{order.id.slice(0, 8)}</p>
+                                <p className="font-mono text-xs font-bold">{order?.id?.toString().slice(0, 8) || 'N/A'}</p>
                             </div>
                         </div>
 
@@ -171,9 +176,9 @@ const OrderTracking = () => {
                                 <Package className="w-4 h-4" /> Order Items
                             </h3>
                             <div className="space-y-3">
-                                {order.order_items.map((item: any) => (
+                                {order?.order_items?.map((item: any) => (
                                     <div key={item.id} className="flex justify-between text-sm">
-                                        <span className="text-muted-foreground">{item.quantity}x {item.products?.name}</span>
+                                        <span className="text-muted-foreground">{item.quantity}x {item.products?.name || 'Product'}</span>
                                         <span className="font-medium text-foreground">₹{item.total_price}</span>
                                     </div>
                                 ))}
