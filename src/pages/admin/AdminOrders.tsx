@@ -5,18 +5,30 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import { Calendar as CalendarIcon, MapPin, Truck, CheckCircle2, Search, Loader2 } from 'lucide-react';
+import { Calendar as CalendarIcon, MapPin, Truck, CheckCircle2, Search, Loader2, User } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 const AdminOrders = () => {
     const [orders, setOrders] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [selectedDate, setSelectedDate] = useState<string>(new Date().toISOString().split('T')[0]);
     const [searchQuery, setSearchQuery] = useState('');
+    const [drivers, setDrivers] = useState<any[]>([]);
+    const [isAssignModalOpen, setIsAssignModalOpen] = useState(false);
+    const [orderToAssign, setOrderToAssign] = useState<any>(null);
+    const [selectedDriverId, setSelectedDriverId] = useState<string>('');
     const { toast } = useToast();
 
     useEffect(() => {
         fetchOrders();
-    }, [selectedDate]); // Re-fetch when date changes
+        fetchDrivers();
+    }, [selectedDate]);
+
+    const fetchDrivers = async () => {
+        const { data } = await supabase.from('drivers').select('*').eq('status', 'active');
+        if (data) setDrivers(data);
+    };
 
     const fetchOrders = async () => {
         setLoading(true);
@@ -29,6 +41,8 @@ const AdminOrders = () => {
                     delivery_date,
                     status,
                     total_amount,
+                    driver_id,
+                    drivers (full_name),
                     customers ( id, customer_id, full_name, mobile ),
                     subscriptions ( quantity, product_id ),
                     addresses:customers(id)
@@ -111,9 +125,16 @@ const AdminOrders = () => {
 
     const handleUpdateStatus = async (orderId: string, newStatus: string) => {
         try {
+            const updateData: any = { status: newStatus };
+            if (newStatus === 'get_to_deliver') {
+                updateData.tracking_active = true;
+            } else if (newStatus === 'delivered' || newStatus === 'cancelled') {
+                updateData.tracking_active = false;
+            }
+
             const { error } = await supabase
                 .from('orders')
-                .update({ status: newStatus })
+                .update(updateData)
                 .eq('id', orderId);
 
             if (error) throw error;
@@ -129,6 +150,31 @@ const AdminOrders = () => {
             fetchOrders(); // Refresh
         } catch (error: any) {
             toast({ title: 'Error', description: 'Failed to update order status.', variant: 'destructive' });
+        }
+    };
+
+    const handleAssignDriver = async () => {
+        if (!orderToAssign || !selectedDriverId) return;
+        try {
+            const { error } = await supabase
+                .from('orders')
+                .update({ 
+                    driver_id: selectedDriverId,
+                    status: 'get_to_deliver',
+                    tracking_active: true
+                })
+                .eq('id', orderToAssign.id);
+
+            if (error) throw error;
+            
+            // Mark driver as busy (optional)
+            // await supabase.from('drivers').update({ status: 'busy' }).eq('id', selectedDriverId);
+
+            toast({ title: 'Success', description: 'Driver assigned and tracking activated.' });
+            setIsAssignModalOpen(false);
+            fetchOrders();
+        } catch (error: any) {
+            toast({ title: 'Error', description: 'Failed to assign driver.', variant: 'destructive' });
         }
     };
 
@@ -239,6 +285,20 @@ const AdminOrders = () => {
                                         </td>
                                         <td className="px-4 py-3">
                                             <div className="flex items-center justify-end gap-2">
+                                                {order.status === 'pending' && (
+                                                    <Button
+                                                        size="sm"
+                                                        variant="outline"
+                                                        className="h-8 border-primary text-primary hover:bg-primary/10"
+                                                        onClick={() => {
+                                                            setOrderToAssign(order);
+                                                            setIsAssignModalOpen(true);
+                                                        }}
+                                                    >
+                                                        <Truck className="w-3.5 h-3.5 mr-1.5" />
+                                                        Assign Driver
+                                                    </Button>
+                                                )}
                                                 {order.status !== 'delivered' && (
                                                     <Button
                                                         size="sm"
@@ -260,6 +320,11 @@ const AdminOrders = () => {
                                                     </Button>
                                                 )}
                                             </div>
+                                            {order.drivers?.full_name && (
+                                                <div className="text-[10px] text-right mt-1 text-muted-foreground">
+                                                    Driver: <span className="font-bold text-primary">{order.drivers.full_name}</span>
+                                                </div>
+                                            )}
                                         </td>
                                     </tr>
                                 ))
@@ -268,6 +333,38 @@ const AdminOrders = () => {
                     </table>
                 </div>
             </Card>
+
+            <Dialog open={isAssignModalOpen} onOpenChange={setIsAssignModalOpen}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Assign Driver to Order</DialogTitle>
+                    </DialogHeader>
+                    <div className="py-4 space-y-4">
+                        <div className="space-y-2">
+                            <Label>Select Available Driver</Label>
+                            <Select onValueChange={setSelectedDriverId} value={selectedDriverId}>
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Choose a driver..." />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {drivers.map((driver) => (
+                                        <SelectItem key={driver.id} value={driver.id}>
+                                            {driver.full_name} ({driver.vehicle_no})
+                                        </SelectItem>
+                                    ))}
+                                    {drivers.length === 0 && (
+                                        <SelectItem value="none" disabled>No active drivers available</SelectItem>
+                                    )}
+                                </SelectContent>
+                            </Select>
+                        </div>
+                    </div>
+                    <DialogFooter>
+                        <Button variant="outline" onClick={() => setIsAssignModalOpen(false)}>Cancel</Button>
+                        <Button onClick={handleAssignDriver} disabled={!selectedDriverId}>Assign & Start Tracking</Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </div>
     );
 };
