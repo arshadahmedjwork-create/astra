@@ -3,7 +3,7 @@ import { supabase } from '@/lib/supabase';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Search, Loader2, Package, Calendar, Clock, CheckCircle2, XCircle, ChevronRight, Filter, Eye, Truck, Users, ChefHat } from 'lucide-react';
+import { Search, Loader2, Package, Calendar, Clock, CheckCircle2, XCircle, ChevronRight, Filter, Eye, Truck, Users, ChefHat, Navigation } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -328,6 +328,13 @@ const AdminAllOrders = () => {
                                         <Button size="sm" className="forest-gradient" onClick={() => setIsAssignModalOpen(true)}>
                                             <Truck className="w-3.5 h-3.5 mr-2" /> Assign Driver
                                         </Button>
+                                    )}
+                                    {selectedOrder.status === 'get_to_deliver' && (
+                                        <Link to={`/erp/track/${selectedOrder.id}`} target="_blank">
+                                            <Button size="sm" className="bg-blue-600 hover:bg-blue-700 text-white">
+                                                <Navigation className="w-3.5 h-3.5 mr-2" /> Track Live
+                                            </Button>
+                                        </Link>
                                     )}
                                     {selectedOrder.status === 'pending' && (
                                         <Button size="sm" variant="outline" onClick={() => handleUpdateStatus(selectedOrder.id, 'preparing')}>

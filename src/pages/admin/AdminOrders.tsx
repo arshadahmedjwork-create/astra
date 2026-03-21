@@ -6,7 +6,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import { Calendar as CalendarIcon, MapPin, Truck, CheckCircle2, Search, Loader2, User, ChefHat } from 'lucide-react';
+import { Calendar as CalendarIcon, MapPin, Truck, CheckCircle2, Search, Loader2, User, ChefHat, Navigation } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
@@ -351,6 +352,18 @@ const AdminOrders = () => {
                                                         <CheckCircle2 className="w-3.5 h-3.5 mr-1.5" />
                                                         Mark Delivered
                                                     </Button>
+                                                )}
+                                                {order.status === 'get_to_deliver' && (
+                                                    <Link to={`/erp/track/${order.id}`} target="_blank">
+                                                        <Button
+                                                            size="sm"
+                                                            variant="ghost"
+                                                            className="h-8 text-blue-600 hover:bg-blue-50"
+                                                        >
+                                                            <Navigation className="w-3.5 h-3.5 mr-1.5" />
+                                                            Track
+                                                        </Button>
+                                                    </Link>
                                                 )}
                                                 {order.status === 'delivered' && (
                                                     <Button
