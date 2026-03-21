@@ -27,7 +27,7 @@ export default function DashboardScreen({ navigation }: any) {
     const fetchNextDelivery = async () => {
         if (!customer?.id) return;
         try {
-            const { data, error } = await supabase
+            const { data } = await supabase
                 .from('subscriptions')
                 .select('*, products(*)')
                 .eq('customer_id', customer.id)
@@ -36,7 +36,6 @@ export default function DashboardScreen({ navigation }: any) {
                 .single();
 
             if (data) {
-                // Calculate next delivery (simple logic: tomorrow morning 5 AM if exists)
                 const now = new Date();
                 const tomorrow = new Date(now);
                 tomorrow.setDate(now.getDate() + 1);
@@ -48,10 +47,8 @@ export default function DashboardScreen({ navigation }: any) {
                     date: tomorrow.toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'short' })
                 });
             }
-            }
 
-            // Also check for active orders out for delivery
-            const { data: activeData } = await supabase
+            const { data: activeOrderData } = await supabase
                 .from('orders')
                 .select('*')
                 .eq('customer_id', customer.id)
@@ -59,7 +56,7 @@ export default function DashboardScreen({ navigation }: any) {
                 .limit(1)
                 .single();
             
-            if (activeData) setActiveOrder(activeData);
+            if (activeOrderData) setActiveOrder(activeOrderData);
         } catch (error) {
             console.log('Error fetching delivery:', error);
         } finally {
