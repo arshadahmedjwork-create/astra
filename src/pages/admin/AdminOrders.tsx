@@ -18,6 +18,8 @@ const AdminOrders = () => {
     const [isAssignModalOpen, setIsAssignModalOpen] = useState(false);
     const [orderToAssign, setOrderToAssign] = useState<any>(null);
     const [selectedDriverId, setSelectedDriverId] = useState<string>('');
+    const [isAddingNewDriver, setIsAddingNewDriver] = useState(false);
+    const [newDriverData, setNewDriverData] = useState({ full_name: '', phone: '', vehicle_no: '' });
     const { toast } = useToast();
 
     useEffect(() => {
@@ -352,28 +354,79 @@ const AdminOrders = () => {
                         <DialogTitle>Assign Driver to Order</DialogTitle>
                     </DialogHeader>
                     <div className="py-4 space-y-4">
-                        <div className="space-y-2">
-                            <Label>Select Available Driver</Label>
-                            <Select onValueChange={setSelectedDriverId} value={selectedDriverId}>
-                                <SelectTrigger>
-                                    <SelectValue placeholder="Choose a driver..." />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {drivers.map((driver) => (
-                                        <SelectItem key={driver.id} value={driver.id}>
-                                            {driver.full_name} ({driver.vehicle_no})
-                                        </SelectItem>
-                                    ))}
-                                    {drivers.length === 0 && (
-                                        <SelectItem value="none" disabled>No active drivers available</SelectItem>
-                                    )}
-                                </SelectContent>
-                            </Select>
-                        </div>
+                        {!isAddingNewDriver ? (
+                            <div className="space-y-4">
+                                <div className="space-y-2">
+                                    <Label>Select Available Driver</Label>
+                                    <Select onValueChange={setSelectedDriverId} value={selectedDriverId}>
+                                        <SelectTrigger>
+                                            <SelectValue placeholder="Choose a driver..." />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            {drivers.map((driver) => (
+                                                <SelectItem key={driver.id} value={driver.id}>
+                                                    {driver.full_name} ({driver.vehicle_no})
+                                                </SelectItem>
+                                            ))}
+                                            {drivers.length === 0 && (
+                                                <SelectItem value="none" disabled>No active drivers available</SelectItem>
+                                            )}
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+                                <Button 
+                                    variant="link" 
+                                    className="p-0 h-auto text-xs text-primary" 
+                                    onClick={() => setIsAddingNewDriver(true)}
+                                >
+                                    + Add New Delivery Partner
+                                </Button>
+                            </div>
+                        ) : (
+                            <div className="space-y-4 border p-3 rounded-lg bg-secondary/10">
+                                <h4 className="text-sm font-bold">New Delivery Partner</h4>
+                                <div className="grid gap-2">
+                                    <Label htmlFor="q-name">Name</Label>
+                                    <Input 
+                                        id="q-name" 
+                                        size="sm" 
+                                        placeholder="Full Name" 
+                                        value={newDriverData.full_name}
+                                        onChange={(e) => setNewDriverData({...newDriverData, full_name: e.target.value})}
+                                    />
+                                </div>
+                                <div className="grid gap-2">
+                                    <Label htmlFor="q-phone">Phone</Label>
+                                    <Input 
+                                        id="q-phone" 
+                                        size="sm" 
+                                        placeholder="Phone Number" 
+                                        value={newDriverData.phone}
+                                        onChange={(e) => setNewDriverData({...newDriverData, phone: e.target.value})}
+                                    />
+                                </div>
+                                <div className="grid gap-2">
+                                    <Label htmlFor="q-vehicle">Vehicle No</Label>
+                                    <Input 
+                                        id="q-vehicle" 
+                                        size="sm" 
+                                        placeholder="TN-01-AB-1234" 
+                                        value={newDriverData.vehicle_no}
+                                        onChange={(e) => setNewDriverData({...newDriverData, vehicle_no: e.target.value})}
+                                    />
+                                </div>
+                                <div className="flex gap-2 justify-end">
+                                    <Button variant="ghost" size="sm" onClick={() => setIsAddingNewDriver(false)}>Cancel</Button>
+                                    <Button size="sm" onClick={handleQuickAddDriver}>Add Driver</Button>
+                                </div>
+                            </div>
+                        )}
                     </div>
                     <DialogFooter>
-                        <Button variant="outline" onClick={() => setIsAssignModalOpen(false)}>Cancel</Button>
-                        <Button onClick={handleAssignDriver} disabled={!selectedDriverId}>Assign & Start Tracking</Button>
+                        <Button variant="outline" onClick={() => setIsAssignModalOpen(false)}>Close</Button>
+                        {!isAddingNewDriver && (
+                            <Button onClick={handleAssignDriver} disabled={!selectedDriverId}>Assign & Start Tracking</Button>
+                        )}
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
