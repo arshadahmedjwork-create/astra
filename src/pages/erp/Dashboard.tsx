@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { MapPin, Calendar, Truck, Pause, CheckCircle2, Package, CreditCard, Bell } from 'lucide-react';
+import { MapPin, Calendar, Truck, Pause, CheckCircle2, Package, CreditCard, Bell, Navigation } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { DayPicker } from 'react-day-picker';
 import ERPLayout from '@/components/erp/ERPLayout';
 import { useAuthStore } from '@/stores/authStore';
@@ -28,6 +29,7 @@ const Dashboard = () => {
     const [deliveryDates, setDeliveryDates] = useState<Date[]>([]);
     const [pausedDates, setPausedDates] = useState<Date[]>([]);
     const [deliveredDates, setDeliveredDates] = useState<Date[]>([]);
+    const [activeOrders, setActiveOrders] = useState<any[]>([]);
 
     useEffect(() => {
         if (!customer?.id) return;
@@ -47,6 +49,7 @@ const Dashboard = () => {
                 setDeliveryDates(data.filter(o => o.status === 'pending' || o.status === 'get_to_deliver').map(o => new Date(o.delivery_date)));
                 setPausedDates(data.filter(o => o.status === 'paused').map(o => new Date(o.delivery_date)));
                 setDeliveredDates(data.filter(o => o.status === 'delivered').map(o => new Date(o.delivery_date)));
+                setActiveOrders(data.filter(o => o.status === 'get_to_deliver'));
             }
         };
         fetchOrders();
@@ -84,6 +87,35 @@ const Dashboard = () => {
                         </div>
                     </div>
                 </motion.div>
+
+                {/* Active Deliveries Section */}
+                {activeOrders.length > 0 && (
+                    <div className="grid grid-cols-1 gap-4">
+                        {activeOrders.map(order => (
+                            <motion.div
+                                key={order.id}
+                                initial={{ opacity: 0, scale: 0.95 }}
+                                animate={{ opacity: 1, scale: 1 }}
+                                className="bg-primary/5 border border-primary/20 rounded-2xl p-4 flex flex-col md:flex-row items-center justify-between gap-4"
+                            >
+                                <div className="flex items-center gap-4">
+                                    <div className="w-12 h-12 bg-primary rounded-xl flex items-center justify-center animate-pulse">
+                                        <Truck className="w-6 h-6 text-white" />
+                                    </div>
+                                    <div>
+                                        <h3 className="font-bold text-foreground">Order Out for Delivery!</h3>
+                                        <p className="text-sm text-muted-foreground">Your delivery partner is on the way with your order.</p>
+                                    </div>
+                                </div>
+                                <Link to={`/erp/track/${order.id}`}>
+                                    <button className="forest-gradient text-white px-6 py-2.5 rounded-full font-bold flex items-center gap-2 shadow-lg shadow-primary/20 hover:scale-105 transition-transform">
+                                        <Navigation className="w-4 h-4" /> Track Live Location
+                                    </button>
+                                </Link>
+                            </motion.div>
+                        ))}
+                    </div>
+                )}
 
                 {/* Stats Cards */}
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">

@@ -20,6 +20,7 @@ export default function DashboardScreen({ navigation }: any) {
     };
 
     const [nextDelivery, setNextDelivery] = React.useState<any>(null);
+    const [activeOrder, setActiveOrder] = React.useState<any>(null);
     const [isDriver, setIsDriver] = React.useState(false);
     const [loading, setLoading] = React.useState(true);
 
@@ -47,6 +48,18 @@ export default function DashboardScreen({ navigation }: any) {
                     date: tomorrow.toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'short' })
                 });
             }
+            }
+
+            // Also check for active orders out for delivery
+            const { data: activeData } = await supabase
+                .from('orders')
+                .select('*')
+                .eq('customer_id', customer.id)
+                .eq('status', 'get_to_deliver')
+                .limit(1)
+                .single();
+            
+            if (activeData) setActiveOrder(activeData);
         } catch (error) {
             console.log('Error fetching delivery:', error);
         } finally {
@@ -176,6 +189,28 @@ export default function DashboardScreen({ navigation }: any) {
                         <View className="flex-1">
                             <Text className="font-bold text-[#1B4D3E] text-lg">Driver Mode</Text>
                             <Text className="text-[#1B4D3E]/60 text-xs mt-0.5">Manage and deliver assigned orders</Text>
+                        </View>
+                    </TouchableOpacity>
+                </View>
+            )}
+
+            {/* Active Delivery Tracking */}
+            {activeOrder && (
+                <View className="px-6 mt-6">
+                    <TouchableOpacity
+                        onPress={() => navigation.navigate('Tracking', { orderId: activeOrder.id })}
+                        className="bg-primary p-6 rounded-[32px] shadow-lg shadow-primary/30 flex-row items-center overflow-hidden"
+                    >
+                        <View className="w-14 h-14 bg-white/20 rounded-2xl items-center justify-center mr-4">
+                            <Navigation color="white" size={32} />
+                        </View>
+                        <View className="flex-1">
+                            <Text className="text-white/80 text-xs font-bold uppercase tracking-widest">Out for Delivery</Text>
+                            <Text className="text-white font-black text-xl">Track Live Order</Text>
+                            <Text className="text-white/70 text-xs mt-1">Partner is on the way!</Text>
+                        </View>
+                        <View className="bg-white p-3 rounded-full">
+                            <Navigation color="#1B4D3E" size={20} />
                         </View>
                     </TouchableOpacity>
                 </View>
