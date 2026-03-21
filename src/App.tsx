@@ -48,6 +48,7 @@ const AdminSubscriptions = lazy(() => import("./pages/admin/AdminSubscriptions")
 const AdminSamples = lazy(() => import("./pages/admin/AdminSamples"));
 const AdminPayments = lazy(() => import("./pages/admin/AdminPayments"));
 const AdminDrivers = lazy(() => import("./pages/admin/AdminDrivers"));
+const AdminAllOrders = lazy(() => import("./pages/admin/AdminAllOrders"));
 
 const queryClient = new QueryClient();
 
@@ -107,6 +108,7 @@ const App = () => (
                 <Route path="samples" element={<AdminSamples />} />
                 <Route path="payments" element={<AdminPayments />} />
                 <Route path="drivers" element={<AdminDrivers />} />
+                <Route path="all-orders" element={<AdminAllOrders />} />
               </Route>
             </Route>
 

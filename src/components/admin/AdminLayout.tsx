@@ -29,7 +29,8 @@ const AdminLayout = () => {
     const navItems = [
         { icon: LayoutDashboard, label: 'Dashboard', path: '/admin/dashboard' },
         { icon: Package, label: 'Inventory', path: '/admin/inventory' },
-        { icon: Truck, label: 'Orders & Deliveries', path: '/admin/orders' },
+        { icon: Truck, label: 'Daily Deliveries', path: '/admin/orders' },
+        { icon: Repeat, label: 'All Orders', path: '/admin/all-orders' },
         { icon: Users, label: 'Drivers', path: '/admin/drivers' },
         { icon: Users, label: 'Customers', path: '/admin/customers' },
         { icon: Repeat, label: 'Subscriptions', path: '/admin/subscriptions' },
