@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { View, Text, TouchableOpacity, ScrollView, ActivityIndicator, Alert, RefreshControl } from 'react-native';
 import { supabase } from '../lib/supabase';
 import { useAuthStore } from '../stores/authStore';
-import { ChevronLeft, Package, Clock, CheckCircle2, XCircle, AlertCircle } from 'lucide-react-native';
+import { ChevronLeft, Package, Clock, CheckCircle2, XCircle, AlertCircle, Navigation } from 'lucide-react-native';
 
 interface OrderItem {
     id: string;
@@ -185,6 +185,16 @@ export default function OrdersScreen({ navigation }: any) {
                                         <Text className="text-[#1B4D3E] font-bold text-lg">₹{order.total_amount}</Text>
                                     </View>
                                 </View>
+
+                                {order.status === 'get_to_deliver' && (
+                                    <TouchableOpacity
+                                        onPress={() => navigation.navigate('Tracking', { orderId: order.id })}
+                                        className="mt-4 bg-[#1B4D3E] py-4 rounded-xl items-center flex-row justify-center shadow-md shadow-[#1B4D3E]/20"
+                                    >
+                                        <Navigation size={18} color="white" />
+                                        <Text className="text-white font-bold ml-2 uppercase">Track Live</Text>
+                                    </TouchableOpacity>
+                                )}
 
                                 {isCancellable(order) && (
                                     <TouchableOpacity

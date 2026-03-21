@@ -2,7 +2,7 @@ import React from 'react';
 import { View, Text, TouchableOpacity, ScrollView, Alert, ActivityIndicator } from 'react-native';
 import { useAuthStore } from '../stores/authStore';
 import { supabase } from '../lib/supabase';
-import { LogOut, Package, Repeat, User, ShoppingCart } from 'lucide-react-native';
+import { LogOut, Package, Repeat, User, ShoppingCart, Navigation } from 'lucide-react-native';
 import { useCartStore } from '../stores/cartStore';
 
 export default function DashboardScreen({ navigation }: any) {
@@ -139,12 +139,21 @@ export default function DashboardScreen({ navigation }: any) {
                     onPress={() => navigation.navigate('Profile')}
                     className="bg-white p-5 rounded-3xl shadow-sm border border-gray-100 flex-row items-center"
                 >
-                    <View className="w-12 h-12 bg-[#D4AF37]/10 rounded-full items-center justify-center mr-4">
-                        <User color="#D4AF37" size={24} />
+                </TouchableOpacity>
+            </View>
+
+            {/* Driver Mode Access */}
+            <View className="px-6 mt-6">
+                <TouchableOpacity
+                    onPress={() => navigation.navigate('Driver')}
+                    className="bg-[#1B4D3E]/5 p-5 rounded-3xl border border-[#1B4D3E]/10 flex-row items-center"
+                >
+                    <View className="w-12 h-12 bg-[#1B4D3E] rounded-full items-center justify-center mr-4">
+                        <Navigation color="white" size={24} />
                     </View>
                     <View className="flex-1">
-                        <Text className="font-bold text-gray-900 text-lg">My Profile</Text>
-                        <Text className="text-gray-500 text-xs mt-0.5">Manage address and details</Text>
+                        <Text className="font-bold text-[#1B4D3E] text-lg">Driver Mode</Text>
+                        <Text className="text-[#1B4D3E]/60 text-xs mt-0.5">Manage and deliver assigned orders</Text>
                     </View>
                 </TouchableOpacity>
             </View>

@@ -30,14 +30,28 @@ export default function ProfileScreen({ navigation }: any) {
     const getCurrentLocation = async () => {
         setFetchingLocation(true);
         try {
-            let { status } = await Location.requestForegroundPermissionsAsync();
-            if (status !== 'granted') {
-                Alert.alert('Permission Denied', 'Permission to access location was denied');
+            const { status: existingStatus } = await Location.getForegroundPermissionsAsync();
+            let finalStatus = existingStatus;
+
+            if (existingStatus !== 'granted') {
+                const { status } = await Location.requestForegroundPermissionsAsync();
+                finalStatus = status;
+            }
+
+            if (finalStatus !== 'granted') {
+                Alert.alert('Permission Denied', 'Please enable location permissions in your settings to use this feature.');
+                return;
+            }
+
+            // Check if location services are enabled
+            const enabled = await Location.hasServicesEnabledAsync();
+            if (!enabled) {
+                Alert.alert('Location Disabled', 'Please enable GPS/Location services on your device.');
                 return;
             }
 
             let loc = await Location.getCurrentPositionAsync({
-                accuracy: Location.Accuracy.Balanced,
+                accuracy: Location.Accuracy.High,
             });
 
             const newCoords = {
@@ -46,17 +60,37 @@ export default function ProfileScreen({ navigation }: any) {
             };
             setLocation(newCoords);
 
-            // Reverse geocode to fill some fields if possible
-            const [address] = await Location.reverseGeocodeAsync(newCoords);
-            if (address) {
-                if (address.name && !doorNo) setDoorNo(address.name);
-                if (address.street && !street) setStreet(address.street);
-                if (address.district && !area) setArea(address.district);
-                if (address.postalCode && !pincode) setPincode(address.postalCode);
-                if (address.subregion && !landmark) setLandmark(address.subregion);
+            // Reverse geocode to fill address components
+            const addresses = await Location.reverseGeocodeAsync(newCoords);
+            if (addresses && addresses.length > 0) {
+                const addr = addresses[0];
+                console.log('Reverse Geocode Result:', addr);
+
+                // Map components more reliably
+                if (addr.name && addr.name !== addr.street) {
+                    setDoorNo(addr.name);
+                } else if (!doorNo) {
+                    setDoorNo(''); // Clear if it was just a duplicate of street
+                }
+
+                if (addr.street) setStreet(addr.street);
+                
+                // Area can be district, subregion or city depending on density
+                const detectedArea = addr.district || addr.subregion || addr.city || '';
+                if (detectedArea) setArea(detectedArea);
+                
+                if (addr.postalCode) setPincode(addr.postalCode);
+                
+                // Landmark fallback if subregion is distinct
+                if (addr.subregion && addr.subregion !== detectedArea) {
+                    setLandmark(addr.subregion);
+                }
+                
+                Alert.alert('Location Detected', 'Address fields have been updated based on your current position.');
             }
         } catch (error: any) {
-            Alert.alert('Error', 'Failed to get current location: ' + error.message);
+            console.error('Location Error:', error);
+            Alert.alert('Location Error', 'Could not determine your precise location. Please ensure GPS is active and try again.');
         } finally {
             setFetchingLocation(false);
         }
