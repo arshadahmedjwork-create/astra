@@ -62,19 +62,18 @@ export default function LoginScreen() {
             const phoneWithPrefix = `+91${mobile}`;
             const phoneRaw = mobile;
 
-            // Temporary OTP bypass for testing
+            // Temporary OTP bypass for testing (123456)
             if (otp === '123456') {
-                const { data: customerData } = await supabase
-                    .from('customers')
-                    .select('*, address:addresses(*)')
-                    .or(`mobile.eq.${phoneWithPrefix},mobile.eq.${phoneRaw}`)
-                    .single();
+                const [customerRes, driverRes] = await Promise.all([
+                    supabase.from('customers').select('*, address:addresses(*)').or(`mobile.eq.${phoneWithPrefix},mobile.eq.${phoneRaw}`).single(),
+                    supabase.from('drivers').select('*').or(`phone.eq.${phoneWithPrefix},phone.eq.${phoneRaw}`).single()
+                ]);
 
-                if (customerData) {
-                    setAuth({ user: { phone: phoneWithPrefix } }, customerData);
+                if (customerRes.data || driverRes.data) {
+                    setAuth({ user: { phone: phoneWithPrefix } }, customerRes.data || null, driverRes.data || null);
                     return;
                 } else {
-                    Alert.alert('Registration Required', `No account found with number ${mobile}. Please register on the web first.`);
+                    Alert.alert('Access Denied', `No account found with number ${mobile}. Please ensure you are registered.`);
                     setLoading(false);
                     return;
                 }
@@ -88,22 +87,20 @@ export default function LoginScreen() {
 
             if (error) throw error;
             if (data?.session) {
-                // Get customer profile
-                const { data: customerData } = await supabase
-                    .from('customers')
-                    .select('*, address:addresses(*)')
-                    .or(`mobile.eq.${phoneWithPrefix},mobile.eq.${phoneRaw}`)
-                    .single();
+                const [customerRes, driverRes] = await Promise.all([
+                    supabase.from('customers').select('*, address:addresses(*)').or(`mobile.eq.${phoneWithPrefix},mobile.eq.${phoneRaw}`).single(),
+                    supabase.from('drivers').select('*').or(`phone.eq.${phoneWithPrefix},phone.eq.${phoneRaw}`).single()
+                ]);
 
-                if (customerData) {
-                    setAuth(data.session, customerData);
+                if (customerRes.data || driverRes.data) {
+                    setAuth(data.session, customerRes.data || null, driverRes.data || null);
                 } else {
-                    Alert.alert('Registration Required', 'No account found. Use the web portal to register first.');
+                    Alert.alert('Access Denied', 'No profile found. Please register first.');
                     await supabase.auth.signOut();
                 }
             }
         } catch (error: any) {
-            Alert.alert('Error', error.message);
+            Alert.alert('Login Failed', error.message);
         } finally {
             setLoading(false);
         }
@@ -124,7 +121,7 @@ export default function LoginScreen() {
                     <Text className="text-3xl font-bold text-[#1B4D3E]">
                         Astra<Text className="text-[#D4AF37]">Dairy</Text>
                     </Text>
-                    <Text className="text-gray-500 mt-1 font-medium">Customer Portal</Text>
+                    <Text className="text-gray-500 mt-1 font-medium italic">Customer & Driver Portal</Text>
                 </View>
 
                 {step === 'phone' ? (

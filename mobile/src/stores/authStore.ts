@@ -27,10 +27,21 @@ interface Customer {
     };
 }
 
+interface Driver {
+    id: string;
+    full_name: string;
+    phone: string;
+    vehicle_no: string;
+    status: string;
+    current_lat?: number;
+    current_lng?: number;
+}
+
 interface AuthState {
     customer: Customer | null;
+    driver: Driver | null;
     isAuthenticated: boolean;
-    setAuth: (session: any, customer: Customer) => void;
+    setAuth: (session: any, user: Customer | null, driver: Driver | null) => void;
     updateCustomer: (customer: Customer) => void;
     logout: () => Promise<void>;
     checkSession: () => Promise<void>;
@@ -40,26 +51,26 @@ export const useAuthStore = create<AuthState>()(
     persist(
         (set) => ({
             customer: null,
+            driver: null,
             isAuthenticated: false,
-            setAuth: (session, customer) => {
-                // Ensure address is an object, not an array
-                const formattedCustomer = {
+            setAuth: (session, customer, driver) => {
+                const formattedCustomer = customer ? {
                     ...customer,
                     address: Array.isArray(customer.address) ? customer.address[0] : customer.address
-                };
-                set({ customer: formattedCustomer, isAuthenticated: true });
+                } : null;
+                set({ customer: formattedCustomer, driver: driver, isAuthenticated: true });
             },
             updateCustomer: (customer) => {
                 set({ customer });
             },
             logout: async () => {
                 await supabase.auth.signOut();
-                set({ customer: null, isAuthenticated: false });
+                set({ customer: null, driver: null, isAuthenticated: false });
             },
             checkSession: async () => {
                 const { data: { session } } = await supabase.auth.getSession();
                 if (!session) {
-                    set({ customer: null, isAuthenticated: false });
+                    set({ customer: null, driver: null, isAuthenticated: false });
                     return;
                 }
 
@@ -67,24 +78,31 @@ export const useAuthStore = create<AuthState>()(
                     const phone = session.user.phone;
                     const phoneRaw = phone.startsWith('+91') ? phone.slice(3) : phone;
 
-                    const { data: customer } = await supabase
-                        .from('customers')
-                        .select('*, address:addresses(*)')
-                        .or(`mobile.eq.${phone},mobile.eq.${phoneRaw}`)
-                        .single();
+                    // Check both tables
+                    const [customerRes, driverRes] = await Promise.all([
+                        supabase.from('customers').select('*, address:addresses(*)').or(`mobile.eq.${phone},mobile.eq.${phoneRaw}`).single(),
+                        supabase.from('drivers').select('*').or(`phone.eq.${phone},phone.eq.${phoneRaw}`).single()
+                    ]);
 
-                    if (customer) {
-                        // Handle address array
-                        const formattedCustomer = {
-                            ...customer,
-                            address: Array.isArray(customer.address) ? customer.address[0] : customer.address
+                    let formattedCustomer = null;
+                    if (customerRes.data) {
+                        formattedCustomer = {
+                            ...customerRes.data,
+                            address: Array.isArray(customerRes.data.address) ? customerRes.data.address[0] : customerRes.data.address
                         };
-                        set({ customer: formattedCustomer, isAuthenticated: true });
+                    }
+
+                    if (formattedCustomer || driverRes.data) {
+                        set({ 
+                            customer: formattedCustomer, 
+                            driver: driverRes.data || null, 
+                            isAuthenticated: true 
+                        });
                         return;
                     }
                 }
 
-                set({ customer: null, isAuthenticated: false });
+                set({ customer: null, driver: null, isAuthenticated: false });
             }
         }),
         {

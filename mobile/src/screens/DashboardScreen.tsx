@@ -6,7 +6,7 @@ import { LogOut, Package, Repeat, User, ShoppingCart, Navigation } from 'lucide-
 import { useCartStore } from '../stores/cartStore';
 
 export default function DashboardScreen({ navigation }: any) {
-    const { customer, logout } = useAuthStore();
+    const { customer, driver, logout } = useAuthStore();
 
     const handleLogout = async () => {
         Alert.alert('Logout', 'Are you sure you want to sign out?', [
@@ -21,7 +21,6 @@ export default function DashboardScreen({ navigation }: any) {
 
     const [nextDelivery, setNextDelivery] = React.useState<any>(null);
     const [activeOrder, setActiveOrder] = React.useState<any>(null);
-    const [isDriver, setIsDriver] = React.useState(false);
     const [loading, setLoading] = React.useState(true);
 
     const fetchNextDelivery = async () => {
@@ -64,29 +63,9 @@ export default function DashboardScreen({ navigation }: any) {
         }
     };
 
-    const checkDriverStatus = async () => {
-        if (!customer?.mobile) return;
-        try {
-            const phone = customer.mobile;
-            const phoneRaw = phone.startsWith('+91') ? phone.slice(3) : phone;
-            const phoneFormatted = phone.startsWith('+91') ? phone : `+91${phone}`;
-
-            const { data, error } = await supabase
-                .from('drivers')
-                .select('id')
-                .or(`phone.eq.${phone},phone.eq.${phoneRaw},phone.eq.${phoneFormatted}`)
-                .single();
-
-            if (data) setIsDriver(true);
-        } catch (error) {
-            console.log('Error checking driver status:', error);
-        }
-    };
-
     React.useEffect(() => {
         fetchNextDelivery();
-        checkDriverStatus();
-    }, [customer?.id, customer?.mobile]);
+    }, [customer?.id]);
 
     return (
         <ScrollView className="flex-1 bg-gray-50">
@@ -95,7 +74,8 @@ export default function DashboardScreen({ navigation }: any) {
                 <View className="flex-row justify-between items-center">
                     <View>
                         <Text className="text-white/80 text-sm font-medium">Welcome back,</Text>
-                        <Text className="text-white text-2xl font-bold mt-1">{customer?.full_name || 'Customer'}</Text>
+                        <Text className="text-white text-2xl font-bold mt-1">{customer?.full_name || driver?.full_name || 'User'}</Text>
+                        {driver && !customer && <Text className="text-[#D4AF37] text-xs font-bold uppercase mt-1">Delivery Partner</Text>}
                     </View>
                     <View className="flex-row gap-2">
                         <TouchableOpacity
@@ -118,10 +98,17 @@ export default function DashboardScreen({ navigation }: any) {
                     </View>
                 </View>
 
-                <View className="mt-8 bg-white/10 rounded-2xl p-4 border border-white/20">
-                    <Text className="text-white/80 text-sm">Customer ID</Text>
-                    <Text className="text-[#D4AF37] font-mono text-lg font-bold mt-1">{customer?.customer_id}</Text>
-                </View>
+                {customer ? (
+                    <View className="mt-8 bg-white/10 rounded-2xl p-4 border border-white/20">
+                        <Text className="text-white/80 text-sm">Customer ID</Text>
+                        <Text className="text-[#D4AF37] font-mono text-lg font-bold mt-1">{customer?.customer_id}</Text>
+                    </View>
+                ) : driver ? (
+                    <View className="mt-8 bg-white/10 rounded-2xl p-4 border border-white/20">
+                        <Text className="text-white/80 text-sm">Vehicle Number</Text>
+                        <Text className="text-[#D4AF37] font-mono text-lg font-bold mt-1">{driver?.vehicle_no}</Text>
+                    </View>
+                ) : null}
             </View>
 
             {/* Quick Actions */}
@@ -181,7 +168,7 @@ export default function DashboardScreen({ navigation }: any) {
             </View>
 
             {/* Driver Mode Access - Only for registered drivers */}
-            {isDriver && (
+            {driver && (
                 <View className="px-6 mt-6">
                     <TouchableOpacity
                         onPress={() => navigation.navigate('Driver')}
@@ -191,7 +178,7 @@ export default function DashboardScreen({ navigation }: any) {
                             <Navigation color="white" size={24} />
                         </View>
                         <View className="flex-1">
-                            <Text className="font-bold text-[#1B4D3E] text-lg">Driver Mode</Text>
+                            <Text className="font-bold text-[#1B4D3E] text-lg">Driver Dashboard</Text>
                             <Text className="text-[#1B4D3E]/60 text-xs mt-0.5">Manage and deliver assigned orders</Text>
                         </View>
                     </TouchableOpacity>

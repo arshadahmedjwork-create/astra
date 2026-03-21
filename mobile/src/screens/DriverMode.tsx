@@ -10,73 +10,50 @@ export default function DriverMode({ navigation }: any) {
     const [orders, setOrders] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [tracking, setTracking] = useState(false);
-    const [driverId, setDriverId] = useState<string | null>(null);
-    const { customer } = useAuthStore();
-    const [isAuthorized, setIsAuthorized] = useState<boolean | null>(null);
-
-    const identifyDriver = async () => {
-        if (!customer?.mobile) {
-            setIsAuthorized(false);
-            setLoading(false);
-            return;
-        }
-
-        try {
-            const phone = customer.mobile;
-            const phoneRaw = phone.startsWith('+91') ? phone.slice(3) : phone;
-            const phoneFormatted = phone.startsWith('+91') ? phone : `+91${phone}`;
-
-            const { data, error } = await supabase
-                .from('drivers')
-                .select('id')
-                .or(`phone.eq.${phone},phone.eq.${phoneRaw},phone.eq.${phoneFormatted}`)
-                .single();
-
-            if (data) {
-                setDriverId(data.id);
-                setIsAuthorized(true);
-            } else {
-                setIsAuthorized(false);
-                setLoading(false);
-            }
-        } catch (error) {
-            setIsAuthorized(false);
-            setLoading(false);
-        }
-    };
+    const { driver } = useAuthStore();
 
     const fetchAssignedOrders = async () => {
-        if (!driverId) return;
-        const { data, error } = await supabase
+        if (!driver?.id) return;
+        const { data } = await supabase
             .from('orders')
             .select('*, customers(full_name, mobile, addresses(*))')
-            .eq('driver_id', driverId)
-            .eq('status', 'get_to_deliver');
+            .eq('driver_id', driver.id)
+            .in('status', ['preparing', 'get_to_deliver']);
 
         if (data) setOrders(data);
         setLoading(false);
     };
 
     useEffect(() => {
-        if (driverId) {
+        if (driver?.id) {
             fetchAssignedOrders();
+            // Optional: Subscribe to order updates for this driver
+            const channel = supabase
+                .channel(`driver-orders-${driver.id}`)
+                .on('postgres_changes', { 
+                    event: '*', 
+                    schema: 'public', 
+                    table: 'orders',
+                    filter: `driver_id=eq.${driver.id}`
+                }, () => fetchAssignedOrders())
+                .subscribe();
+            
+            return () => {
+                supabase.removeChannel(channel);
+            };
         }
-    }, [driverId]);
-
-    useEffect(() => {
-        identifyDriver();
-    }, []);
+    }, [driver?.id]);
 
     const startTracking = async () => {
         let { status } = await Location.requestForegroundPermissionsAsync();
         if (status !== 'granted') {
-            Alert.alert('Error', 'Location permission is required for driver mode.');
+            Alert.alert('Permission Denied', 'Location permission is required for delivery tracking.');
             return;
         }
 
         setTracking(true);
-        if (driverId) {
-            const started = await startBackgroundLocation(driverId);
+        if (driver?.id) {
+            const started = await startBackgroundLocation(driver.id);
             if (!started) setTracking(false);
         }
     };
@@ -97,7 +74,7 @@ export default function DriverMode({ navigation }: any) {
     const handleDeliver = async (orderId: string) => {
         const { error } = await supabase
             .from('orders')
-            .update({ status: 'delivered' })
+            .update({ status: 'delivered', tracking_active: false })
             .eq('id', orderId);
 
         if (!error) {
@@ -106,25 +83,37 @@ export default function DriverMode({ navigation }: any) {
         }
     };
 
-    if (isAuthorized === false) {
+    const handleStartDelivery = async (orderId: string) => {
+        const { error } = await supabase
+            .from('orders')
+            .update({ status: 'get_to_deliver', tracking_active: true })
+            .eq('id', orderId);
+
+        if (!error) {
+            Alert.alert('Delivery Started', 'You are now out for delivery. Tracking is active!');
+            fetchAssignedOrders();
+        }
+    };
+
+    if (!driver) {
         return (
             <SafeAreaView className="flex-1 bg-white justify-center items-center px-6">
                 <ShieldAlert color="#b91c1c" size={64} />
-                <Text className="text-2xl font-bold text-gray-900 mt-6 text-center">Access Denied</Text>
+                <Text className="text-2xl font-bold text-gray-900 mt-6 text-center">Unauthorized Access</Text>
                 <Text className="text-gray-500 text-center mt-2 mb-8">
-                    Your account is not registered as a delivery partner. Please contact management to get access.
+                    Please log in as a delivery partner to access this page.
                 </Text>
                 <TouchableOpacity
-                    onPress={() => navigation.goBack()}
+                    onPress={() => navigation.navigate('Login')}
                     className="bg-[#1B4D3E] px-10 py-4 rounded-full w-full"
                 >
-                    <Text className="text-white font-bold text-center">Back to Dashboard</Text>
+                    <Text className="text-white font-bold text-center">Go to Login</Text>
                 </TouchableOpacity>
             </SafeAreaView>
         );
     }
 
-    if (loading || isAuthorized === null) {
+    if (loading) {
         return (
             <View className="flex-1 justify-center items-center bg-gray-50">
                 <ActivityIndicator color="#1B4D3E" size="large" />
@@ -203,13 +192,23 @@ export default function DriverMode({ navigation }: any) {
                                     <Navigation color="#1d4ed8" size={20} />
                                     <Text className="text-[#1d4ed8] font-bold ml-2">Directions</Text>
                                 </TouchableOpacity>
-                                <TouchableOpacity
-                                    onPress={() => handleDeliver(order.id)}
-                                    className="flex-1 bg-[#1B4D3E] h-14 rounded-2xl items-center justify-center flex-row"
-                                >
-                                    <CheckCircle color="white" size={20} />
-                                    <Text className="text-white font-bold ml-2">Delivered</Text>
-                                </TouchableOpacity>
+                                {order.status === 'get_to_deliver' ? (
+                                    <TouchableOpacity
+                                        onPress={() => handleDeliver(order.id)}
+                                        className="flex-1 bg-[#1B4D3E] h-14 rounded-2xl items-center justify-center flex-row"
+                                    >
+                                        <CheckCircle color="white" size={20} />
+                                        <Text className="text-white font-bold ml-2">Mark Delivered</Text>
+                                    </TouchableOpacity>
+                                ) : (
+                                    <TouchableOpacity
+                                        onPress={() => handleStartDelivery(order.id)}
+                                        className="flex-1 bg-orange-500 h-14 rounded-2xl items-center justify-center flex-row"
+                                    >
+                                        <Navigation color="white" size={20} />
+                                        <Text className="text-white font-bold ml-2">Start Delivery</Text>
+                                    </TouchableOpacity>
+                                )}
                             </View>
                         </View>
                     ))
