@@ -3,9 +3,11 @@ import { supabase } from '@/lib/supabase';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Search, Loader2, Package, Calendar, Clock, CheckCircle2, XCircle, ChevronRight, Filter, Eye, Truck } from 'lucide-react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Search, Loader2, Package, Calendar, Clock, CheckCircle2, XCircle, ChevronRight, Filter, Eye, Truck, Users } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Label } from '@/components/ui/label';
+import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
 
 const AdminAllOrders = () => {
@@ -14,6 +16,9 @@ const AdminAllOrders = () => {
     const [searchQuery, setSearchQuery] = useState('');
     const [statusFilter, setStatusFilter] = useState('all');
     const [selectedOrder, setSelectedOrder] = useState<any | null>(null);
+    const [isAddDriverOpen, setIsAddDriverOpen] = useState(false);
+    const [newDriverData, setNewDriverData] = useState({ full_name: '', phone: '', vehicle_no: '' });
+    const { toast } = useToast();
 
     useEffect(() => {
         fetchAllOrders();
@@ -43,6 +48,26 @@ const AdminAllOrders = () => {
         }
     };
 
+    const handleQuickAddDriver = async () => {
+        if (!newDriverData.full_name || !newDriverData.phone) {
+            toast({ title: 'Error', description: 'Name and Phone are required.', variant: 'destructive' });
+            return;
+        }
+        try {
+            const { error } = await supabase
+                .from('drivers')
+                .insert([{ ...newDriverData, status: 'active', tracking_active: false }]);
+
+            if (error) throw error;
+            
+            toast({ title: 'Success', description: 'New driver added successfully.' });
+            setIsAddDriverOpen(false);
+            setNewDriverData({ full_name: '', phone: '', vehicle_no: '' });
+        } catch (error: any) {
+            toast({ title: 'Error', description: 'Failed to add driver.', variant: 'destructive' });
+        }
+    };
+
     const getStatusStyle = (status: string) => {
         switch (status) {
             case 'delivered': return 'bg-green-100 text-green-700 border-green-200';
@@ -67,9 +92,14 @@ const AdminAllOrders = () => {
 
     return (
         <div className="space-y-6">
-            <div>
-                <h1 className="text-3xl font-bold text-foreground">Order Management</h1>
-                <p className="text-muted-foreground mt-1">View and manage all historical orders across the platform</p>
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                <div>
+                    <h1 className="text-3xl font-bold text-foreground">Order Management</h1>
+                    <p className="text-muted-foreground mt-1">View and manage all historical orders across the platform</p>
+                </div>
+                <Button className="forest-gradient gap-2" onClick={() => setIsAddDriverOpen(true)}>
+                    <Users className="w-4 h-4" /> Add Delivery Partner
+                </Button>
             </div>
 
             <Card className="border-border/50 shadow-sm">
@@ -234,6 +264,48 @@ const AdminAllOrders = () => {
                             </div>
                         </div>
                     )}
+                </DialogContent>
+            </Dialog>
+
+            {/* Quick Add Driver Dialog */}
+            <Dialog open={isAddDriverOpen} onOpenChange={setIsAddDriverOpen}>
+                <DialogContent className="sm:max-w-[400px]">
+                    <DialogHeader>
+                        <DialogTitle>Add New Delivery Partner</DialogTitle>
+                    </DialogHeader>
+                    <div className="space-y-4 py-4">
+                        <div className="grid gap-2">
+                            <Label htmlFor="d-name">Full Name</Label>
+                            <Input 
+                                id="d-name" 
+                                placeholder="John Doe" 
+                                value={newDriverData.full_name}
+                                onChange={(e) => setNewDriverData({...newDriverData, full_name: e.target.value})}
+                            />
+                        </div>
+                        <div className="grid gap-2">
+                            <Label htmlFor="d-phone">Phone Number</Label>
+                            <Input 
+                                id="d-phone" 
+                                placeholder="+91 98765 43210" 
+                                value={newDriverData.phone}
+                                onChange={(e) => setNewDriverData({...newDriverData, phone: e.target.value})}
+                            />
+                        </div>
+                        <div className="grid gap-2">
+                            <Label htmlFor="d-vehicle">Vehicle Number</Label>
+                            <Input 
+                                id="d-vehicle" 
+                                placeholder="TN-01-AB-1234" 
+                                value={newDriverData.vehicle_no}
+                                onChange={(e) => setNewDriverData({...newDriverData, vehicle_no: e.target.value})}
+                            />
+                        </div>
+                    </div>
+                    <DialogFooter>
+                        <Button variant="outline" onClick={() => setIsAddDriverOpen(false)}>Cancel</Button>
+                        <Button onClick={handleQuickAddDriver}>Add Partner</Button>
+                    </DialogFooter>
                 </DialogContent>
             </Dialog>
         </div>

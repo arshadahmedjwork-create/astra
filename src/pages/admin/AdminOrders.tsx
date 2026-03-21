@@ -155,6 +155,30 @@ const AdminOrders = () => {
         }
     };
 
+    const handleQuickAddDriver = async () => {
+        if (!newDriverData.full_name || !newDriverData.phone) {
+            toast({ title: 'Error', description: 'Name and Phone are required.', variant: 'destructive' });
+            return;
+        }
+        try {
+            const { data, error } = await supabase
+                .from('drivers')
+                .insert([{ ...newDriverData, status: 'active', tracking_active: false }])
+                .select()
+                .single();
+
+            if (error) throw error;
+            
+            toast({ title: 'Success', description: 'New driver added and active.' });
+            await fetchDrivers(); // Refresh list
+            setSelectedDriverId(data.id); // Select the new driver
+            setIsAddingNewDriver(false); // Hide form
+            setNewDriverData({ full_name: '', phone: '', vehicle_no: '' }); // Reset
+        } catch (error: any) {
+            toast({ title: 'Error', description: 'Failed to add driver.', variant: 'destructive' });
+        }
+    };
+
     const handleAssignDriver = async () => {
         if (!orderToAssign || !selectedDriverId) return;
         try {
@@ -389,7 +413,6 @@ const AdminOrders = () => {
                                     <Label htmlFor="q-name">Name</Label>
                                     <Input 
                                         id="q-name" 
-                                        size="sm" 
                                         placeholder="Full Name" 
                                         value={newDriverData.full_name}
                                         onChange={(e) => setNewDriverData({...newDriverData, full_name: e.target.value})}
@@ -399,7 +422,6 @@ const AdminOrders = () => {
                                     <Label htmlFor="q-phone">Phone</Label>
                                     <Input 
                                         id="q-phone" 
-                                        size="sm" 
                                         placeholder="Phone Number" 
                                         value={newDriverData.phone}
                                         onChange={(e) => setNewDriverData({...newDriverData, phone: e.target.value})}
@@ -409,7 +431,6 @@ const AdminOrders = () => {
                                     <Label htmlFor="q-vehicle">Vehicle No</Label>
                                     <Input 
                                         id="q-vehicle" 
-                                        size="sm" 
                                         placeholder="TN-01-AB-1234" 
                                         value={newDriverData.vehicle_no}
                                         onChange={(e) => setNewDriverData({...newDriverData, vehicle_no: e.target.value})}
