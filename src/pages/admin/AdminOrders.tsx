@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import { Calendar as CalendarIcon, MapPin, Truck, CheckCircle2, Search, Loader2, User } from 'lucide-react';
+import { Calendar as CalendarIcon, MapPin, Truck, CheckCircle2, Search, Loader2, User, ChefHat } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
@@ -277,6 +277,7 @@ const AdminOrders = () => {
                                         </td>
                                         <td className="px-4 py-3 text-center">
                                             <span className={`px-2.5 py-1 text-xs font-medium rounded-full ${order.status === 'delivered' ? 'bg-green-100 text-green-700 dark:bg-green-500/20 dark:text-green-400' :
+                                                order.status === 'preparing' ? 'bg-blue-100 text-blue-700 dark:bg-blue-500/20 dark:text-blue-400' :
                                                 order.status === 'pending' || order.status === 'get_to_deliver' ? 'bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-400' :
                                                     'bg-secondary text-secondary-foreground border border-border'
                                                 }`}>
@@ -286,6 +287,17 @@ const AdminOrders = () => {
                                         <td className="px-4 py-3">
                                             <div className="flex items-center justify-end gap-2">
                                                 {order.status === 'pending' && (
+                                                    <Button
+                                                        size="sm"
+                                                        variant="outline"
+                                                        className="h-8 border-amber-500 text-amber-600 hover:bg-amber-50"
+                                                        onClick={() => handleUpdateStatus(order.id, 'preparing')}
+                                                    >
+                                                        <ChefHat className="w-3.5 h-3.5 mr-1.5" />
+                                                        Start Preparing
+                                                    </Button>
+                                                )}
+                                                {(order.status === 'pending' || order.status === 'preparing') && (
                                                     <Button
                                                         size="sm"
                                                         variant="outline"
