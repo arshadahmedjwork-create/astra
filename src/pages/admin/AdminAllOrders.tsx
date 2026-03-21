@@ -3,7 +3,7 @@ import { supabase } from '@/lib/supabase';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Search, Loader2, Package, Calendar, Clock, CheckCircle2, XCircle, ChevronRight, Filter, Eye, Truck, Users } from 'lucide-react';
+import { Search, Loader2, Package, Calendar, Clock, CheckCircle2, XCircle, ChevronRight, Filter, Eye, Truck, Users, ChefHat } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
@@ -16,13 +16,22 @@ const AdminAllOrders = () => {
     const [searchQuery, setSearchQuery] = useState('');
     const [statusFilter, setStatusFilter] = useState('all');
     const [selectedOrder, setSelectedOrder] = useState<any | null>(null);
-    const [isAddDriverOpen, setIsAddDriverOpen] = useState(false);
+    const [drivers, setDrivers] = useState<any[]>([]);
+    const [isAssignModalOpen, setIsAssignModalOpen] = useState(false);
+    const [selectedDriverId, setSelectedDriverId] = useState<string>('');
+    const [isAddingNewDriver, setIsAddingNewDriver] = useState(false);
     const [newDriverData, setNewDriverData] = useState({ full_name: '', phone: '', vehicle_no: '' });
     const { toast } = useToast();
 
     useEffect(() => {
         fetchAllOrders();
+        fetchDrivers();
     }, []);
+
+    const fetchDrivers = async () => {
+        const { data } = await supabase.from('drivers').select('*').eq('status', 'active');
+        if (data) setDrivers(data);
+    };
 
     const fetchAllOrders = async () => {
         setLoading(true);
@@ -65,6 +74,51 @@ const AdminAllOrders = () => {
             setNewDriverData({ full_name: '', phone: '', vehicle_no: '' });
         } catch (error: any) {
             toast({ title: 'Error', description: 'Failed to add driver.', variant: 'destructive' });
+        }
+    };
+
+    const handleAssignDriver = async () => {
+        if (!selectedOrder || !selectedDriverId) return;
+        try {
+            const { error } = await supabase
+                .from('orders')
+                .update({ 
+                    driver_id: selectedDriverId,
+                    status: 'get_to_deliver',
+                    tracking_active: true
+                })
+                .eq('id', selectedOrder.id);
+
+            if (error) throw error;
+            
+            toast({ title: 'Success', description: 'Driver assigned and tracking activated.' });
+            setIsAssignModalOpen(false);
+            fetchAllOrders();
+        } catch (error: any) {
+            toast({ title: 'Error', description: 'Failed to assign driver.', variant: 'destructive' });
+        }
+    };
+
+    const handleUpdateStatus = async (orderId: string, newStatus: string) => {
+        try {
+            const updateData: any = { status: newStatus };
+            if (newStatus === 'get_to_deliver') {
+                updateData.tracking_active = true;
+            } else if (newStatus === 'delivered' || newStatus === 'cancelled') {
+                updateData.tracking_active = false;
+            }
+
+            const { error } = await supabase
+                .from('orders')
+                .update(updateData)
+                .eq('id', orderId);
+
+            if (error) throw error;
+
+            toast({ title: 'Success', description: `Order marked as ${newStatus}` });
+            fetchAllOrders();
+        } catch (error: any) {
+            toast({ title: 'Error', description: 'Failed to update status.', variant: 'destructive' });
         }
     };
 
@@ -190,9 +244,25 @@ const AdminAllOrders = () => {
                                             </span>
                                         </td>
                                         <td className="px-4 py-3 text-right">
-                                            <Button variant="ghost" size="icon" className="h-8 w-8 text-primary hover:bg-primary/10" onClick={() => setSelectedOrder(order)}>
-                                                <Eye className="w-4 h-4" />
-                                            </Button>
+                                            <div className="flex items-center justify-end gap-2">
+                                                {(order.status === 'pending' || order.status === 'preparing') && (
+                                                    <Button 
+                                                        variant="ghost" 
+                                                        size="icon" 
+                                                        className="h-8 w-8 text-amber-600 hover:bg-amber-100"
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            setSelectedOrder(order);
+                                                            setIsAssignModalOpen(true);
+                                                        }}
+                                                    >
+                                                        <Truck className="w-4 h-4" />
+                                                    </Button>
+                                                )}
+                                                <Button variant="ghost" size="icon" className="h-8 w-8 text-primary hover:bg-primary/10" onClick={() => setSelectedOrder(order)}>
+                                                    <Eye className="w-4 h-4" />
+                                                </Button>
+                                            </div>
                                         </td>
                                     </tr>
                                 ))
@@ -248,22 +318,60 @@ const AdminAllOrders = () => {
                                 </table>
                             </div>
 
-                            <div className="flex justify-between items-center text-xs">
-                                <div className="flex items-center gap-2">
-                                    <Clock className="w-3.5 h-3.5 text-muted-foreground" />
-                                    <span className="text-muted-foreground">Status:</span>
-                                    <span className={`px-2 py-0.5 rounded-full font-bold uppercase ${getStatusStyle(selectedOrder.status)}`}>
-                                        {selectedOrder.status.replace(/_/g, ' ')}
-                                    </span>
-                                </div>
-                                <div className="flex items-center gap-2">
-                                    <Truck className="w-3.5 h-3.5 text-muted-foreground" />
-                                    <span className="text-muted-foreground">Delivery Method:</span>
-                                    <span className="font-medium">Home Delivery</span>
+                            <div className="flex justify-between items-center text-xs pt-4 border-t border-border">
+                                <div className="flex flex-wrap gap-2">
+                                    {(selectedOrder.status === 'pending' || selectedOrder.status === 'preparing') && (
+                                        <Button size="sm" className="forest-gradient" onClick={() => setIsAssignModalOpen(true)}>
+                                            <Truck className="w-3.5 h-3.5 mr-2" /> Assign Driver
+                                        </Button>
+                                    )}
+                                    {selectedOrder.status === 'pending' && (
+                                        <Button size="sm" variant="outline" onClick={() => handleUpdateStatus(selectedOrder.id, 'preparing')}>
+                                            <ChefHat className="w-3.5 h-3.5 mr-2" /> Start Prep
+                                        </Button>
+                                    )}
+                                    {selectedOrder.status !== 'delivered' && selectedOrder.status !== 'cancelled' && (
+                                        <Button size="sm" variant="outline" className="text-destructive hover:bg-destructive/10" onClick={() => handleUpdateStatus(selectedOrder.id, 'cancelled')}>
+                                            <XCircle className="w-3.5 h-3.5 mr-2" /> Cancel
+                                        </Button>
+                                    )}
                                 </div>
                             </div>
                         </div>
                     )}
+                </DialogContent>
+            </Dialog>
+
+            {/* Assign Driver Dialog */}
+            <Dialog open={isAssignModalOpen} onOpenChange={setIsAssignModalOpen}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Assign Driver to Order</DialogTitle>
+                    </DialogHeader>
+                    <div className="py-4 space-y-4">
+                        <div className="space-y-2">
+                            <Label>Select Available Driver</Label>
+                            <Select onValueChange={setSelectedDriverId} value={selectedDriverId}>
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Choose a driver..." />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {drivers.map((driver) => (
+                                        <SelectItem key={driver.id} value={driver.id}>
+                                            {driver.full_name} ({driver.vehicle_no})
+                                        </SelectItem>
+                                    ))}
+                                    {drivers.length === 0 && (
+                                        <SelectItem value="none" disabled>No active drivers available</SelectItem>
+                                    )}
+                                </SelectContent>
+                            </Select>
+                        </div>
+                    </div>
+                    <DialogFooter>
+                        <Button variant="outline" onClick={() => setIsAssignModalOpen(false)}>Cancel</Button>
+                        <Button onClick={handleAssignDriver} disabled={!selectedDriverId}>Assign & Start Tracking</Button>
+                    </DialogFooter>
                 </DialogContent>
             </Dialog>
 
