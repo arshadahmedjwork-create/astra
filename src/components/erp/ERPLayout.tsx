@@ -12,13 +12,68 @@ import {
     Menu,
     X,
     ChevronRight,
-    Package,
     ShoppingCart,
-    Navigation
+    Navigation,
+    BellRing,
+    CheckCircle2,
+    Package
 } from 'lucide-react';
 import { useAuthStore } from '@/stores/authStore';
 import { useCartStore } from '@/stores/useCartStore';
 import astraLogo from '@/assets/astra-logo.png';
+import { Button } from '../ui/button';
+
+const DailyPrompt = () => {
+    const [isVisible, setIsVisible] = useState(false);
+    
+    useState(() => {
+        const today = new Date().toDateString();
+        const lastConfirmed = localStorage.getItem('astra_daily_confirmed');
+        if (lastConfirmed !== today) {
+            setIsVisible(true);
+        }
+    });
+
+    const handleConfirm = () => {
+        const today = new Date().toDateString();
+        localStorage.setItem('astra_daily_confirmed', today);
+        setIsVisible(false);
+    };
+
+    if (!isVisible) return null;
+
+    return (
+        <AnimatePresence>
+            <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-background/80 backdrop-blur-sm"
+            >
+                <motion.div
+                    initial={{ scale: 0.9, opacity: 0, y: 20 }}
+                    animate={{ scale: 1, opacity: 1, y: 0 }}
+                    className="bg-card border border-primary/20 p-8 rounded-[32px] shadow-2xl max-w-sm w-full text-center"
+                >
+                    <div className="w-20 h-20 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-6">
+                        <BellRing className="w-10 h-10 text-primary animate-bounce" />
+                    </div>
+                    <h2 className="text-2xl font-bold text-foreground mb-2">Daily Confirmation</h2>
+                    <p className="text-muted-foreground mb-8 text-sm">
+                        Please confirm your delivery for today to ensure everything is on track!
+                    </p>
+                    <Button 
+                        onClick={handleConfirm}
+                        className="w-full forest-gradient h-14 rounded-2xl text-lg font-bold shadow-lg shadow-primary/20"
+                    >
+                        <CheckCircle2 className="w-5 h-5 mr-2" />
+                        Confirm Today's Order
+                    </Button>
+                </motion.div>
+            </motion.div>
+        </AnimatePresence>
+    );
+};
 
 const sidebarItems = [
     { name: 'Dashboard', href: '/erp/dashboard', icon: LayoutDashboard },
@@ -236,6 +291,7 @@ const ERPLayout = ({ children }: ERPLayoutProps) => {
                     {children}
                 </main>
             </div>
+            <DailyPrompt />
         </div>
     );
 };

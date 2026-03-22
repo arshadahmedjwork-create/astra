@@ -33,27 +33,39 @@ const RenewSubscription = () => {
     const [products, setProducts] = useState<Product[]>([]);
     const [categories, setCategories] = useState<string[]>([]);
     const [rows, setRows] = useState<SubscriptionRow[]>([]);
+    const [existingSubscriptions, setExistingSubscriptions] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [submitting, setSubmitting] = useState(false);
 
-    useEffect(() => {
-        const fetchProducts = async () => {
-            const { data } = await supabase
+        const fetchInitialData = async () => {
+            if (!customer?.id) return;
+            setLoading(true);
+
+            // Fetch Products
+            const { data: prodData } = await supabase
                 .from('products')
                 .select('id, name, category, price, unit')
                 .eq('active', true);
 
-            if (data) {
-                setProducts(data);
-                const cats = [...new Set(data.map(p => p.category))];
+            if (prodData) {
+                setProducts(prodData);
+                const cats = [...new Set(prodData.map(p => p.category))];
                 setCategories(cats);
-                // Add initial row
-                addRow(data);
+                addRow(prodData);
             }
+
+            // Fetch Existing Subscriptions
+            const { data: subData } = await supabase
+                .from('subscriptions')
+                .select('*, products(name, unit)')
+                .eq('customer_id', customer.id);
+            
+            if (subData) setExistingSubscriptions(subData);
+            
             setLoading(false);
         };
-        fetchProducts();
-    }, []);
+        fetchInitialData();
+    }, [customer?.id]);
 
     const addRow = (prods?: Product[]) => {
         const id = crypto.randomUUID();
@@ -156,6 +168,21 @@ const RenewSubscription = () => {
             toast({ title: 'Error', description: 'Something went wrong.', variant: 'destructive' });
         }
         setSubmitting(false);
+    };
+
+    const handleTogglePause = async (sub: any) => {
+        const newStatus = sub.status === 'paused' ? 'active' : 'paused';
+        const { error } = await supabase
+            .from('subscriptions')
+            .update({ status: newStatus })
+            .eq('id', sub.id);
+        
+        if (!error) {
+            setExistingSubscriptions(prev => prev.map(s => 
+                s.id === sub.id ? { ...s, status: newStatus } : s
+            ));
+            toast({ title: 'Status Updated', description: `Subscription is now ${newStatus}.` });
+        }
     };
 
     return (
@@ -312,6 +339,69 @@ const RenewSubscription = () => {
                                         )}
                                     </Button>
                                 </div>
+                            </div>
+                        </div>
+                    </motion.div>
+                )}
+
+                {/* Existing Subscriptions Section */}
+                {!loading && existingSubscriptions.length > 0 && (
+                    <motion.div
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.2 }}
+                        className="mt-12"
+                    >
+                        <h2 className="text-xl font-bold text-foreground mb-4 flex items-center gap-2">
+                            <CalendarDays className="w-5 h-5 text-primary" />
+                            Your Active Subscriptions
+                        </h2>
+                        <div className="bg-card rounded-2xl border border-border overflow-hidden">
+                            <div className="overflow-x-auto">
+                                <table className="w-full text-sm text-left">
+                                    <thead className="bg-secondary/50 text-xs font-semibold text-muted-foreground uppercase">
+                                        <tr>
+                                            <th className="px-6 py-3">Product</th>
+                                            <th className="px-6 py-3">Frequency</th>
+                                            <th className="px-6 py-3">Qty</th>
+                                            <th className="px-6 py-3 text-center">Status</th>
+                                            <th className="px-6 py-3 text-right">Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-border">
+                                        {existingSubscriptions.map((sub) => (
+                                            <tr key={sub.id} className="hover:bg-secondary/10 transition-colors">
+                                                <td className="px-6 py-4">
+                                                    <div className="font-medium text-foreground">{sub.products?.name}</div>
+                                                    <div className="text-xs text-muted-foreground">₹{sub.unit_price}/{sub.products?.unit}</div>
+                                                </td>
+                                                <td className="px-6 py-4 text-muted-foreground">
+                                                    Next: {new Date(sub.required_date).toLocaleDateString()}
+                                                </td>
+                                                <td className="px-6 py-4 font-bold text-foreground">
+                                                    {sub.quantity}
+                                                </td>
+                                                <td className="px-6 py-4 text-center">
+                                                    <span className={`px-2 py-1 rounded-full text-[10px] font-bold uppercase ${
+                                                        sub.status === 'paused' ? 'bg-orange-100 text-orange-700' : 'bg-green-100 text-green-700'
+                                                    }`}>
+                                                        {sub.status}
+                                                    </span>
+                                                </td>
+                                                <td className="px-6 py-4 text-right">
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="sm"
+                                                        onClick={() => handleTogglePause(sub)}
+                                                        className={sub.status === 'paused' ? 'text-green-600' : 'text-orange-600'}
+                                                    >
+                                                        {sub.status === 'paused' ? 'Resume' : 'Pause'}
+                                                    </Button>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
                             </div>
                         </div>
                     </motion.div>
