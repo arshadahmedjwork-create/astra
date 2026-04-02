@@ -25,6 +25,8 @@ interface Customer {
         lat?: number;
         lng?: number;
     };
+    wallet_balance?: number;
+    assigned_driver_id?: string;
 }
 
 interface Driver {
@@ -45,11 +47,12 @@ interface AuthState {
     updateCustomer: (customer: Customer) => void;
     logout: () => Promise<void>;
     checkSession: () => Promise<void>;
+    refreshProfile: () => Promise<void>;
 }
 
 export const useAuthStore = create<AuthState>()(
     persist(
-        (set) => ({
+        (set, get) => ({
             customer: null,
             driver: null,
             isAuthenticated: false,
@@ -103,6 +106,26 @@ export const useAuthStore = create<AuthState>()(
                 }
 
                 set({ customer: null, driver: null, isAuthenticated: false });
+            },
+
+            refreshProfile: async () => {
+                const { customer } = get();
+                if (!customer?.id) return;
+
+                const { data: customerData, error } = await supabase
+                    .from('customers')
+                    .select('*, address:addresses(*)')
+                    .eq('id', customer.id)
+                    .single();
+
+                if (error || !customerData) return;
+
+                const formattedCustomer = {
+                    ...customerData,
+                    address: Array.isArray(customerData.address) ? customerData.address[0] : customerData.address
+                };
+
+                set({ customer: formattedCustomer });
             }
         }),
         {

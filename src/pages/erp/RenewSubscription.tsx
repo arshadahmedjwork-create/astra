@@ -8,6 +8,7 @@ import ERPLayout from '@/components/erp/ERPLayout';
 import { useToast } from '@/hooks/use-toast';
 import { useAuthStore } from '@/stores/authStore';
 import { supabase } from '@/lib/supabase';
+import { generateDatesFromFrequency } from '@/lib/subscriptionUtils';
 
 interface Product {
     id: string;
@@ -21,7 +22,9 @@ interface SubscriptionRow {
     id: string;
     category: string;
     productId: string;
-    requiredDate: string;
+    frequencyType: 'daily' | 'alternate' | 'weekdays' | 'custom';
+    startDate: string;
+    endDate: string;
     unitPrice: number;
     quantity: number;
     price: number;
@@ -37,6 +40,7 @@ const RenewSubscription = () => {
     const [loading, setLoading] = useState(true);
     const [submitting, setSubmitting] = useState(false);
 
+    useEffect(() => {
         const fetchInitialData = async () => {
             if (!customer?.id) return;
             setLoading(true);
@@ -73,7 +77,9 @@ const RenewSubscription = () => {
             id,
             category: '',
             productId: '',
-            requiredDate: '',
+            frequencyType: 'daily',
+            startDate: '',
+            endDate: '',
             unitPrice: 0,
             quantity: 1,
             price: 0,
@@ -109,22 +115,35 @@ const RenewSubscription = () => {
     const handleSubmit = async () => {
         if (!customer?.id) return;
 
-        const validRows = rows.filter(r => r.productId && r.requiredDate && r.quantity > 0);
+        const validRows = rows.filter(r => r.productId && r.startDate && r.endDate && r.quantity > 0);
         if (validRows.length === 0) {
-            toast({ title: 'No items', description: 'Please add at least one product to subscribe.', variant: 'destructive' });
+            toast({ title: 'No items', description: 'Please add at least one product with a date range.', variant: 'destructive' });
             return;
         }
 
         setSubmitting(true);
         try {
-            const subscriptions = validRows.map(r => ({
-                customer_id: customer.id,
-                product_id: r.productId,
-                required_date: r.requiredDate,
-                unit_price: r.unitPrice,
-                quantity: r.quantity,
-                status: 'active',
-            }));
+            const subscriptions = validRows.map(r => {
+                const selectedDates = r.frequencyType !== 'custom'
+                    ? generateDatesFromFrequency(
+                        new Date(r.startDate + 'T00:00:00'),
+                        new Date(r.endDate   + 'T00:00:00'),
+                        r.frequencyType,
+                    )
+                    : [];
+                return {
+                    customer_id:    customer!.id,
+                    product_id:     r.productId,
+                    frequency_type: r.frequencyType,
+                    selected_dates: selectedDates,
+                    start_date:     r.startDate,
+                    end_date:       r.endDate,
+                    required_date:  r.startDate,
+                    unit_price:     r.unitPrice,
+                    quantity:       r.quantity,
+                    status:         'active',
+                };
+            });
 
             const { error } = await supabase.from('subscriptions').insert(subscriptions);
 
@@ -257,15 +276,40 @@ const RenewSubscription = () => {
                                             </Select>
                                         </div>
 
-                                        {/* Date */}
+                                        {/* Frequency */}
                                         <div>
-                                            <label className="text-xs text-muted-foreground md:hidden mb-1 block">Required Date</label>
-                                            <Input
-                                                type="date"
-                                                value={row.requiredDate}
-                                                onChange={(e) => updateRow(row.id, 'requiredDate', e.target.value)}
-                                                className="h-9 text-sm"
-                                            />
+                                            <label className="text-xs text-muted-foreground md:hidden mb-1 block">Frequency</label>
+                                            <Select value={row.frequencyType} onValueChange={(v) => updateRow(row.id, 'frequencyType', v)}>
+                                                <SelectTrigger className="h-9 text-sm"><SelectValue placeholder="Frequency" /></SelectTrigger>
+                                                <SelectContent>
+                                                    <SelectItem value="daily">Daily</SelectItem>
+                                                    <SelectItem value="alternate">Alternate Days</SelectItem>
+                                                    <SelectItem value="weekdays">Weekdays Only</SelectItem>
+                                                </SelectContent>
+                                            </Select>
+                                        </div>
+
+                                        {/* Date Range */}
+                                        <div className="flex gap-1">
+                                            <div className="flex-1">
+                                                <label className="text-xs text-muted-foreground md:hidden mb-1 block">Start</label>
+                                                <Input
+                                                    type="date"
+                                                    value={row.startDate}
+                                                    onChange={(e) => updateRow(row.id, 'startDate', e.target.value)}
+                                                    className="h-9 text-xs"
+                                                />
+                                            </div>
+                                            <div className="flex-1">
+                                                <label className="text-xs text-muted-foreground md:hidden mb-1 block">End</label>
+                                                <Input
+                                                    type="date"
+                                                    min={row.startDate}
+                                                    value={row.endDate}
+                                                    onChange={(e) => updateRow(row.id, 'endDate', e.target.value)}
+                                                    className="h-9 text-xs"
+                                                />
+                                            </div>
                                         </div>
 
                                         {/* Unit Price */}

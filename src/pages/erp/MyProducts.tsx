@@ -1,12 +1,10 @@
 import { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { ShoppingBag, Plus, Minus, ShoppingCart, ArrowRight } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { motion } from 'framer-motion';
+import { ShoppingBag, Repeat } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import ERPLayout from '@/components/erp/ERPLayout';
-import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/lib/supabase';
-import { useCartStore } from '@/stores/useCartStore';
+import SubscribeModal, { type SubscribeModalProduct } from '@/components/erp/SubscribeModal';
 
 interface Product {
     id: string;
@@ -33,53 +31,22 @@ const productImages: Record<string, string> = {
 
 const MyProducts = () => {
     const [products, setProducts] = useState<Product[]>([]);
-    const [quantities, setQuantities] = useState<Record<string, number>>({});
     const [loading, setLoading] = useState(true);
-    const { toast } = useToast();
-    const { addItem, items } = useCartStore();
-    const navigate = useNavigate();
-
-    const cartCount = items.reduce((sum, item) => sum + item.quantity, 0);
+    const [subscribeProduct, setSubscribeProduct] = useState<SubscribeModalProduct | null>(null);
 
     useEffect(() => {
         const fetchProducts = async () => {
-            const { data, error } = await supabase
+            const { data } = await supabase
                 .from('products')
                 .select('*')
                 .eq('active', true)
                 .order('category');
 
-            if (data) {
-                setProducts(data);
-                const initialQty: Record<string, number> = {};
-                data.forEach(p => { initialQty[p.id] = 1; });
-                setQuantities(initialQty);
-            }
+            if (data) setProducts(data);
             setLoading(false);
         };
         fetchProducts();
     }, []);
-
-    const updateQuantity = (id: string, delta: number) => {
-        setQuantities(prev => ({
-            ...prev,
-            [id]: Math.max(1, (prev[id] || 1) + delta),
-        }));
-    };
-
-    const handleAddToCart = (product: Product) => {
-        addItem({
-            id: product.id,
-            name: product.name,
-            price: product.price,
-            quantity: quantities[product.id] || 1,
-            image: productImages[product.name] || '/assets/product-raw-milk.png'
-        });
-        toast({
-            title: 'Added to cart!',
-            description: `${quantities[product.id]}x ${product.name} added to your cart.`,
-        });
-    };
 
     return (
         <ERPLayout>
@@ -94,7 +61,7 @@ const MyProducts = () => {
                         My Products
                     </h1>
                     <p className="text-sm text-muted-foreground mt-1">
-                        Browse and add products to your subscription
+                        Subscribe to recurring deliveries for your favourite products
                     </p>
                 </motion.div>
 
@@ -112,6 +79,7 @@ const MyProducts = () => {
                                 transition={{ delay: i * 0.05 }}
                                 className="bg-card rounded-2xl border border-border overflow-hidden hover:shadow-lg transition-all duration-300 group"
                             >
+                                {/* Product image */}
                                 <div className="aspect-square bg-sage/20 overflow-hidden relative">
                                     <img
                                         src={productImages[product.name] || '/assets/product-raw-milk.png'}
@@ -125,6 +93,7 @@ const MyProducts = () => {
                                     </div>
                                 </div>
 
+                                {/* Card body */}
                                 <div className="p-5">
                                     <h3 className="font-bold text-foreground text-lg">{product.name}</h3>
                                     <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{product.description}</p>
@@ -136,32 +105,19 @@ const MyProducts = () => {
                                         </div>
                                     </div>
 
-                                    <div className="flex items-center gap-3 mt-4">
-                                        <div className="flex items-center border border-border rounded-xl overflow-hidden">
-                                            <button
-                                                onClick={() => updateQuantity(product.id, -1)}
-                                                className="px-3 py-2 hover:bg-secondary transition-colors"
-                                            >
-                                                <Minus className="w-3 h-3" />
-                                            </button>
-                                            <span className="px-4 py-2 text-sm font-semibold min-w-[40px] text-center">
-                                                {quantities[product.id] || 1}
-                                            </span>
-                                            <button
-                                                onClick={() => updateQuantity(product.id, 1)}
-                                                className="px-3 py-2 hover:bg-secondary transition-colors"
-                                            >
-                                                <Plus className="w-3 h-3" />
-                                            </button>
-                                        </div>
-                                        <Button
-                                            onClick={() => handleAddToCart(product)}
-                                            className="flex-1 forest-gradient text-primary-foreground rounded-xl h-10 font-semibold text-sm"
-                                        >
-                                            <ShoppingCart className="w-4 h-4 mr-1" />
-                                            Add
-                                        </Button>
-                                    </div>
+                                    {/* Single Subscribe CTA */}
+                                    <Button
+                                        onClick={() => setSubscribeProduct({
+                                            id: product.id,
+                                            name: product.name,
+                                            price: product.price,
+                                            unit: product.unit,
+                                        })}
+                                        className="w-full mt-5 h-11 rounded-xl font-black text-sm forest-gradient shadow-md shadow-primary/20 gap-2"
+                                    >
+                                        <Repeat className="w-4 h-4" />
+                                        Subscribe / Pre-Order
+                                    </Button>
                                 </div>
                             </motion.div>
                         ))}
@@ -169,34 +125,13 @@ const MyProducts = () => {
                 )}
             </div>
 
-            {/* Floating Cart Button */}
-            <AnimatePresence>
-                {cartCount > 0 && (
-                    <motion.div
-                        initial={{ opacity: 0, scale: 0.8, y: 20 }}
-                        animate={{ opacity: 1, scale: 1, y: 0 }}
-                        exit={{ opacity: 0, scale: 0.8, y: 20 }}
-                        className="fixed bottom-8 right-8 z-50"
-                    >
-                        <Button
-                            onClick={() => navigate('/erp/cart')}
-                            className="h-16 px-6 rounded-2xl shadow-2xl forest-gradient border border-primary/20 flex items-center gap-4 group"
-                        >
-                            <div className="relative">
-                                <ShoppingCart className="w-6 h-6 text-primary-foreground" />
-                                <span className="absolute -top-3 -right-3 bg-accent text-white text-[10px] font-bold h-5 w-5 rounded-full flex items-center justify-center border-2 border-white shadow-sm">
-                                    {cartCount}
-                                </span>
-                            </div>
-                            <div className="text-left hidden sm:block">
-                                <p className="text-[10px] text-primary-foreground/70 font-semibold uppercase tracking-wider">Your Cart</p>
-                                <p className="text-sm font-bold text-primary-foreground">View Basket</p>
-                            </div>
-                            <ArrowRight className="w-4 h-4 text-primary-foreground group-hover:translate-x-1 transition-transform" />
-                        </Button>
-                    </motion.div>
-                )}
-            </AnimatePresence>
+            {/* Subscribe Modal */}
+            <SubscribeModal
+                open={!!subscribeProduct}
+                onClose={() => setSubscribeProduct(null)}
+                product={subscribeProduct}
+                onSuccess={() => setSubscribeProduct(null)}
+            />
         </ERPLayout>
     );
 };

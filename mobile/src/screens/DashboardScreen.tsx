@@ -1,10 +1,44 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, ScrollView, Alert, ActivityIndicator, Modal, SafeAreaView } from 'react-native';
+import { View, Text, TouchableOpacity, ScrollView, Alert, ActivityIndicator, Modal, SafeAreaView, Animated, Easing } from 'react-native';
 import { useAuthStore } from '../stores/authStore';
 import { supabase } from '../lib/supabase';
-import { LogOut, Package, Repeat, User, ShoppingCart, Navigation, BellRing, CheckCircle } from 'lucide-react-native';
+import { LogOut, Package, Repeat, User, ShoppingCart, Navigation, BellRing, CheckCircle, Wallet, CreditCard } from 'lucide-react-native';
 import { useCartStore } from '../stores/cartStore';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+
+const Marquee = () => {
+    const scrollX = React.useRef(new Animated.Value(0)).current;
+
+    React.useEffect(() => {
+        const startAnimation = () => {
+            scrollX.setValue(300);
+            Animated.timing(scrollX, {
+                toValue: -300,
+                duration: 10000,
+                easing: Easing.linear,
+                useNativeDriver: true,
+            }).start(() => startAnimation());
+        };
+        startAnimation();
+    }, []);
+
+    return (
+        <View style={{ backgroundColor: '#FEF3C7', paddingVertical: 6, borderBottomWidth: 1, borderBottomColor: '#FDE68A', overflow: 'hidden' }}>
+            <Animated.Text
+                style={{
+                    transform: [{ translateX: scrollX }],
+                    color: '#92400E',
+                    fontSize: 10,
+                    fontWeight: 'bold',
+                    width: 600,
+                    textAlign: 'center'
+                }}
+            >
+                Next day Delivery cutoff time is 7PM • Order before 7PM for tomorrow's delivery • Next day Delivery cutoff time is 7PM
+            </Animated.Text>
+        </View>
+    );
+};
 
 export default function DashboardScreen({ navigation }: any) {
     const { customer, driver, logout } = useAuthStore();
@@ -22,8 +56,28 @@ export default function DashboardScreen({ navigation }: any) {
 
     const [nextDelivery, setNextDelivery] = React.useState<any>(null);
     const [activeOrder, setActiveOrder] = React.useState<any>(null);
+    const [driverStats, setDriverStats] = React.useState<any>({ pending: 0, completed: 0 });
     const [loading, setLoading] = React.useState(true);
     const [showDailyPrompt, setShowDailyPrompt] = React.useState(false);
+
+    const fetchActiveOrder = async () => {
+        if (!customer?.id) return;
+        try {
+            const { data } = await supabase
+                .from('orders')
+                .select('*')
+                .eq('customer_id', customer.id)
+                .in('status', ['preparing', 'get_to_deliver'])
+                .order('created_at', { ascending: false })
+                .limit(1)
+                .maybeSingle();
+            
+            if (data) setActiveOrder(data);
+            else setActiveOrder(null);
+        } catch (e) {
+            console.log('Error fetching active order:', e);
+        }
+    };
 
     const fetchNextDelivery = async () => {
         if (!customer?.id) return;
@@ -75,10 +129,37 @@ export default function DashboardScreen({ navigation }: any) {
         }
     };
 
+    const fetchDriverStats = async () => {
+        if (!driver?.id) return;
+        try {
+            const { data: pendingData } = await supabase
+                .from('orders')
+                .select('id')
+                .eq('driver_id', driver.id)
+                .in('status', ['preparing', 'get_to_deliver']);
+            
+            const { data: completedData } = await supabase
+                .from('orders')
+                .select('id')
+                .eq('driver_id', driver.id)
+                .eq('status', 'delivered')
+                .gte('updated_at', new Date().toISOString().split('T')[0]);
+
+            setDriverStats({
+                pending: pendingData?.length || 0,
+                completed: completedData?.length || 0
+            });
+        } catch (e) {
+            console.log('Error fetching driver stats:', e);
+        }
+    };
+
     React.useEffect(() => {
         fetchNextDelivery();
+        fetchActiveOrder();
+        if (driver) fetchDriverStats();
         checkDailyPrompt();
-    }, [customer?.id]);
+    }, [customer?.id, driver?.id]);
 
     const checkDailyPrompt = async () => {
         try {
@@ -104,27 +185,30 @@ export default function DashboardScreen({ navigation }: any) {
 
     return (
         <SafeAreaView className="flex-1 bg-gray-50">
+            <Marquee />
             <ScrollView className="flex-1 bg-gray-50">
                 {/* Header */}
                 <View className="bg-[#1B4D3E] pt-16 pb-6 px-6 rounded-b-[32px] shadow-lg">
                     <View className="flex-row justify-between items-center">
-                        <View>
+                        <View className="flex-1 mr-4">
                             <Text className="text-white/80 text-sm font-medium">Welcome back,</Text>
-                            <Text className="text-white text-2xl font-bold mt-1">{customer?.full_name || driver?.full_name || 'User'}</Text>
+                            <Text className="text-white text-2xl font-bold mt-1" numberOfLines={1} ellipsizeMode="tail">{customer?.full_name || driver?.full_name || 'User'}</Text>
                             {driver && !customer && <Text className="text-[#D4AF37] text-xs font-bold uppercase mt-1">Delivery Partner</Text>}
                         </View>
                         <View className="flex-row gap-2">
-                            <TouchableOpacity
-                                onPress={() => navigation.navigate('Cart')}
-                                className="bg-white/10 p-3 rounded-xl border border-white/20 relative"
-                            >
-                                <ShoppingCart color="white" size={20} />
-                                {useCartStore.getState().items.length > 0 && (
-                                    <View className="absolute -top-1 -right-1 bg-[#D4AF37] min-w-[18px] h-[18px] rounded-full items-center justify-center px-1">
-                                        <Text className="text-[10px] font-bold text-[#1B4D3E]">{useCartStore.getState().items.length}</Text>
-                                    </View>
-                                )}
-                            </TouchableOpacity>
+                            {customer && (
+                                <TouchableOpacity
+                                    onPress={() => navigation.navigate('Cart')}
+                                    className="bg-white/10 p-3 rounded-xl border border-white/20 relative"
+                                >
+                                    <ShoppingCart color="white" size={20} />
+                                    {useCartStore.getState().items.length > 0 && (
+                                        <View className="absolute -top-1 -right-1 bg-[#D4AF37] min-w-[18px] h-[18px] rounded-full items-center justify-center px-1">
+                                            <Text className="text-[10px] font-bold text-[#1B4D3E]">{useCartStore.getState().items.length}</Text>
+                                        </View>
+                                    )}
+                                </TouchableOpacity>
+                            )}
                             <TouchableOpacity
                                 onPress={handleLogout}
                                 className="bg-white/10 p-3 rounded-xl border border-white/20"
@@ -147,35 +231,56 @@ export default function DashboardScreen({ navigation }: any) {
                     ) : null}
                 </View>
 
+                {/* Wallet Balance Card (Mobile Quick View) */}
+                {customer && (
+                    <View className="px-6 -mt-6">
+                        <TouchableOpacity
+                            onPress={() => navigation.navigate('Wallet')}
+                            className="bg-white p-6 rounded-[32px] shadow-xl shadow-[#1B4D3E]/10 border border-gray-100 flex-row items-center justify-between"
+                        >
+                            <View className="flex-row items-center">
+                                <View className="w-14 h-14 bg-[#1B4D3E]/5 rounded-2xl items-center justify-center mr-4">
+                                    <Wallet color="#1B4D3E" size={28} />
+                                </View>
+                                <View>
+                                    <Text className="text-gray-400 font-bold text-[10px] uppercase tracking-wider">Wallet Balance</Text>
+                                    <Text className="text-2xl font-black text-gray-900 mt-1">₹{customer?.wallet_balance?.toLocaleString() || '0.00'}</Text>
+                                </View>
+                            </View>
+                            <View className="bg-[#1B4D3E] p-3 rounded-2xl shadow-md">
+                                <CreditCard color="white" size={20} />
+                            </View>
+                        </TouchableOpacity>
+                    </View>
+                )}
+
                 {/* Quick Actions */}
                 <View className="px-6 mt-8">
                     <Text className="text-xl font-bold text-gray-900 mb-4">Quick Actions</Text>
 
-                    <View className="flex-row justify-between gap-4">
-                        {customer && (
-                            <>
-                                <TouchableOpacity
-                                    onPress={() => navigation.navigate('Products')}
-                                    className="flex-1 bg-white p-6 rounded-3xl shadow-sm border border-gray-100 items-center"
-                                >
-                                    <View className="w-14 h-14 bg-[#1B4D3E]/10 rounded-full items-center justify-center mb-3">
-                                        <Package color="#1B4D3E" size={28} />
-                                    </View>
-                                    <Text className="font-bold text-gray-900 text-center">Buy Products</Text>
-                                </TouchableOpacity>
+                    {customer && (
+                        <View style={{ flexDirection: 'row', gap: 16 }}>
+                            <TouchableOpacity
+                                onPress={() => navigation.navigate('Products')}
+                                className="flex-1 bg-white p-5 rounded-3xl shadow-sm border border-gray-100 items-center justify-center min-h-[140px]"
+                            >
+                                <View className="w-14 h-14 bg-[#1B4D3E]/10 rounded-full items-center justify-center mb-4">
+                                    <Package color="#1B4D3E" size={28} />
+                                </View>
+                                <Text className="font-bold text-gray-900 text-center text-sm px-1" numberOfLines={2}>Subscribe</Text>
+                            </TouchableOpacity>
 
-                                <TouchableOpacity
-                                    onPress={() => navigation.navigate('Subscriptions')}
-                                    className="flex-1 bg-white p-6 rounded-3xl shadow-sm border border-gray-100 items-center"
-                                >
-                                    <View className="w-14 h-14 bg-[#1B4D3E]/10 rounded-full items-center justify-center mb-3">
-                                        <Repeat color="#1B4D3E" size={28} />
-                                    </View>
-                                    <Text className="font-bold text-gray-900 text-center">Subscriptions</Text>
-                                </TouchableOpacity>
-                            </>
-                        )}
-                    </View>
+                            <TouchableOpacity
+                                onPress={() => navigation.navigate('Subscriptions')}
+                                className="flex-1 bg-white p-5 rounded-3xl shadow-sm border border-gray-100 items-center justify-center min-h-[140px]"
+                            >
+                                <View className="w-14 h-14 bg-[#1B4D3E]/10 rounded-full items-center justify-center mb-4">
+                                    <Repeat color="#1B4D3E" size={28} />
+                                </View>
+                                <Text className="font-bold text-gray-900 text-center text-sm px-1" numberOfLines={2}>Subscriptions</Text>
+                            </TouchableOpacity>
+                        </View>
+                    )}
 
                     {customer && (
                         <TouchableOpacity
@@ -211,21 +316,63 @@ export default function DashboardScreen({ navigation }: any) {
                     </View>
                 )}
 
-                {/* Driver Mode Access - Only for registered drivers */}
+                {/* Driver Operational Dashboard - Premium View */}
                 {driver && (
                     <View className="px-6 mt-6">
-                        <TouchableOpacity
-                            onPress={() => navigation.navigate('Driver')}
-                            className="bg-[#1B4D3E]/5 p-5 rounded-3xl border border-[#1B4D3E]/10 flex-row items-center"
-                        >
-                            <View className="w-12 h-12 bg-[#1B4D3E] rounded-full items-center justify-center mr-4">
+                        <View className="bg-white p-6 rounded-[40px] shadow-2xl shadow-[#1B4D3E]/20 border border-gray-100 overflow-hidden">
+                            <View className="flex-row justify-between items-center mb-6">
+                                <View className="flex-1">
+                                    <Text className="text-gray-400 font-bold text-[10px] uppercase tracking-[2px]">Today's Shift</Text>
+                                    <Text className="text-2xl font-black text-gray-900 mt-1" numberOfLines={1}>Operational View</Text>
+                                </View>
+                                <View className="bg-emerald-50 px-3 py-1 rounded-full flex-row items-center ml-2">
+                                    <View className="w-2 h-2 bg-emerald-500 rounded-full mr-2" />
+                                    <Text className="text-emerald-700 text-[10px] font-bold uppercase">Online</Text>
+                                </View>
+                            </View>
+
+                            <View className="flex-row gap-4 mb-8">
+                                <View className="flex-1 bg-[#1B4D3E]/5 p-5 rounded-3xl border border-[#1B4D3E]/10">
+                                    <View className="w-10 h-10 bg-[#1B4D3E] rounded-2xl items-center justify-center mb-3">
+                                        <Package color="white" size={20} />
+                                    </View>
+                                    <Text className="text-[#1B4D3E] text-2xl font-black">{driverStats.pending}</Text>
+                                    <Text className="text-[#1B4D3E]/60 text-[10px] font-bold uppercase mt-1">Pending Orders</Text>
+                                </View>
+                                <View className="flex-1 bg-emerald-50 p-5 rounded-3xl border border-emerald-100">
+                                    <View className="w-10 h-10 bg-emerald-500 rounded-2xl items-center justify-center mb-3">
+                                        <CheckCircle color="white" size={20} />
+                                    </View>
+                                    <Text className="text-emerald-700 text-2xl font-black">{driverStats.completed}</Text>
+                                    <Text className="text-emerald-700/60 text-[10px] font-bold uppercase mt-1">Delivered Today</Text>
+                                </View>
+                            </View>
+
+                            <TouchableOpacity
+                                onPress={() => navigation.navigate('Driver')}
+                                className="bg-[#1B4D3E] p-6 rounded-[28px] flex-row items-center justify-center shadow-xl shadow-[#1B4D3E]/30"
+                            >
                                 <Navigation color="white" size={24} />
-                            </View>
-                            <View className="flex-1">
-                                <Text className="font-bold text-[#1B4D3E] text-lg">Driver Dashboard</Text>
-                                <Text className="text-[#1B4D3E]/60 text-xs mt-0.5">Manage and deliver assigned orders</Text>
-                            </View>
-                        </TouchableOpacity>
+                                <Text className="text-white font-black text-lg ml-3">Enter Driver Dashboard</Text>
+                            </TouchableOpacity>
+
+                            {/* Next Task Preview Snippet */}
+                            {driverStats.pending > 0 && (
+                                <View className="mt-6 pt-6 border-t border-gray-100">
+                                    <Text className="text-gray-400 font-bold text-[8px] uppercase tracking-[2px] mb-3 text-center">Upcoming Task</Text>
+                                    <View className="flex-row items-center bg-gray-50 p-4 rounded-2xl">
+                                        <View className="w-10 h-10 bg-white rounded-xl items-center justify-center mr-3 shadow-sm">
+                                            <Package color="#1B4D3E" size={20} />
+                                        </View>
+                                        <View className="flex-1">
+                                            <Text className="text-gray-900 font-bold text-sm">Priority Delivery</Text>
+                                            <Text className="text-gray-500 text-[10px] mt-0.5">Check dashboard for details</Text>
+                                        </View>
+                                        <Navigation color="#1B4D3E" size={16} />
+                                    </View>
+                                </View>
+                            )}
+                        </View>
                     </View>
                 )}
 
@@ -308,7 +455,7 @@ export default function DashboardScreen({ navigation }: any) {
                 transparent={true}
                 animationType="fade"
             >
-                <View className="flex-1 bg-black/60 justify-center items-center px-6">
+                <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', justifyContent: 'center', alignItems: 'center', paddingHorizontal: 24 }}>
                     <View className="bg-white rounded-[40px] p-8 w-full items-center shadow-2xl">
                         <View className="w-20 h-20 bg-[#1B4D3E]/10 rounded-full items-center justify-center mb-6">
                             <BellRing color="#1B4D3E" size={40} />

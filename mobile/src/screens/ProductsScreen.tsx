@@ -1,8 +1,11 @@
-import React, { useEffect, useState } from 'react';
-import { View, Text, TouchableOpacity, ScrollView, ActivityIndicator, Image, Modal, Pressable } from 'react-native';
+import React, { useEffect, useState, useCallback } from 'react';
+import { View, Text, TouchableOpacity, ScrollView, ActivityIndicator, Image } from 'react-native';
+import { useFocusEffect } from '@react-navigation/native';
 import { supabase } from '../lib/supabase';
-import { ArrowLeft, ShoppingCart, Plus, Minus, Check, X } from 'lucide-react-native';
-import { useCartStore } from '../stores/cartStore';
+import { useAuthStore } from '../stores/authStore';
+import { ArrowLeft, Repeat, Edit3, CheckCircle2 } from 'lucide-react-native';
+import SubscribeSheet, { type SubscribeProduct } from './SubscribeSheet';
+import { type FrequencyType } from '../lib/subscriptionUtils';
 
 interface Product {
     id: string;
@@ -15,75 +18,136 @@ interface Product {
 }
 
 const PRODUCT_IMAGES: Record<string, any> = {
-    'Cow Milk': require('../../assets/product-raw-milk.png'),
-    'Buffalo Milk': require('../../assets/product-raw-milk.png'),
-    'A2 Milk': require('../../assets/product-raw-milk.png'),
-    'Paneer': require('../../assets/product-paneer.png'),
-    'Ghee': require('../../assets/product-ghee.png'),
-    'Curd': require('../../assets/product-curd.png'),
-    'Buttermilk': require('../../assets/product-buttermilk.png'),
-    'Flavoured Milk': require('../../assets/product-chocolate-milk.png'),
-    'Natural Kulfi': require('../../assets/product-kulfi.png'),
-    'Carrot Milk': require('../../assets/product-carrot-milk.png'),
-    'Coconut Oil': require('../../assets/product-coconut-oil.png'),
-    'Sesame Oil': require('../../assets/product-sesame-oil.png'),
+    'Cow Milk':         require('../../assets/product-raw-milk.png'),
+    'Buffalo Milk':     require('../../assets/product-raw-milk.png'),
+    'A2 Milk':          require('../../assets/product-raw-milk.png'),
+    'Paneer':           require('../../assets/product-paneer.png'),
+    'Ghee':             require('../../assets/product-ghee.png'),
+    'Curd':             require('../../assets/product-curd.png'),
+    'Buttermilk':       require('../../assets/product-buttermilk.png'),
+    'Flavoured Milk':   require('../../assets/product-chocolate-milk.png'),
+    'Natural Kulfi':    require('../../assets/product-kulfi.png'),
+    'Carrot Milk':      require('../../assets/product-carrot-milk.png'),
+    'Coconut Oil':      require('../../assets/product-coconut-oil.png'),
+    'Sesame Oil':       require('../../assets/product-sesame-oil.png'),
     'Homogenized Milk': require('../../assets/product-homogenized-milk.png'),
     'Pasteurized Milk': require('../../assets/product-pasteurized-milk.png'),
 };
 
-function ProductItem({ product, onAdd }: { product: Product, onAdd: (p: Product) => void }) {
-    const isInCart = useCartStore((state) => state.isInCart(product.id));
+// ─── Product Card ─────────────────────────────────────────────────────────────
 
+function ProductCard({
+    product,
+    isSubscribed,
+    onSubscribe,
+    onEdit,
+}: {
+    product: Product;
+    isSubscribed: boolean;
+    onSubscribe: (p: Product) => void;
+    onEdit: () => void;
+}) {
     return (
-        <View className="bg-white rounded-[24px] overflow-hidden shadow-sm border border-gray-100 flex-row">
-            <View className="w-32 h-32 bg-[#8FBC8F]/20 items-center justify-center">
+        <View style={{
+            backgroundColor: 'white',
+            borderRadius: 24,
+            overflow: 'hidden',
+            flexDirection: 'row',
+            marginBottom: 16,
+            borderWidth: 1,
+            borderColor: isSubscribed ? '#bbf7d0' : '#f3f4f6',
+            shadowColor: '#000',
+            shadowOpacity: 0.04,
+            shadowRadius: 8,
+            shadowOffset: { width: 0, height: 2 },
+            elevation: 2,
+        }}>
+            {/* Thumbnail */}
+            <View style={{ width: 112, height: 112, backgroundColor: '#f0fdf4', alignItems: 'center', justifyContent: 'center' }}>
                 <Image
                     source={PRODUCT_IMAGES[product.name] || require('../../assets/logo.png')}
-                    className="w-full h-full"
+                    style={{ width: '100%', height: '100%' }}
                     resizeMode="cover"
                 />
-            </View>
-            <View className="flex-1 p-4 justify-between">
-                <View>
-                    <View className="flex-row justify-between items-start">
-                        <Text className="font-bold text-gray-900 text-lg flex-1 mr-2">{product.name}</Text>
+                {isSubscribed && (
+                    <View style={{
+                        position: 'absolute', top: 6, left: 6,
+                        backgroundColor: '#16a34a', borderRadius: 10,
+                        width: 20, height: 20,
+                        alignItems: 'center', justifyContent: 'center',
+                    }}>
+                        <CheckCircle2 color="white" size={13} />
                     </View>
-                    <Text className="text-xs text-gray-500 mt-1" numberOfLines={2}>{product.description}</Text>
+                )}
+            </View>
+
+            {/* Info */}
+            <View style={{ flex: 1, padding: 14, justifyContent: 'space-between' }}>
+                <View>
+                    <Text style={{ fontWeight: '800', color: '#111827', fontSize: 15, lineHeight: 20 }} numberOfLines={1}>
+                        {product.name}
+                    </Text>
+                    {isSubscribed && (
+                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 2 }}>
+                            <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: '#16a34a' }} />
+                            <Text style={{ fontSize: 10, color: '#16a34a', fontWeight: '700' }}>Active Subscription</Text>
+                        </View>
+                    )}
+                    <Text style={{ fontSize: 11, color: '#9ca3af', marginTop: 4, lineHeight: 16 }} numberOfLines={2}>
+                        {product.description}
+                    </Text>
                 </View>
 
-                <View className="flex-row items-center justify-between mt-3">
-                    <View className="flex-row items-baseline">
-                        <Text className="font-bold text-[#1B4D3E] text-lg">₹{product.price}</Text>
-                        <Text className="text-[10px] text-gray-500 font-normal ml-1">/{product.unit}</Text>
+                <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 8 }}>
+                    {/* Price */}
+                    <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 2 }}>
+                        <Text style={{ fontWeight: '900', color: '#1B4D3E', fontSize: 18 }}>₹{product.price}</Text>
+                        <Text style={{ fontSize: 10, color: '#9ca3af' }}>/{product.unit}</Text>
                     </View>
 
-                    <TouchableOpacity
-                        onPress={() => onAdd(product)}
-                        className={`w-10 h-10 rounded-full items-center justify-center ${isInCart ? 'bg-green-500' : 'bg-[#1B4D3E]'}`}
-                    >
-                        {isInCart ? <Check color="white" size={20} /> : <Plus color="white" size={20} />}
-                    </TouchableOpacity>
+                    {/* CTA button */}
+                    {isSubscribed ? (
+                        <TouchableOpacity
+                            onPress={onEdit}
+                            activeOpacity={0.8}
+                            style={{
+                                flexDirection: 'row', alignItems: 'center', gap: 5,
+                                paddingHorizontal: 14, paddingVertical: 8, borderRadius: 16,
+                                borderWidth: 1.5, borderColor: '#16a34a',
+                                backgroundColor: '#f0fdf4',
+                            }}
+                        >
+                            <Edit3 color="#16a34a" size={12} />
+                            <Text style={{ color: '#16a34a', fontWeight: '900', fontSize: 11 }}>Edit</Text>
+                        </TouchableOpacity>
+                    ) : (
+                        <TouchableOpacity
+                            onPress={() => onSubscribe(product)}
+                            activeOpacity={0.8}
+                            style={{
+                                flexDirection: 'row', alignItems: 'center', gap: 5,
+                                paddingHorizontal: 14, paddingVertical: 8, borderRadius: 16,
+                                backgroundColor: '#1B4D3E',
+                            }}
+                        >
+                            <Repeat color="white" size={12} />
+                            <Text style={{ color: 'white', fontWeight: '900', fontSize: 11 }}>Subscribe</Text>
+                        </TouchableOpacity>
+                    )}
                 </View>
             </View>
         </View>
     );
 }
 
+// ─── Main Screen ──────────────────────────────────────────────────────────────
+
 export default function ProductsScreen({ navigation }: any) {
-    const { items, addItem } = useCartStore((state) => ({
-        items: state.items,
-        addItem: state.addItem
-    }));
-    const [products, setProducts] = useState<Product[]>([]);
-    const [loading, setLoading] = useState(true);
-    const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
-    const [quantity, setQuantity] = useState(1);
-
-    const cartItemsCount = items.length;
-
-    useEffect(() => {
-        fetchProducts();
-    }, []);
+    const { customer } = useAuthStore();
+    const [products,          setProducts]          = useState<Product[]>([]);
+    const [subscribedIds,     setSubscribedIds]     = useState<Set<string>>(new Set());
+    const [loading,           setLoading]           = useState(true);
+    const [subscribeProduct,  setSubscribeProduct]  = useState<SubscribeProduct | null>(null);
 
     const fetchProducts = async () => {
         const { data } = await supabase
@@ -91,124 +155,88 @@ export default function ProductsScreen({ navigation }: any) {
             .select('*')
             .eq('active', true)
             .order('category');
+        if (data) setProducts(data);
+    };
 
+    const fetchSubscribedIds = async () => {
+        if (!customer?.id) return;
+        const { data } = await supabase
+            .from('subscriptions')
+            .select('product_id')
+            .eq('customer_id', customer.id)
+            .in('status', ['active', 'paused']);
         if (data) {
-            setProducts(data);
-        }
-        setLoading(false);
-    };
-
-    const handleOpenModal = (product: Product) => {
-        setSelectedProduct(product);
-        setQuantity(1);
-    };
-
-    const handleAddToCart = () => {
-        if (selectedProduct) {
-            addItem(selectedProduct, quantity);
-            setSelectedProduct(null);
+            setSubscribedIds(new Set(data.map((s: any) => s.product_id)));
         }
     };
+
+    // Reload subscribed IDs every time screen comes into focus
+    // (so after navigating back from Subscriptions, the state is fresh)
+    useFocusEffect(
+        useCallback(() => {
+            setLoading(true);
+            Promise.all([fetchProducts(), fetchSubscribedIds()])
+                .finally(() => setLoading(false));
+        }, [customer?.id])
+    );
 
     return (
-        <View className="flex-1 bg-gray-50">
+        <View style={{ flex: 1, backgroundColor: '#f9fafb' }}>
             {/* Header */}
-            <View className="bg-[#1B4D3E] pt-16 pb-4 px-6 shadow-md flex-row items-center justify-between">
-                <TouchableOpacity onPress={() => navigation.goBack()} className="p-2 -ml-2">
+            <View style={{ backgroundColor: '#1B4D3E', paddingTop: 56, paddingBottom: 16, paddingHorizontal: 24, flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+                <TouchableOpacity onPress={() => navigation.goBack()} style={{ padding: 6 }}>
                     <ArrowLeft color="white" size={24} />
                 </TouchableOpacity>
-                <Text className="text-white text-xl font-bold">Products</Text>
-                <TouchableOpacity
-                    onPress={() => navigation.navigate('Cart')}
-                    className="p-2 relative"
-                >
-                    <ShoppingCart color="white" size={24} />
-                    {cartItemsCount > 0 && (
-                        <View className="absolute -top-0 -right-0 bg-[#D4AF37] min-w-[16px] h-[16px] rounded-full items-center justify-center px-1">
-                            <Text className="text-[8px] font-bold text-[#1B4D3E]">{cartItemsCount}</Text>
-                        </View>
-                    )}
-                </TouchableOpacity>
+                <View style={{ flex: 1 }}>
+                    <Text style={{ color: 'white', fontSize: 20, fontWeight: '900' }}>Products</Text>
+                    <Text style={{ color: 'rgba(255,255,255,0.55)', fontSize: 11, marginTop: 1 }}>
+                        🟢 Active subscription  ·  Tap Subscribe to add
+                    </Text>
+                </View>
             </View>
 
-            <ScrollView className="flex-1 px-4 pt-4 pb-20">
+            {/* List */}
+            <ScrollView style={{ flex: 1, paddingHorizontal: 16, paddingTop: 16 }} showsVerticalScrollIndicator={false}>
                 {loading ? (
-                    <ActivityIndicator size="large" color="#1B4D3E" className="mt-10" />
+                    <ActivityIndicator size="large" color="#1B4D3E" style={{ marginTop: 64 }} />
                 ) : (
-                    <View className="gap-4 pb-12">
-                        {products.map((product) => (
-                            <ProductItem key={product.id} product={product} onAdd={handleOpenModal} />
+                    <View style={{ paddingBottom: 80 }}>
+                        {products.map(product => (
+                            <ProductCard
+                                key={product.id}
+                                product={product}
+                                isSubscribed={subscribedIds.has(product.id)}
+                                onSubscribe={p =>
+                                    setSubscribeProduct({
+                                        id:    p.id,
+                                        name:  p.name,
+                                        price: p.price,
+                                        unit:  p.unit,
+                                    })
+                                }
+                                onEdit={() => navigation.navigate('Subscriptions')}
+                            />
                         ))}
                     </View>
                 )}
             </ScrollView>
 
-            {/* Quantity Modal */}
-            <Modal
-                visible={!!selectedProduct}
-                transparent
-                animationType="fade"
-                onRequestClose={() => setSelectedProduct(null)}
-            >
-                <Pressable
-                    className="flex-1 bg-black/50 justify-center items-center px-10"
-                    onPress={() => setSelectedProduct(null)}
-                >
-                    <Pressable
-                        className="bg-white w-full rounded-[32px] p-6 shadow-2xl"
-                        onPress={(e) => e.stopPropagation()}
-                    >
-                        <View className="flex-row justify-between items-center mb-6">
-                            <Text className="text-xl font-bold text-gray-900">Select Quantity</Text>
-                            <TouchableOpacity onPress={() => setSelectedProduct(null)}>
-                                <X color="#64748b" size={24} />
-                            </TouchableOpacity>
-                        </View>
-
-                        {selectedProduct && (
-                            <View className="items-center mb-8">
-                                <View className="w-24 h-24 bg-[#8FBC8F]/10 rounded-2xl items-center justify-center overflow-hidden mb-4">
-                                    <Image
-                                        source={PRODUCT_IMAGES[selectedProduct.name] || require('../../assets/logo.png')}
-                                        className="w-full h-full"
-                                        resizeMode="cover"
-                                    />
-                                </View>
-                                <Text className="text-lg font-bold text-[#1B4D3E] text-center">{selectedProduct.name}</Text>
-                                <Text className="text-gray-500 mt-1">₹{selectedProduct.price} / {selectedProduct.unit}</Text>
-                            </View>
-                        )}
-
-                        <View className="flex-row items-center justify-center bg-gray-50 rounded-2xl py-4 mb-8">
-                            <TouchableOpacity
-                                onPress={() => setQuantity(Math.max(1, quantity - 1))}
-                                className="w-12 h-12 bg-white border border-gray-100 rounded-xl items-center justify-center shadow-sm"
-                            >
-                                <Minus color="#1B4D3E" size={20} />
-                            </TouchableOpacity>
-                            <View className="mx-8 items-center">
-                                <Text className="text-3xl font-bold text-[#1B4D3E]">{quantity}</Text>
-                                <Text className="text-gray-400 text-[10px] uppercase font-bold tracking-widest mt-1">Items</Text>
-                            </View>
-                            <TouchableOpacity
-                                onPress={() => setQuantity(quantity + 1)}
-                                className="w-12 h-12 bg-white border border-gray-100 rounded-xl items-center justify-center shadow-sm"
-                            >
-                                <Plus color="#1B4D3E" size={20} />
-                            </TouchableOpacity>
-                        </View>
-
-                        <TouchableOpacity
-                            onPress={handleAddToCart}
-                            className="bg-[#1B4D3E] h-14 rounded-2xl items-center justify-center shadow-lg"
-                        >
-                            <Text className="text-white font-bold text-lg">Add to Cart • ₹{selectedProduct ? selectedProduct.price * quantity : 0}</Text>
-                        </TouchableOpacity>
-                    </Pressable>
-                </Pressable>
-            </Modal>
+            {/* Calendar date picker — confirms then navigates to payment */}
+            <SubscribeSheet
+                visible={!!subscribeProduct}
+                onClose={() => setSubscribeProduct(null)}
+                product={subscribeProduct}
+                onConfirm={(dates: string[], freq: FrequencyType, qty: number) => {
+                    if (!subscribeProduct) return;
+                    setSubscribeProduct(null);
+                    navigation.navigate('SubscribePayment', {
+                        product:       subscribeProduct,
+                        selectedDates: dates,
+                        frequencyType: freq,
+                        quantity:      qty,
+                    });
+                }}
+            />
         </View>
     );
 }
-
-

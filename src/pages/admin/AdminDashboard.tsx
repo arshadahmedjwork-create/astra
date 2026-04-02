@@ -32,81 +32,115 @@ const AdminDashboard = () => {
         monthlyRevenue: 0,
     });
 
-    const [recentOrders, setRecentOrders] = useState<any[]>([]);
+    const [recentOrders,  setRecentOrders]  = useState<any[]>([]);
+    const [deliveryChart, setDeliveryChart] = useState<{ name: string; deliveries: number }[]>([]);
+    const [productChart,  setProductChart]  = useState<{ name: string; value: number }[]>([]);
     const [loading, setLoading] = useState(true);
-
-    // Placeholder data for charts
-    const revenueData = [
-        { name: 'Mon', revenue: 4000 },
-        { name: 'Tue', revenue: 3000 },
-        { name: 'Wed', revenue: 2000 },
-        { name: 'Thu', revenue: 2780 },
-        { name: 'Fri', revenue: 1890 },
-        { name: 'Sat', revenue: 2390 },
-        { name: 'Sun', revenue: 3490 },
-    ];
-
-    const deliveryData = [
-        { name: 'Cow Milk', value: 400 },
-        { name: 'Buffalo Milk', value: 300 },
-        { name: 'A2 Milk', value: 200 },
-        { name: 'Paneer', value: 100 },
-    ];
 
     useEffect(() => {
         fetchDashboardData();
+
+        // Real-time — re-fetch when orders or subscriptions change
+        const channel = supabase
+            .channel('admin-dashboard-rt')
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'orders' },        () => fetchDashboardData())
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'subscriptions' }, () => fetchDashboardData())
+            .subscribe();
+
+        // Also poll every 30 s as a fallback
+        const timer = setInterval(fetchDashboardData, 30_000);
+
+        return () => {
+            supabase.removeChannel(channel);
+            clearInterval(timer);
+        };
     }, []);
 
     const fetchDashboardData = async () => {
         setLoading(true);
         try {
-            // Fetch total customers
-            const { count: customerCount } = await supabase
-                .from('customers')
-                .select('*', { count: 'exact', head: true });
-
-            // Fetch active subscriptions
-            const { count: subCount } = await supabase
-                .from('subscriptions')
-                .select('*', { count: 'exact', head: true })
-                .eq('status', 'active');
-
-            // Fetch pending samples
-            const { count: sampleCount } = await supabase
-                .from('sample_requests')
-                .select('*', { count: 'exact', head: true })
-                .eq('status', 'requested');
-
-            // Fetch today's deliveries (orders with status pending or get_to_deliver for today)
             const today = new Date().toISOString().split('T')[0];
-            const { count: deliveryCount } = await supabase
-                .from('orders')
-                .select('*', { count: 'exact', head: true })
-                .eq('delivery_date', today)
-                .in('status', ['pending', 'get_to_deliver']);
 
-            // Fetch recent orders for the table
-            const { data: orders } = await supabase
+            // ── KPI Queries (parallel) ────────────────────────────────────────
+            const [
+                { count: customerCount },
+                { count: subCount },
+                { count: sampleCount },
+                { count: deliveryCount },
+                { data: orders },
+                { data: revenueRows },
+                { data: productRows },
+            ] = await Promise.all([
+                supabase.from('customers').select('*', { count: 'exact', head: true }),
+                supabase.from('subscriptions').select('*', { count: 'exact', head: true }).eq('status', 'active'),
+                supabase.from('sample_requests').select('*', { count: 'exact', head: true }).eq('status', 'requested'),
+                supabase.from('orders').select('*', { count: 'exact', head: true }).eq('delivery_date', today).in('status', ['pending', 'get_to_deliver', 'preparing']),
+
+                // Recent orders table
+                supabase.from('orders')
+                    .select('id, order_date, status, total_amount, customers(full_name, customer_id)')
+                    .order('created_at', { ascending: false })
+                    .limit(5),
+
+                // 7-day daily delivery chart (count of orders per day)
+                supabase.from('orders')
+                    .select('delivery_date, status')
+                    .gte('delivery_date', new Date(Date.now() - 6 * 86400000).toISOString().split('T')[0])
+                    .lte('delivery_date', today),
+
+                // Product demand: active subscriptions grouped by product name
+                supabase.from('subscriptions')
+                    .select('quantity, products(name)')
+                    .eq('status', 'active'),
+            ]);
+
+            // ── Build 7-day chart ─────────────────────────────────────────────
+            const dayLabels = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+            const dayCounts: Record<string, number> = {};
+            for (let i = 6; i >= 0; i--) {
+                const d = new Date(Date.now() - i * 86400000);
+                const key = d.toISOString().split('T')[0];
+                dayCounts[key] = 0;
+            }
+            (revenueRows || []).forEach((row: any) => {
+                if (row.delivery_date in dayCounts) dayCounts[row.delivery_date]++;
+            });
+            const deliveryChartData = Object.entries(dayCounts).map(([date, count]) => ({
+                name: dayLabels[new Date(date + 'T00:00:00').getDay()],
+                deliveries: count,
+            }));
+
+            // ── Build product demand chart ────────────────────────────────────
+            const productMap: Record<string, number> = {};
+            (productRows || []).forEach((row: any) => {
+                const name = row.products?.name || 'Unknown';
+                productMap[name] = (productMap[name] || 0) + (row.quantity || 1);
+            });
+            const productChartData = Object.entries(productMap)
+                .sort((a, b) => b[1] - a[1])
+                .slice(0, 5)
+                .map(([name, value]) => ({ name, value }));
+
+            // ── Monthly revenue from delivered orders ─────────────────────────
+            const monthStart = new Date();
+            monthStart.setDate(1);
+            const { data: revData } = await supabase
                 .from('orders')
-                .select(`
-                    id, 
-                    order_date, 
-                    status, 
-                    total_amount,
-                    customers (full_name, customer_id)
-                `)
-                .order('created_at', { ascending: false })
-                .limit(5);
+                .select('total_amount')
+                .eq('status', 'delivered')
+                .gte('delivery_date', monthStart.toISOString().split('T')[0]);
+            const monthlyRevenue = (revData || []).reduce((s: number, r: any) => s + (r.total_amount || 0), 0);
 
             setStats({
-                totalCustomers: customerCount || 0,
+                totalCustomers:     customerCount || 0,
                 activeSubscriptions: subCount || 0,
-                todayDeliveries: deliveryCount || 0,
-                pendingSamples: sampleCount || 0,
-                monthlyRevenue: 125000, // Placeholder until payments table is fully populated
+                todayDeliveries:    deliveryCount || 0,
+                pendingSamples:     sampleCount || 0,
+                monthlyRevenue,
             });
-
-            if (orders) setRecentOrders(orders);
+            if (orders)          setRecentOrders(orders);
+            if (deliveryChartData.length) setDeliveryChart(deliveryChartData);
+            if (productChartData.length)  setProductChart(productChartData);
         } catch (error) {
             console.error('Error fetching dashboard data:', error);
         } finally {
@@ -209,28 +243,35 @@ const AdminDashboard = () => {
             {/* Charts Section */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 <Card className="col-span-1 lg:col-span-2 border-border/50 shadow-sm">
-                    <CardHeader>
-                        <CardTitle className="text-lg">Revenue Trends</CardTitle>
-                        <CardDescription>Daily revenue for the past 7 days</CardDescription>
+                    <CardHeader className="flex flex-row items-center justify-between">
+                        <div>
+                            <CardTitle className="text-lg">Daily Deliveries</CardTitle>
+                            <CardDescription>Orders scheduled per day — last 7 days (live)</CardDescription>
+                        </div>
+                        <span className="flex items-center gap-1.5 text-xs text-green-600 font-semibold">
+                            <span className="inline-block w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+                            Live
+                        </span>
                     </CardHeader>
                     <CardContent className="pl-0">
                         <div className="h-[300px] w-full">
                             <ResponsiveContainer width="100%" height="100%">
-                                <AreaChart data={revenueData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
+                                <AreaChart data={deliveryChart} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
                                     <defs>
-                                        <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
-                                            <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.3} />
+                                        <linearGradient id="colorDelivery" x1="0" y1="0" x2="0" y2="1">
+                                            <stop offset="5%"  stopColor="hsl(var(--primary))" stopOpacity={0.3} />
                                             <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0} />
                                         </linearGradient>
                                     </defs>
                                     <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" />
                                     <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 12 }} dy={10} />
-                                    <YAxis axisLine={false} tickLine={false} tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 12 }} dx={-10} tickFormatter={(val) => `₹${val}`} />
+                                    <YAxis axisLine={false} tickLine={false} tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 12 }} dx={-10} allowDecimals={false} />
                                     <Tooltip
                                         contentStyle={{ backgroundColor: 'hsl(var(--card))', borderColor: 'hsl(var(--border))', borderRadius: '8px' }}
                                         itemStyle={{ color: 'hsl(var(--foreground))' }}
+                                        formatter={(v: any) => [`${v} deliveries`, 'Count']}
                                     />
-                                    <Area type="monotone" dataKey="revenue" stroke="hsl(var(--primary))" strokeWidth={3} fillOpacity={1} fill="url(#colorRevenue)" />
+                                    <Area type="monotone" dataKey="deliveries" stroke="hsl(var(--primary))" strokeWidth={3} fillOpacity={1} fill="url(#colorDelivery)" />
                                 </AreaChart>
                             </ResponsiveContainer>
                         </div>
@@ -239,21 +280,22 @@ const AdminDashboard = () => {
 
                 <Card className="col-span-1 border-border/50 shadow-sm">
                     <CardHeader>
-                        <CardTitle className="text-lg">Product Demands</CardTitle>
-                        <CardDescription>Top delivering products today</CardDescription>
+                        <CardTitle className="text-lg">Product Demand</CardTitle>
+                        <CardDescription>Active subscriptions by product (live)</CardDescription>
                     </CardHeader>
                     <CardContent>
                         <div className="h-[300px] w-full">
                             <ResponsiveContainer width="100%" height="100%">
-                                <BarChart data={deliveryData} layout="vertical" margin={{ top: 0, right: 0, left: 0, bottom: 0 }}>
+                                <BarChart data={productChart} layout="vertical" margin={{ top: 0, right: 0, left: 0, bottom: 0 }}>
                                     <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="hsl(var(--border))" />
-                                    <XAxis type="number" hide />
-                                    <YAxis dataKey="name" type="category" axisLine={false} tickLine={false} tick={{ fill: 'hsl(var(--foreground))', fontSize: 12 }} width={90} />
+                                    <XAxis type="number" hide allowDecimals={false} />
+                                    <YAxis dataKey="name" type="category" axisLine={false} tickLine={false} tick={{ fill: 'hsl(var(--foreground))', fontSize: 11 }} width={90} />
                                     <Tooltip
                                         cursor={{ fill: 'hsl(var(--secondary))' }}
                                         contentStyle={{ backgroundColor: 'hsl(var(--card))', borderColor: 'hsl(var(--border))', borderRadius: '8px' }}
+                                        formatter={(v: any) => [`${v} units`, 'Subscribed qty']}
                                     />
-                                    <Bar dataKey="value" fill="hsl(var(--accent))" radius={[0, 4, 4, 0]} barSize={24} />
+                                    <Bar dataKey="value" fill="hsl(var(--primary))" radius={[0, 4, 4, 0]} barSize={22} />
                                 </BarChart>
                             </ResponsiveContainer>
                         </div>

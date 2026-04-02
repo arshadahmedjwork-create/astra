@@ -1,5 +1,6 @@
 import * as Location from 'expo-location';
 import * as TaskManager from 'expo-task-manager';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { supabase } from './lib/supabase';
 
 export const LOCATION_TRACKING_TASK = 'LOCATION_TRACKING_TASK';
@@ -22,9 +23,7 @@ export async function startBackgroundLocation(driverId: string) {
         },
     });
 
-    // Store driver ID globally or in a way the task can access it
-    // For now, we'll use a hack or assume the task can get it from somewhere
-    (global as any).currentDriverId = driverId;
+    await AsyncStorage.setItem('active_tracking_driver_id', driverId);
     return true;
 }
 
@@ -44,16 +43,20 @@ TaskManager.defineTask(LOCATION_TRACKING_TASK, async ({ data, error }: any) => {
         const { locations } = data;
         const [location] = locations;
         if (location) {
-            const driverId = (global as any).currentDriverId;
-            if (driverId) {
-                await supabase
-                    .from('drivers')
-                    .update({
-                        current_lat: location.coords.latitude,
-                        current_lng: location.coords.longitude,
-                        updated_at: new Date().toISOString(),
-                    })
-                    .eq('id', driverId);
+            try {
+                const driverId = await AsyncStorage.getItem('active_tracking_driver_id');
+                if (driverId) {
+                    await supabase
+                        .from('drivers')
+                        .update({
+                            current_lat: location.coords.latitude,
+                            current_lng: location.coords.longitude,
+                            updated_at: new Date().toISOString(),
+                        })
+                        .eq('id', driverId);
+                }
+            } catch (e) {
+                console.error('Error in background task:', e);
             }
         }
     }

@@ -1,8 +1,10 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, TouchableOpacity, SafeAreaView, ActivityIndicator } from 'react-native';
+import { View, Text, TouchableOpacity, SafeAreaView, ActivityIndicator, Image } from 'react-native';
 import MapView, { Marker, Polyline, PROVIDER_GOOGLE } from 'react-native-maps';
-import { ChevronLeft, Phone, Clock, Navigation } from 'lucide-react-native';
+import { ChevronLeft, Phone, Clock } from 'lucide-react-native';
 import { supabase } from '../lib/supabase';
+
+const driverImg = require('../../assets/driver.png');
 
 export default function TrackingScreen({ route, navigation }: any) {
     const { orderId } = route.params;
@@ -10,6 +12,9 @@ export default function TrackingScreen({ route, navigation }: any) {
     const [driverLocation, setDriverLocation] = useState<any>(null);
     const [customerLocation, setCustomerLocation] = useState<any>(null);
     const [loading, setLoading] = useState(true);
+    const [eta, setEta] = useState('Calculating...');
+    const [routeCoords, setRouteCoords] = useState<any[]>([]);
+    const mapRef = React.useRef<MapView>(null);
 
     const fetchOrderDetails = async () => {
         const { data, error } = await supabase
@@ -43,8 +48,45 @@ export default function TrackingScreen({ route, navigation }: any) {
         setLoading(false);
     };
 
+    const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: number) => {
+        const R = 6371; // km
+        const dLat = (lat2 - lat1) * Math.PI / 180;
+        const dLon = (lon2 - lon1) * Math.PI / 180;
+        const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+            Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+            Math.sin(dLon / 2) * Math.sin(dLon / 2);
+        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        return R * c;
+    };
+
+    const fetchOSRMRoute = async (start: any, end: any) => {
+        try {
+            const url = `https://router.project-osrm.org/route/v1/driving/${start.longitude},${start.latitude};${end.longitude},${end.latitude}?overview=full&geometries=geojson`;
+            const response = await fetch(url);
+            const data = await response.json();
+            if (data.routes && data.routes.length > 0) {
+                const coords = data.routes[0].geometry.coordinates.map((c: any) => ({
+                    latitude: c[1],
+                    longitude: c[0]
+                }));
+                setRouteCoords(coords);
+                
+                // Update ETA based on OSRM distance (in meters)
+                const distanceKm = data.routes[0].distance / 1000;
+                const mins = Math.max(1, Math.round(distanceKm * 4)); // 4 mins per km for city traffic
+                setEta(`${mins} min${mins > 1 ? 's' : ''}`);
+            }
+        } catch (e) {
+            console.error('Error fetching OSRM route:', e);
+        }
+    };
+
     useEffect(() => {
         fetchOrderDetails();
+    }, [orderId]);
+
+    useEffect(() => {
+        if (!order?.driver_id) return;
 
         // Subscribe to driver location updates
         const channel = supabase
@@ -53,13 +95,18 @@ export default function TrackingScreen({ route, navigation }: any) {
                 event: 'UPDATE',
                 schema: 'public',
                 table: 'drivers',
-                filter: order?.driver_id ? `id=eq.${order.driver_id}` : undefined,
+                filter: `id=eq.${order.driver_id}`,
             }, (payload) => {
                 if (payload.new.current_lat && payload.new.current_lng) {
-                    setDriverLocation({
+                    const newLoc = {
                         latitude: payload.new.current_lat,
                         longitude: payload.new.current_lng,
-                    });
+                    };
+                    setDriverLocation(newLoc);
+                    
+                    if (customerLocation) {
+                        fetchOSRMRoute(newLoc, customerLocation);
+                    }
                 }
             })
             .subscribe();
@@ -67,7 +114,22 @@ export default function TrackingScreen({ route, navigation }: any) {
         return () => {
             supabase.removeChannel(channel);
         };
-    }, [orderId, order?.driver_id]);
+    }, [order?.driver_id, customerLocation]);
+
+    useEffect(() => {
+        if (driverLocation && customerLocation && routeCoords.length === 0) {
+            fetchOSRMRoute(driverLocation, customerLocation);
+        }
+    }, [driverLocation, customerLocation]);
+
+    useEffect(() => {
+        if (driverLocation && customerLocation && mapRef.current) {
+            mapRef.current.fitToCoordinates([driverLocation, customerLocation, ...routeCoords], {
+                edgePadding: { top: 100, right: 100, bottom: 300, left: 100 },
+                animated: true,
+            });
+        }
+    }, [driverLocation, customerLocation, routeCoords]);
 
     if (loading) {
         return (
@@ -80,10 +142,12 @@ export default function TrackingScreen({ route, navigation }: any) {
     return (
         <View className="flex-1 bg-white">
             <MapView
+                ref={mapRef}
                 className="flex-1"
                 provider={PROVIDER_GOOGLE}
                 initialRegion={{
-                    ...(driverLocation || customerLocation || { latitude: 13.0827, longitude: 80.2707 }),
+                    latitude: driverLocation?.latitude || customerLocation?.latitude || 13.0827,
+                    longitude: driverLocation?.longitude || customerLocation?.longitude || 80.2707,
                     latitudeDelta: 0.05,
                     longitudeDelta: 0.05,
                 }}
@@ -100,16 +164,22 @@ export default function TrackingScreen({ route, navigation }: any) {
                         coordinate={driverLocation}
                         title="Delivery Partner"
                     >
-                        <View className="bg-white p-2 rounded-full border-2 border-[#D4AF37] shadow-lg">
-                            <Navigation size={20} color="#D4AF37" />
-                        </View>
+                        <Image source={driverImg} style={{ width: 44, height: 44, resizeMode: 'contain' }} />
                     </Marker>
                 )}
-                {driverLocation && customerLocation && (
+                {routeCoords.length > 0 ? (
+                    <Polyline
+                        coordinates={routeCoords}
+                        strokeWidth={4}
+                        strokeColor="#1B4D3E"
+                        lineDashPattern={[1]}
+                    />
+                ) : driverLocation && customerLocation && (
                     <Polyline
                         coordinates={[driverLocation, customerLocation]}
-                        strokeWidth={3}
+                        strokeWidth={2}
                         strokeColor="#1B4D3E"
+                        lineDashPattern={[5, 5]}
                     />
                 )}
             </MapView>
@@ -138,7 +208,7 @@ export default function TrackingScreen({ route, navigation }: any) {
                         </View>
                         <View>
                             <Text className="text-gray-400 text-xs font-bold uppercase">Estimated Arrival</Text>
-                            <Text className="text-gray-900 text-lg font-bold">12 - 15 Mins</Text>
+                            <Text className="text-gray-900 text-lg font-bold">{eta}</Text>
                         </View>
                     </View>
                     <TouchableOpacity className="bg-[#1B4D3E] p-4 rounded-full shadow-md">
@@ -149,12 +219,16 @@ export default function TrackingScreen({ route, navigation }: any) {
                 <View className="h-[1px] bg-gray-100 my-4" />
 
                 <View className="flex-row items-center">
-                    <View className="w-10 h-10 bg-gray-100 rounded-full items-center justify-center mr-3">
-                        <Navigation color="#475569" size={20} />
+                    <View className="w-10 h-10 bg-[#1B4D3E]/10 rounded-full items-center justify-center mr-3 overflow-hidden border border-[#D4AF37]">
+                        <Image source={driverImg} style={{ width: 32, height: 32, resizeMode: 'contain' }} />
                     </View>
-                    <Text className="text-gray-600 flex-1">
-                        Your delivery partner is on the way to your address.
-                    </Text>
+                    <View className="flex-1">
+                        <Text className="text-gray-900 font-bold">{order?.drivers?.full_name || 'Delivery Partner'}</Text>
+                        <Text className="text-gray-500 text-[10px] uppercase font-bold">{order?.drivers?.vehicle_no || 'TVS XL 100'}</Text>
+                    </View>
+                    <View className="bg-emerald-50 px-3 py-1 rounded-full">
+                        <Text className="text-emerald-700 text-[10px] font-bold">Verified</Text>
+                    </View>
                 </View>
             </View>
         </View>

@@ -1,3 +1,4 @@
+import './src/backgroundLocation';
 import React, { useEffect, useState } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
@@ -18,6 +19,8 @@ import ProfileScreen from './src/screens/ProfileScreen';
 import OrdersScreen from './src/screens/OrdersScreen';
 import TrackingScreen from './src/screens/TrackingScreen';
 import DriverMode from './src/screens/DriverMode';
+import WalletScreen from './src/screens/WalletScreen';
+import SubscribePaymentScreen from './src/screens/SubscribePaymentScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -130,6 +133,8 @@ export default function App() {
             <Stack.Screen name="Orders" component={OrdersScreen} />
             <Stack.Screen name="Tracking" component={TrackingScreen} />
             <Stack.Screen name="Driver" component={DriverMode} />
+            <Stack.Screen name="Wallet" component={WalletScreen} />
+            <Stack.Screen name="SubscribePayment" component={SubscribePaymentScreen} />
           </>
         )}
       </Stack.Navigator>
