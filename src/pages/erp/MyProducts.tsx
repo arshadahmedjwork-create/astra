@@ -163,10 +163,34 @@ const MyProducts = () => {
 
             {/* Subscribe Modal */}
             <SubscribeModal
-                open={!!subscribeProduct}
+                isOpen={!!subscribeProduct}
                 onClose={() => setSubscribeProduct(null)}
                 product={subscribeProduct}
-                onSuccess={() => setSubscribeProduct(null)}
+                onConfirm={async (dates, frequency, quantity) => {
+                    if (!customer?.id || !subscribeProduct) return;
+                    try {
+                        const { error } = await supabase.from('subscriptions').insert({
+                            customer_id: customer.id,
+                            product_id: subscribeProduct.id,
+                            selected_dates: dates,
+                            frequency,
+                            quantity,
+                            status: 'active',
+                            unit_price: subscribeProduct.price,
+                        });
+                        if (error) throw error;
+                        setSubscribeProduct(null);
+                        // Refresh subscriptions
+                        const { data } = await supabase
+                            .from('subscriptions')
+                            .select('product_id')
+                            .eq('customer_id', customer.id)
+                            .in('status', ['active', 'paused', 'completed']);
+                        if (data) setActiveSubProductIds(new Set(data.map(s => s.product_id)));
+                    } catch (error: any) {
+                        alert('Failed to save subscription: ' + error.message);
+                    }
+                }}
             />
         </ERPLayout>
     );

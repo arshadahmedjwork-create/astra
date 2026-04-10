@@ -209,14 +209,11 @@ export default function SubscribeSheet({ visible, onClose, product, onConfirm, o
             const { error } = await supabase.from('subscriptions').insert({
                 customer_id:    customer.id,
                 product_id:     product.id,
-                frequency_type: frequency,
+                frequency,
                 selected_dates: selectedDates,
-                start_date:     selectedDates[0],
-                end_date:       selectedDates[selectedDates.length - 1],
-                required_date:  selectedDates[0],
-                unit_price:     product.price,
                 quantity,
                 status:         'active',
+                unit_price:     product.price,
             });
             if (error) throw error;
             setSuccess(true);

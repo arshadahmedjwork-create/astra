@@ -328,7 +328,7 @@ const AdminOrders = () => {
         o.address?.area?.toLowerCase().includes(searchQuery.toLowerCase())
     );
 
-    const pendingCount   = orders.filter(o => o.status === 'pending' || o.status === 'get_to_deliver').length;
+    const pendingCount   = orders.filter(o => o.status === 'pending' || o.status === 'get_to_deliver' || o.status === 'preparing').length;
     const doneCount      = orders.filter(o => o.status === 'delivered').length;
     const plannedCount   = plannedDeliveries.length;
 

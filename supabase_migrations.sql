@@ -97,7 +97,9 @@ CREATE TABLE IF NOT EXISTS subscriptions (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   customer_id UUID NOT NULL REFERENCES customers(id) ON DELETE CASCADE,
   product_id UUID NOT NULL REFERENCES products(id),
-  required_date DATE NOT NULL,
+  required_date DATE, -- Deprecated in favor of selected_dates
+  selected_dates JSONB DEFAULT '[]',
+  frequency TEXT,
   quantity INTEGER NOT NULL DEFAULT 1,
   unit_price NUMERIC(10,2) NOT NULL,
   total_price NUMERIC(10,2) GENERATED ALWAYS AS (quantity * unit_price) STORED,
@@ -115,8 +117,10 @@ CREATE TABLE IF NOT EXISTS orders (
   subscription_id UUID REFERENCES subscriptions(id),
   order_date DATE DEFAULT CURRENT_DATE,
   delivery_date DATE,
-  status TEXT DEFAULT 'pending' CHECK (status IN ('pending', 'get_to_deliver', 'delivered', 'paused', 'cancelled')),
+  status TEXT DEFAULT 'pending' CHECK (status IN ('pending', 'get_to_deliver', 'delivered', 'paused', 'cancelled', 'preparing')),
   total_amount NUMERIC(10,2),
+  driver_id UUID, -- References drivers table
+  tracking_active BOOLEAN DEFAULT false,
   created_at TIMESTAMPTZ DEFAULT now(),
   updated_at TIMESTAMPTZ DEFAULT now()
 );
@@ -194,6 +198,22 @@ CREATE TABLE IF NOT EXISTS admins (
 );
 
 -- ============================================================
+-- 10. DRIVERS
+-- ============================================================
+CREATE TABLE IF NOT EXISTS drivers (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  full_name TEXT NOT NULL,
+  phone TEXT NOT NULL,
+  vehicle_no TEXT,
+  status TEXT DEFAULT 'inactive' CHECK (status IN ('active', 'inactive', 'busy')),
+  tracking_active BOOLEAN DEFAULT false,
+  current_lat NUMERIC(10,8),
+  current_lng NUMERIC(11,8),
+  created_at TIMESTAMPTZ DEFAULT now(),
+  updated_at TIMESTAMPTZ DEFAULT now()
+);
+
+-- ============================================================
 -- ROW LEVEL SECURITY
 -- ============================================================
 ALTER TABLE customers ENABLE ROW LEVEL SECURITY;
@@ -267,6 +287,13 @@ CREATE POLICY "OTP update" ON otp_verification
 -- Admins
 CREATE POLICY "Admins select" ON admins
   FOR SELECT USING (true);
+
+-- Drivers
+ALTER TABLE drivers ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Drivers select" ON drivers FOR SELECT USING (true);
+CREATE POLICY "Drivers insert" ON drivers FOR INSERT WITH CHECK (true);
+CREATE POLICY "Drivers update" ON drivers FOR UPDATE USING (true);
+CREATE POLICY "Drivers delete" ON drivers FOR DELETE USING (true);
 
 -- ============================================================
 -- SEED DATA: Products
