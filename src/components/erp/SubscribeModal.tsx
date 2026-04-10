@@ -17,6 +17,7 @@ interface SubscribeModalProps {
         name: string;
         price: number;
         unit: string;
+        category?: string;
         image?: string;
     } | null;
     onConfirm: (dates: string[], frequency: FrequencyType, quantity: number) => void;
@@ -39,6 +40,16 @@ const SubscribeModal: React.FC<SubscribeModalProps> = ({ isOpen, onClose, produc
     });
 
     const today = startOfDay(new Date());
+
+    // Lock Milk to 1 month
+    React.useEffect(() => {
+        if (isOpen && product?.category === 'Milk') {
+            const end = new Date(today);
+            end.setMonth(today.getMonth() + 1);
+            setRange({ from: today, to: end });
+            setFrequency('daily'); // Default to daily for milk
+        }
+    }, [isOpen, product?.id, product?.category]);
 
     const generatedDateStrings = useMemo(() => {
         if (!product) return [];
@@ -157,7 +168,7 @@ const SubscribeModal: React.FC<SubscribeModalProps> = ({ isOpen, onClose, produc
                                         setRange(val || { from: undefined, to: undefined });
                                     }
                                 }}
-                                disabled={(date) => isBefore(date, today)}
+                                disabled={(date) => isBefore(date, today) || (product?.category === 'Milk')}
                                 className="rounded-xl w-full"
                             />
                         </div>

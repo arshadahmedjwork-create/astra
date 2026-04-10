@@ -114,6 +114,7 @@ const MyProducts = () => {
                                             name: product.name,
                                             price: product.price,
                                             unit: product.unit,
+                                            category: product.category,
                                         })}
                                         className="w-full mt-5 h-11 rounded-xl font-black text-sm forest-gradient shadow-md shadow-primary/20 gap-2"
                                     >

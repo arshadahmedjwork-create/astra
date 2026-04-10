@@ -78,8 +78,17 @@ CREATE TABLE IF NOT EXISTS products (
   stock_quantity INTEGER DEFAULT 0,
   is_sample BOOLEAN DEFAULT false,
   active BOOLEAN DEFAULT true,
+  purchase_type TEXT DEFAULT 'both' CHECK (purchase_type IN ('daily', 'subscription', 'both')),
   created_at TIMESTAMPTZ DEFAULT now()
 );
+
+-- Add purchase_type column to existing products table if it doesn't exist
+DO $$ 
+BEGIN 
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='products' AND column_name='purchase_type') THEN
+        ALTER TABLE products ADD COLUMN purchase_type TEXT DEFAULT 'both' CHECK (purchase_type IN ('daily', 'subscription', 'both'));
+    END IF;
+END $$;
 
 -- ============================================================
 -- 4. SUBSCRIPTIONS
@@ -260,17 +269,17 @@ CREATE POLICY "Admins select" ON admins
 -- ============================================================
 -- SEED DATA: Products
 -- ============================================================
-INSERT INTO products (name, category, description, price, unit, stock_quantity, is_sample, active) VALUES
-  ('Cow Milk', 'Milk', 'Farm fresh A2 cow''s milk in glass bottles, delivered within 12 hours of milking.', 70.00, 'litre', 500, true, true),
-  ('Buffalo Milk', 'Milk', 'Rich and creamy buffalo milk, high in fat content.', 80.00, 'litre', 200, false, true),
-  ('A2 Milk', 'Milk', 'Premium A2 protein cow''s milk for easier digestion.', 90.00, 'litre', 150, false, true),
-  ('Paneer', 'Dairy', 'Soft, fresh paneer made from pure cow''s milk. No preservatives.', 320.00, 'kg', 50, false, true),
-  ('Ghee', 'Dairy', 'Pure desi cow ghee made using traditional bilona method.', 750.00, 'kg', 100, false, true),
-  ('Curd', 'Dairy', 'Natural curd set in traditional earthen pots.', 60.00, 'kg', 120, false, true),
-  ('Buttermilk', 'Dairy', 'Refreshing traditional buttermilk with spices.', 30.00, 'litre', 80, false, true),
-  ('Flavoured Milk', 'Milk', 'Delicious flavoured milk in chocolate, badam, and rose.', 50.00, '250ml', 300, false, true);,
-  ('Natural Kulfi', 'Dessert', 'Handcrafted malai kulfi with no artificial colors or flavours.', 40.00, 'piece', false, true)
-ON CONFLICT DO NOTHING;
+INSERT INTO products (name, category, description, price, unit, stock_quantity, is_sample, active, purchase_type) VALUES
+  ('Cow Milk', 'Milk', 'Farm fresh A2 cow''s milk in glass bottles, delivered within 12 hours of milking.', 70.00, 'litre', 500, true, true, 'both'),
+  ('Buffalo Milk', 'Milk', 'Rich and creamy buffalo milk, high in fat content.', 80.00, 'litre', 200, false, true, 'both'),
+  ('A2 Milk', 'Milk', 'Premium A2 protein cow''s milk for easier digestion.', 90.00, 'litre', 150, false, true, 'both'),
+  ('Paneer', 'Dairy', 'Soft, fresh paneer made from pure cow''s milk. No preservatives.', 320.00, 'kg', 50, false, true, 'both'),
+  ('Ghee', 'Dairy', 'Pure desi cow ghee made using traditional bilona method.', 750.00, 'kg', 100, false, true, 'both'),
+  ('Curd', 'Dairy', 'Natural curd set in traditional earthen pots.', 60.00, 'kg', 120, false, true, 'both'),
+  ('Buttermilk', 'Dairy', 'Refreshing traditional buttermilk with spices.', 30.00, 'litre', 80, false, true, 'both'),
+  ('Flavoured Milk', 'Milk', 'Delicious flavoured milk in chocolate, badam, and rose.', 50.00, '250ml', 300, false, true, 'both'),
+  ('Natural Kulfi', 'Dessert', 'Handcrafted malai kulfi with no artificial colors or flavours.', 40.00, 'piece', 50, false, true, 'both')
+ON CONFLICT (id) DO UPDATE SET purchase_type = EXCLUDED.purchase_type;
 
 -- ============================================================
 -- UPDATED_AT TRIGGER FUNCTION

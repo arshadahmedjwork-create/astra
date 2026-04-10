@@ -101,7 +101,7 @@ const RenewSubscription = () => {
                     updated.unitPrice = product.price;
                     updated.price = product.price * updated.quantity;
 
-                    // Milk Logic: Suggest 1 month duration
+                    // Milk Logic: Lock to 1 month duration
                     if (product.category === 'Milk' && updated.startDate) {
                         const start = new Date(updated.startDate + 'T00:00:00');
                         const end = new Date(start);
@@ -365,6 +365,7 @@ const RenewSubscription = () => {
                                                             value={row.endDate}
                                                             onChange={(e) => updateRow(row.id, 'endDate', e.target.value)}
                                                             className="h-9 text-xs"
+                                                            disabled={row.category === 'Milk'}
                                                         />
                                                     </div>
                                                 </>

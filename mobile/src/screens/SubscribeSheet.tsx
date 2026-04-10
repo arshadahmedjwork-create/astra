@@ -81,13 +81,18 @@ export default function SubscribeSheet({ visible, onClose, product, onConfirm, o
     const today = todayStr();
 
     React.useEffect(() => {
-        if (product?.category === 'Milk') {
-            const start = new Date();
-            const end = new Date();
+        if (product?.category === 'Milk' && rangeStart) {
+            const start = new Date(rangeStart + 'T00:00:00');
+            const end = new Date(start);
             end.setMonth(start.getMonth() + 1);
-            
-            setRangeStart(today);
             setRangeEnd(end.toISOString().split('T')[0]);
+        }
+    }, [product?.id, rangeStart]);
+
+    // Initial default for Milk
+    React.useEffect(() => {
+        if (product?.category === 'Milk') {
+            setRangeStart(today);
         }
     }, [product?.id]);
 
@@ -157,12 +162,16 @@ export default function SubscribeSheet({ visible, onClose, product, onConfirm, o
 
         if (!rangeStart || (rangeStart && rangeEnd)) {
             setRangeStart(d);
-            setRangeEnd(null);
+            if (product?.category !== 'Milk') {
+                setRangeEnd(null);
+            }
         } else {
             if (d < rangeStart) {
                 setRangeStart(d);
-                setRangeEnd(null);
-            } else {
+                if (product?.category !== 'Milk') {
+                    setRangeEnd(null);
+                }
+            } else if (product?.category !== 'Milk') {
                 setRangeEnd(d);
             }
         }

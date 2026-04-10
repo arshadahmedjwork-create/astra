@@ -169,6 +169,7 @@ const ProductDetail = () => {
   const [isSubscribing, setIsSubscribing] = useState(false);
   const [isSubscribeModalOpen, setIsSubscribeModalOpen] = useState(false);
   const [dbProductId, setDbProductId] = useState<string | null>(null);
+  const [dbProductCategory, setDbProductCategory] = useState<string | null>(null);
 
   // Fetch actual DB product ID for subscription
   useEffect(() => {
@@ -176,10 +177,13 @@ const ProductDetail = () => {
       const fetchId = async () => {
         const { data } = await supabase
           .from('products')
-          .select('id')
+          .select('id, category')
           .ilike('name', `%${product.title}%`)
           .single();
-        if (data) setDbProductId(data.id);
+        if (data) {
+          setDbProductId(data.id);
+          setDbProductCategory(data.category);
+        }
       };
       fetchId();
     }
@@ -316,6 +320,7 @@ const ProductDetail = () => {
                   name: product.title,
                   price: product.price,
                   unit: product.unit,
+                  category: dbProductCategory || undefined,
                   image: product.image
                 }}
                 onConfirm={handleSubscribeConfirm}
