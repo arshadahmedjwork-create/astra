@@ -19,6 +19,7 @@ interface SubscribeModalProps {
         unit: string;
         category?: string;
         image?: string;
+        purchase_type?: 'daily' | 'subscription' | 'both';
     } | null;
     onConfirm: (dates: string[], frequency: FrequencyType, quantity: number) => void;
 }
@@ -41,15 +42,22 @@ const SubscribeModal: React.FC<SubscribeModalProps> = ({ isOpen, onClose, produc
 
     const today = startOfDay(new Date());
 
-    // Lock Milk to 1 month
+    // Lock Milk to 1 month or Lock Daily-only to custom
     React.useEffect(() => {
-        if (isOpen && product?.category === 'Milk') {
+        if (!isOpen || !product) return;
+
+        if (product.category === 'Milk') {
             const end = new Date(today);
             end.setMonth(today.getMonth() + 1);
             setRange({ from: today, to: end });
-            setFrequency('daily'); // Default to daily for milk
+            setFrequency('daily');
+        } else if (product.purchase_type === 'daily') {
+            setFrequency('custom');
+            setRange({ from: undefined, to: undefined });
         }
-    }, [isOpen, product?.id, product?.category]);
+    }, [isOpen, product?.id, product?.category, product?.purchase_type]);
+
+    const isDailyOnly = product?.purchase_type === 'daily';
 
     const generatedDateStrings = useMemo(() => {
         if (!product) return [];
@@ -73,10 +81,13 @@ const SubscribeModal: React.FC<SubscribeModalProps> = ({ isOpen, onClose, produc
             <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
                     <DialogTitle className="flex items-center gap-2 text-2xl font-bold text-[#1B4D3E]">
-                        <Repeat className="w-6 h-6" /> Start Subscription
+                        {isDailyOnly ? <CalendarDays className="w-6 h-6" /> : <Repeat className="w-6 h-6" />}
+                        {isDailyOnly ? 'Quick Order' : 'Start Subscription'}
                     </DialogTitle>
                     <DialogDescription>
-                        Schedule recurring deliveries for {product.name}
+                        {isDailyOnly 
+                            ? `Select a delivery date for ${product.name}`
+                            : `Schedule recurring deliveries for ${product.name}`}
                     </DialogDescription>
                 </DialogHeader>
 
@@ -90,12 +101,15 @@ const SubscribeModal: React.FC<SubscribeModalProps> = ({ isOpen, onClose, produc
                                     <Button
                                         key={opt.key}
                                         type="button"
+                                        disabled={isDailyOnly && opt.key !== 'custom'}
                                         variant={frequency === opt.key ? "default" : "outline"}
                                         className={cn(
                                             "flex flex-col items-start h-auto p-3 gap-1 transition-all",
-                                            frequency === opt.key ? "bg-[#1B4D3E] text-white border-[#1B4D3E] shadow-md scale-[1.02]" : "hover:border-[#1B4D3E]/30"
+                                            frequency === opt.key ? "bg-[#1B4D3E] text-white border-[#1B4D3E] shadow-md scale-[1.02]" : "hover:border-[#1B4D3E]/30",
+                                            isDailyOnly && opt.key !== 'custom' && "opacity-50 grayscale cursor-not-allowed"
                                         )}
                                         onClick={() => {
+                                            if (isDailyOnly && opt.key !== 'custom') return;
                                             setFrequency(opt.key);
                                             setRange({ from: undefined, to: undefined });
                                             setSelectedDates([]);
@@ -188,7 +202,7 @@ const SubscribeModal: React.FC<SubscribeModalProps> = ({ isOpen, onClose, produc
                         disabled={generatedDateStrings.length === 0}
                         className="bg-[#1B4D3E] hover:bg-[#2c7a65] text-white h-12 px-8 rounded-xl font-bold flex gap-2 shadow-lg transition-all active:scale-95"
                     >
-                        Confirm Subscription <ArrowRight className="w-4 h-4" />
+                        {isDailyOnly ? 'Confirm Order' : 'Confirm Subscription'} <ArrowRight className="w-4 h-4" />
                     </Button>
                 </DialogFooter>
             </DialogContent>

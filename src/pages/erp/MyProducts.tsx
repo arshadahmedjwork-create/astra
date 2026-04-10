@@ -146,11 +146,12 @@ const MyProducts = () => {
                                                 price: product.price,
                                                 unit: product.unit,
                                                 category: product.category,
+                                                purchase_type: product.purchase_type || 'both',
                                             })}
                                             className="w-full mt-5 h-11 rounded-xl font-black text-sm forest-gradient shadow-md shadow-primary/20 gap-2"
                                         >
                                             <Repeat className="w-4 h-4" />
-                                            Subscribe / Pre-Order
+                                            {product.purchase_type === 'daily' ? 'Order Once' : 'Subscribe / Pre-Order'}
                                         </Button>
                                     )}
                                 </div>

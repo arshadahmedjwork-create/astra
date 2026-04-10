@@ -266,8 +266,8 @@ const AdminInventory = () => {
                                     onChange={e => setFormData({ ...formData, purchase_type: e.target.value as any })}
                                 >
                                     <option value="both">Both (Daily & Subscription)</option>
-                                    <option value="daily">Daily Only (One-time)</option>
-                                    <option value="subscription">Subscription Only</option>
+                                    <option value="daily">Order Once Only (No Subscription)</option>
+                                    <option value="subscription">Subscription Only (No Daily)</option>
                                 </select>
                                 <p className="text-[10px] text-muted-foreground">Control if this product is available in the store, for subscriptions, or both.</p>
                             </div>
@@ -390,7 +390,9 @@ const AdminInventory = () => {
                                                 product.purchase_type === 'subscription' ? 'bg-primary/10 text-primary' :
                                                 'bg-secondary text-secondary-foreground'
                                             }`}>
-                                                {product.purchase_type || 'both'}
+                                                {product.purchase_type === 'daily' ? 'One-time Only' : 
+                                                 product.purchase_type === 'subscription' ? 'Sub Only' : 
+                                                 'Both'}
                                             </span>
                                         </td>
                                         <td className="px-4 py-3">
