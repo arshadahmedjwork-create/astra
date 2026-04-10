@@ -1,6 +1,17 @@
-import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, ActivityIndicator, Alert, KeyboardAvoidingView, Platform, Image } from 'react-native';
+import React, { useState, useRef } from 'react';
+import {
+    View,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    ActivityIndicator,
+    Alert,
+    KeyboardAvoidingView,
+    Platform,
+    Image,
+} from 'react-native';
 import { supabase } from '../lib/supabase';
+import { sendOtp, verifyOtp, retryOtp } from '../lib/msg91';
 import { useAuthStore } from '../stores/authStore';
 
 export default function LoginScreen() {
@@ -8,8 +19,24 @@ export default function LoginScreen() {
     const [otp, setOtp] = useState('');
     const [step, setStep] = useState<'phone' | 'otp'>('phone');
     const [loading, setLoading] = useState(false);
+    const [resendTimer, setResendTimer] = useState(0);
+    const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
     const { setAuth } = useAuthStore();
+
+    const startResendTimer = () => {
+        setResendTimer(30);
+        if (timerRef.current) clearInterval(timerRef.current);
+        timerRef.current = setInterval(() => {
+            setResendTimer((prev) => {
+                if (prev <= 1) {
+                    clearInterval(timerRef.current!);
+                    return 0;
+                }
+                return prev - 1;
+            });
+        }, 1000);
+    };
 
     const handleSendOTP = async () => {
         if (!/^[0-9]{10}$/.test(mobile)) {
@@ -19,33 +46,27 @@ export default function LoginScreen() {
 
         setLoading(true);
         try {
-            const phone = `+91${mobile}`;
-
-            // For testing: Proceed to OTP step immediately if provider fails or as a general bypass
-            // This avoids the "unsupported phone provider" error if Supabase isn't linked to Twilio/etc yet.
-            try {
-                const { error: otpError } = await supabase.auth.signInWithOtp({
-                    phone,
-                });
-                if (otpError) {
-                    console.log('OTP Send failed (expected if no provider):', otpError.message);
-                    // If it's the provider error, we still move to next step for the '123456' bypass
-                    if (otpError.message.includes('unsupported phone provider')) {
-                        setStep('otp');
-                        return;
-                    }
-                    throw otpError;
-                }
-            } catch (e) {
-                // Fallback for testing
-                setStep('otp');
-                return;
-            }
-
+            await sendOtp(mobile);
             setStep('otp');
-            Alert.alert('OTP Sent', `OTP has been sent to ${mobile}`);
+            startResendTimer();
+            Alert.alert('OTP Sent', `A 6-digit OTP has been sent to +91 ${mobile}`);
         } catch (error: any) {
-            Alert.alert('Error', error.message);
+            console.error('[LoginScreen] sendOtp error:', error);
+            Alert.alert('Failed to Send OTP', error.message || 'Please check your internet connection and try again.');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleResendOTP = async () => {
+        if (resendTimer > 0) return;
+        setLoading(true);
+        try {
+            await retryOtp(mobile, 'text');
+            startResendTimer();
+            Alert.alert('OTP Resent', `A new OTP has been sent to +91 ${mobile}`);
+        } catch (error: any) {
+            Alert.alert('Error', error.message || 'Failed to resend OTP.');
         } finally {
             setLoading(false);
         }
@@ -59,48 +80,72 @@ export default function LoginScreen() {
 
         setLoading(true);
         try {
+            const verified = await verifyOtp(mobile, otp);
+
+            if (!verified) {
+                Alert.alert('Invalid OTP', 'The OTP you entered is incorrect. Please try again.');
+                setLoading(false);
+                return;
+            }
+
+            // OTP verified — look up the customer or driver in Supabase
             const phoneWithPrefix = `+91${mobile}`;
             const phoneRaw = mobile;
 
-            // Temporary OTP bypass for testing (123456)
-            if (otp === '123456') {
-                const [customerRes, driverRes] = await Promise.all([
-                    supabase.from('customers').select('*, address:addresses(*)').or(`mobile.eq.${phoneWithPrefix},mobile.eq.${phoneRaw}`).single(),
-                    supabase.from('drivers').select('*').or(`phone.eq.${phoneWithPrefix},phone.eq.${phoneRaw}`).single()
-                ]);
-
-                if (customerRes.data || driverRes.data) {
-                    setAuth({ user: { phone: phoneWithPrefix } }, customerRes.data || null, driverRes.data || null);
-                    return;
-                } else {
-                    Alert.alert('Access Denied', `No account found with number ${mobile}. Please ensure you are registered.`);
-                    setLoading(false);
-                    return;
-                }
+            // TEST BYPASS for 8888888888
+            if (mobile === '8888888888') {
+                setAuth(
+                    { user: { phone: phoneWithPrefix } },
+                    {
+                        id: 'test-customer-id',
+                        customer_id: 'ASTRA-TEST-001',
+                        mobile: phoneWithPrefix,
+                        full_name: 'Test Customer (Bypass)',
+                        wallet_balance: 1000,
+                        address: {
+                            id: 'test-addr',
+                            door_no: '100',
+                            street: 'Test Street',
+                            landmark: 'Test Office',
+                            area: 'Test Area',
+                            city: 'Chennai',
+                            state: 'TN',
+                            pincode: '600001',
+                            alt_mobile: mobile
+                        }
+                    },
+                    null
+                );
+                return;
             }
 
-            const { data, error } = await supabase.auth.verifyOtp({
-                phone: phoneWithPrefix,
-                token: otp,
-                type: 'sms',
-            });
+            const [customerRes, driverRes] = await Promise.all([
+                supabase
+                    .from('customers')
+                    .select('*, address:addresses(*)')
+                    .or(`mobile.eq.${phoneWithPrefix},mobile.eq.${phoneRaw}`)
+                    .single(),
+                supabase
+                    .from('drivers')
+                    .select('*')
+                    .or(`phone.eq.${phoneWithPrefix},phone.eq.${phoneRaw}`)
+                    .single(),
+            ]);
 
-            if (error) throw error;
-            if (data?.session) {
-                const [customerRes, driverRes] = await Promise.all([
-                    supabase.from('customers').select('*, address:addresses(*)').or(`mobile.eq.${phoneWithPrefix},mobile.eq.${phoneRaw}`).single(),
-                    supabase.from('drivers').select('*').or(`phone.eq.${phoneWithPrefix},phone.eq.${phoneRaw}`).single()
-                ]);
-
-                if (customerRes.data || driverRes.data) {
-                    setAuth(data.session, customerRes.data || null, driverRes.data || null);
-                } else {
-                    Alert.alert('Access Denied', 'No profile found. Please register first.');
-                    await supabase.auth.signOut();
-                }
+            if (customerRes.data || driverRes.data) {
+                setAuth(
+                    { user: { phone: phoneWithPrefix } },
+                    customerRes.data || null,
+                    driverRes.data || null
+                );
+            } else {
+                Alert.alert(
+                    'Access Denied',
+                    `No account found for +91 ${mobile}. Please ensure you are registered.`
+                );
             }
         } catch (error: any) {
-            Alert.alert('Login Failed', error.message);
+            Alert.alert('Login Failed', error.message || 'Something went wrong. Please try again.');
         } finally {
             setLoading(false);
         }
@@ -121,32 +166,48 @@ export default function LoginScreen() {
                     <Text className="text-3xl font-bold text-[#1B4D3E]">
                         Astra<Text className="text-[#D4AF37]">Dairy</Text>
                     </Text>
-                    <Text className="text-gray-500 mt-1 font-medium italic">Customer & Driver Portal</Text>
+                    <Text className="text-gray-500 mt-1 font-medium italic">Customer &amp; Driver Portal</Text>
                 </View>
 
                 {step === 'phone' ? (
                     <View className="space-y-4">
                         <View>
                             <Text className="text-sm font-semibold text-gray-700 mb-2">Mobile Number</Text>
-                            <TextInput
-                                className="w-full h-14 bg-gray-50 border border-gray-200 rounded-xl px-4 text-lg"
-                                placeholder="Enter 10 digit number"
-                                keyboardType="number-pad"
-                                maxLength={10}
-                                value={mobile}
-                                onChangeText={setMobile}
-                            />
+                            <View className="flex-row items-center bg-gray-50 border border-gray-200 rounded-xl overflow-hidden">
+                                <View className="px-3 py-4 border-r border-gray-200 bg-gray-100">
+                                    <Text className="text-gray-600 font-medium">+91</Text>
+                                </View>
+                                <TextInput
+                                    className="flex-1 h-14 px-4 text-lg"
+                                    placeholder="Enter 10 digit number"
+                                    keyboardType="number-pad"
+                                    maxLength={10}
+                                    value={mobile}
+                                    onChangeText={setMobile}
+                                />
+                            </View>
                         </View>
                         <TouchableOpacity
                             onPress={handleSendOTP}
                             disabled={loading || mobile.length !== 10}
-                            className={`w-full h-14 rounded-xl items-center justify-center mt-6 ${loading || mobile.length !== 10 ? 'bg-[#1B4D3E]/50' : 'bg-[#1B4D3E]'}`}
+                            className={`w-full h-14 rounded-xl items-center justify-center mt-6 ${
+                                loading || mobile.length !== 10 ? 'bg-[#1B4D3E]/50' : 'bg-[#1B4D3E]'
+                            }`}
                         >
-                            {loading ? <ActivityIndicator color="white" /> : <Text className="text-white font-bold text-lg">Send OTP</Text>}
+                            {loading ? (
+                                <ActivityIndicator color="white" />
+                            ) : (
+                                <Text className="text-white font-bold text-lg">Send OTP</Text>
+                            )}
                         </TouchableOpacity>
                     </View>
                 ) : (
                     <View className="space-y-4">
+                        <View className="items-center mb-2">
+                            <Text className="text-sm text-gray-500">OTP sent to</Text>
+                            <Text className="text-base font-bold text-[#1B4D3E]">+91 {mobile}</Text>
+                        </View>
+
                         <View>
                             <Text className="text-sm font-semibold text-gray-700 mb-2">Enter OTP</Text>
                             <TextInput
@@ -158,16 +219,36 @@ export default function LoginScreen() {
                                 onChangeText={setOtp}
                             />
                         </View>
+
                         <TouchableOpacity
                             onPress={handleVerifyOTP}
                             disabled={loading || otp.length !== 6}
-                            className={`w-full h-14 rounded-xl items-center justify-center mt-6 ${loading || otp.length !== 6 ? 'bg-[#1B4D3E]/50' : 'bg-[#1B4D3E]'}`}
+                            className={`w-full h-14 rounded-xl items-center justify-center mt-4 ${
+                                loading || otp.length !== 6 ? 'bg-[#1B4D3E]/50' : 'bg-[#1B4D3E]'
+                            }`}
                         >
-                            {loading ? <ActivityIndicator color="white" /> : <Text className="text-white font-bold text-lg">Verify & Login</Text>}
+                            {loading ? (
+                                <ActivityIndicator color="white" />
+                            ) : (
+                                <Text className="text-white font-bold text-lg">Verify &amp; Login</Text>
+                            )}
                         </TouchableOpacity>
 
-                        <TouchableOpacity onPress={() => setStep('phone')} className="items-center mt-4 p-2">
-                            <Text className="text-[#1B4D3E] font-medium">Wrong number? Go back</Text>
+                        <TouchableOpacity
+                            onPress={handleResendOTP}
+                            disabled={loading || resendTimer > 0}
+                            className="items-center mt-2 p-2"
+                        >
+                            <Text className={`font-medium ${resendTimer > 0 ? 'text-gray-400' : 'text-[#1B4D3E]'}`}>
+                                {resendTimer > 0 ? `Resend OTP in ${resendTimer}s` : 'Resend OTP'}
+                            </Text>
+                        </TouchableOpacity>
+
+                        <TouchableOpacity
+                            onPress={() => { setStep('phone'); setOtp(''); }}
+                            className="items-center mt-1 p-2"
+                        >
+                            <Text className="text-[#1B4D3E] font-medium">← Wrong number? Go back</Text>
                         </TouchableOpacity>
                     </View>
                 )}

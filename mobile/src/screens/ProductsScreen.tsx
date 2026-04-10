@@ -3,9 +3,10 @@ import { View, Text, TouchableOpacity, ScrollView, ActivityIndicator, Image } fr
 import { useFocusEffect } from '@react-navigation/native';
 import { supabase } from '../lib/supabase';
 import { useAuthStore } from '../stores/authStore';
-import { ArrowLeft, Repeat, Edit3, CheckCircle2 } from 'lucide-react-native';
+import { ArrowLeft, Repeat, Edit3, CheckCircle2, ShoppingCart, ShoppingBag } from 'lucide-react-native';
 import SubscribeSheet, { type SubscribeProduct } from './SubscribeSheet';
 import { type FrequencyType } from '../lib/subscriptionUtils';
+import { useCartStore } from '../stores/cartStore';
 
 interface Product {
     id: string;
@@ -39,12 +40,16 @@ const PRODUCT_IMAGES: Record<string, any> = {
 function ProductCard({
     product,
     isSubscribed,
+    isInCart,
     onSubscribe,
+    onAddToCart,
     onEdit,
 }: {
     product: Product;
     isSubscribed: boolean;
+    isInCart: boolean;
     onSubscribe: (p: Product) => void;
+    onAddToCart: (p: Product) => void;
     onEdit: () => void;
 }) {
     return (
@@ -98,42 +103,34 @@ function ProductCard({
                     </Text>
                 </View>
 
-                <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 8 }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 12 }}>
                     {/* Price */}
                     <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 2 }}>
                         <Text style={{ fontWeight: '900', color: '#1B4D3E', fontSize: 18 }}>₹{product.price}</Text>
                         <Text style={{ fontSize: 10, color: '#9ca3af' }}>/{product.unit}</Text>
                     </View>
 
-                    {/* CTA button */}
-                    {isSubscribed ? (
-                        <TouchableOpacity
-                            onPress={onEdit}
-                            activeOpacity={0.8}
-                            style={{
-                                flexDirection: 'row', alignItems: 'center', gap: 5,
-                                paddingHorizontal: 14, paddingVertical: 8, borderRadius: 16,
-                                borderWidth: 1.5, borderColor: '#16a34a',
-                                backgroundColor: '#f0fdf4',
-                            }}
-                        >
-                            <Edit3 color="#16a34a" size={12} />
-                            <Text style={{ color: '#16a34a', fontWeight: '900', fontSize: 11 }}>Edit</Text>
-                        </TouchableOpacity>
-                    ) : (
-                        <TouchableOpacity
-                            onPress={() => onSubscribe(product)}
-                            activeOpacity={0.8}
-                            style={{
-                                flexDirection: 'row', alignItems: 'center', gap: 5,
-                                paddingHorizontal: 14, paddingVertical: 8, borderRadius: 16,
-                                backgroundColor: '#1B4D3E',
-                            }}
-                        >
-                            <Repeat color="white" size={12} />
-                            <Text style={{ color: 'white', fontWeight: '900', fontSize: 11 }}>Subscribe</Text>
-                        </TouchableOpacity>
-                    )}
+                    {/* Unified Purchase Action */}
+                    <TouchableOpacity
+                        onPress={() => onSubscribe(product)}
+                        activeOpacity={0.8}
+                        style={{
+                            backgroundColor: '#1B4D3E',
+                            paddingHorizontal: 20,
+                            paddingVertical: 10,
+                            borderRadius: 16,
+                            flexDirection: 'row',
+                            alignItems: 'center',
+                            gap: 8,
+                            shadowColor: '#1B4D3E',
+                            shadowOpacity: 0.2,
+                            shadowRadius: 5,
+                            elevation: 3,
+                        }}
+                    >
+                        <Text style={{ color: 'white', fontWeight: '900', fontSize: 13 }}>Purchase</Text>
+                        <ArrowLeft color="white" size={14} style={{ transform: [{ rotate: '180deg' }] }} />
+                    </TouchableOpacity>
                 </View>
             </View>
         </View>
@@ -148,6 +145,8 @@ export default function ProductsScreen({ navigation }: any) {
     const [subscribedIds,     setSubscribedIds]     = useState<Set<string>>(new Set());
     const [loading,           setLoading]           = useState(true);
     const [subscribeProduct,  setSubscribeProduct]  = useState<SubscribeProduct | null>(null);
+    const { addItem, isInCart, items } = useCartStore();
+    const cartCount = items.length;
 
     const fetchProducts = async () => {
         const { data } = await supabase
@@ -188,9 +187,9 @@ export default function ProductsScreen({ navigation }: any) {
                     <ArrowLeft color="white" size={24} />
                 </TouchableOpacity>
                 <View style={{ flex: 1 }}>
-                    <Text style={{ color: 'white', fontSize: 20, fontWeight: '900' }}>Products</Text>
+                    <Text style={{ color: 'white', fontSize: 20, fontWeight: '900' }}>Buy Products</Text>
                     <Text style={{ color: 'rgba(255,255,255,0.55)', fontSize: 11, marginTop: 1 }}>
-                        🟢 Active subscription  ·  Tap Subscribe to add
+                        Pick a product to buy once or start a subscription
                     </Text>
                 </View>
             </View>
@@ -206,6 +205,7 @@ export default function ProductsScreen({ navigation }: any) {
                                 key={product.id}
                                 product={product}
                                 isSubscribed={subscribedIds.has(product.id)}
+                                isInCart={isInCart(product.id)}
                                 onSubscribe={p =>
                                     setSubscribeProduct({
                                         id:    p.id,
@@ -214,18 +214,68 @@ export default function ProductsScreen({ navigation }: any) {
                                         unit:  p.unit,
                                     })
                                 }
+                                onAddToCart={p => {
+                                    addItem({
+                                        id: p.id,
+                                        name: p.name,
+                                        price: p.price,
+                                        unit: p.unit,
+                                    });
+                                }}
                                 onEdit={() => navigation.navigate('Subscriptions')}
                             />
                         ))}
                     </View>
                 )}
             </ScrollView>
+            {/* Floating Cart Button */}
+            {cartCount > 0 && (
+                <View style={{ position: 'absolute', bottom: 24, left: 16, right: 16 }}>
+                    <TouchableOpacity
+                        onPress={() => navigation.navigate('Cart')}
+                        activeOpacity={0.9}
+                        style={{
+                            backgroundColor: '#1B4D3E',
+                            flexDirection: 'row',
+                            alignItems: 'center',
+                            justifyContent: 'space-between',
+                            paddingHorizontal: 24,
+                            paddingVertical: 18,
+                            borderRadius: 20,
+                            shadowColor: '#000',
+                            shadowOffset: { width: 0, height: 8 },
+                            shadowOpacity: 0.25,
+                            shadowRadius: 12,
+                            elevation: 8,
+                        }}
+                    >
+                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+                            <View style={{ backgroundColor: 'rgba(255,255,255,0.2)', padding: 8, borderRadius: 12 }}>
+                                <ShoppingBag color="white" size={20} />
+                            </View>
+                            <View>
+                                <Text style={{ color: 'white', fontWeight: '800', fontSize: 16 }}>View Your Cart</Text>
+                                <Text style={{ color: 'rgba(255,255,255,0.7)', fontSize: 12 }}>{cartCount} items selected</Text>
+                            </View>
+                        </View>
+                        <ArrowLeft color="white" size={20} style={{ transform: [{ rotate: '180deg' }] }} />
+                    </TouchableOpacity>
+                </View>
+            )}
 
             {/* Calendar date picker — confirms then navigates to payment */}
             <SubscribeSheet
                 visible={!!subscribeProduct}
                 onClose={() => setSubscribeProduct(null)}
                 product={subscribeProduct}
+                onBuyOnce={(p: SubscribeProduct) => {
+                    addItem({
+                        id: p.id,
+                        name: p.name,
+                        price: p.price,
+                        unit: p.unit,
+                    });
+                }}
                 onConfirm={(dates: string[], freq: FrequencyType, qty: number) => {
                     if (!subscribeProduct) return;
                     setSubscribeProduct(null);

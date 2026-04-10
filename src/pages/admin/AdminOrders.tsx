@@ -263,20 +263,42 @@ const AdminOrders = () => {
         setAssigning(true);
         try {
             if (orderToAssign._source === 'planned') {
-                // Pre-create the order and assign driver
                 const sub = orderToAssign;
-                const { error } = await supabase.from('orders').insert({
-                    customer_id:     sub.customers?.id,
-                    subscription_id: sub._subId,
-                    delivery_date:   selectedDate,
-                    order_date:      today,
-                    status:          'pending',
-                    driver_id:       selectedDriverId,
-                    tracking_active: true,
-                    total_amount:    sub.total_amount,
-                });
-                if (error) throw error;
-                toast({ title: 'Pre-scheduled!', description: 'Order created & driver assigned for ' + selectedDate });
+                
+                // ── Check if an order already exists for this subscription and date ──
+                const { data: existing } = await supabase
+                    .from('orders')
+                    .select('id')
+                    .eq('subscription_id', sub._subId)
+                    .eq('delivery_date', selectedDate)
+                    .maybeSingle();
+
+                if (existing) {
+                    // Update existing
+                    const { error } = await supabase.from('orders')
+                        .update({ 
+                            driver_id: selectedDriverId, 
+                            status: 'get_to_deliver', 
+                            tracking_active: true 
+                        })
+                        .eq('id', existing.id);
+                    if (error) throw error;
+                    toast({ title: 'Updated!', description: 'Existing order updated with new driver.' });
+                } else {
+                    // Pre-create the order and assign driver
+                    const { error } = await supabase.from('orders').insert({
+                        customer_id:     sub.customers?.id,
+                        subscription_id: sub._subId,
+                        delivery_date:   selectedDate,
+                        order_date:      today,
+                        status:          'pending',
+                        driver_id:       selectedDriverId,
+                        tracking_active: true,
+                        total_amount:    sub.total_amount,
+                    });
+                    if (error) throw error;
+                    toast({ title: 'Pre-scheduled!', description: 'Order created & driver assigned for ' + selectedDate });
+                }
             } else {
                 // Normal order: just assign driver
                 const { error } = await supabase.from('orders')

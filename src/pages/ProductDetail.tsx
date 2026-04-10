@@ -9,8 +9,14 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-import { Check, ShoppingCart } from "lucide-react";
+import { Check, ShoppingCart, Repeat } from "lucide-react";
 import { useCartStore } from "@/stores/useCartStore";
+import { useAuthStore } from "@/stores/authStore";
+import { supabase } from "@/lib/supabase";
+import { useToast } from "@/components/ui/use-toast";
+import { useNavigate } from "react-router-dom";
+import SubscribeModal from "@/components/erp/SubscribeModal";
+import { useState, useEffect } from "react";
 
 const rawMilk = "/assets/product-raw-milk.png";
 const paneer = "/assets/product-paneer.png";
@@ -24,6 +30,8 @@ interface ProductData {
   hook: string;
   image: string;
   description: string;
+  price: number;
+  unit: string;
   notes: string[];
   faqs: { q: string; a: string }[];
 }
@@ -35,6 +43,8 @@ const productData: Record<string, ProductData> = {
     image: rawMilk,
     description:
       "Our cow's milk comes from indigenous breeds raised on natural fodder. Available as raw, pasteurised, and homogenised variants. Every bottle is packed in reusable glass, preserving the natural taste and nutrition.",
+    price: 70.00,
+    unit: "litre",
     notes: [
       "Please order one day in advance for next-day delivery.",
       "Boil before consuming (raw milk).",
@@ -53,6 +63,8 @@ const productData: Record<string, ProductData> = {
     image: paneer,
     description:
       "Our paneer is made fresh from pure cow's milk — soft, creamy, and rich in protein. It's perfect for a wide range of dishes including palak paneer, paneer tikka, paneer butter masala, kadai paneer, and more.",
+    price: 320.00,
+    unit: "kg",
     notes: [
       "Order one day in advance.",
       "Best consumed within 2 days of purchase.",
@@ -69,6 +81,8 @@ const productData: Record<string, ProductData> = {
     image: ghee,
     description:
       "Our ghee is prepared using the traditional bilona (hand-churning) method from A2 cow's milk. Rich in flavour and aroma, it's perfect for cooking, Ayurvedic uses, and daily consumption. Ghee has been revered in Ayurveda for its digestive, nourishing, and healing properties.",
+    price: 750.00,
+    unit: "kg",
     notes: [
       "Store in a cool, dry place.",
       "Use a clean, dry spoon to scoop.",
@@ -86,6 +100,8 @@ const productData: Record<string, ProductData> = {
     image: curd,
     description:
       "Our curd is set using natural culture in earthen pots (mann paanai), which gives it a distinct flavour and texture. Made from pure cow's milk, it's rich in probiotics and perfect for daily consumption.",
+    price: 60.00,
+    unit: "kg",
     notes: [
       "Order one day in advance.",
       "Earthen pot packaging is biodegradable.",
@@ -102,6 +118,8 @@ const productData: Record<string, ProductData> = {
     image: kulfi,
     description:
       "Our kulfi is made the traditional way — slow-cooking milk until it reduces and thickens, then infusing it with cardamom, saffron, and pistachios. No added colors, flavours, or preservatives.",
+    price: 40.00,
+    unit: "piece",
     notes: [
       "Keep frozen until consumption.",
       "Contains dairy and nuts.",
@@ -118,6 +136,8 @@ const productData: Record<string, ProductData> = {
     image: chocolateMilk,
     description:
       "Our flavoured milk is made with real cow's milk and natural flavours. Available in chocolate and other seasonal flavours. A delicious and nutritious drink for children and adults alike.",
+    price: 50.00,
+    unit: "250ml",
     notes: [
       "Shake well before consuming — separation is natural.",
       "Store refrigerated.",
@@ -142,6 +162,69 @@ const relatedProducts = [
 const ProductDetail = () => {
   const { slug } = useParams<{ slug: string }>();
   const product = slug ? productData[slug] : null;
+  const navigate = useNavigate();
+  const { toast } = useToast();
+  const { customer } = useAuthStore();
+  
+  const [isSubscribing, setIsSubscribing] = useState(false);
+  const [isSubscribeModalOpen, setIsSubscribeModalOpen] = useState(false);
+  const [dbProductId, setDbProductId] = useState<string | null>(null);
+
+  // Fetch actual DB product ID for subscription
+  useEffect(() => {
+    if (product) {
+      const fetchId = async () => {
+        const { data } = await supabase
+          .from('products')
+          .select('id')
+          .ilike('name', `%${product.title}%`)
+          .single();
+        if (data) setDbProductId(data.id);
+      };
+      fetchId();
+    }
+  }, [product]);
+
+  const handleSubscribeConfirm = async (dates: string[], freq: any, qty: number) => {
+    if (!customer?.id) {
+      toast({ title: "Login Required", description: "Please login to start a subscription.", variant: "destructive" });
+      navigate("/erp/login");
+      return;
+    }
+
+    if (!dbProductId) {
+      toast({ title: "Error", description: "Product not ready for subscription. Please try again.", variant: "destructive" });
+      return;
+    }
+
+    setIsSubscribing(true);
+    try {
+      const { error } = await supabase.from('subscriptions').insert({
+        customer_id:    customer.id,
+        product_id:     dbProductId,
+        frequency_type: freq,
+        selected_dates: dates,
+        start_date:     dates[0],
+        end_date:       dates[dates.length - 1],
+        required_date:  dates[0],
+        unit_price:     product?.price || 0,
+        quantity:       qty,
+        status:         'active',
+      });
+
+      if (error) throw error;
+
+      toast({ 
+        title: "Successfully Subscribed!", 
+        description: `Scheduled ${dates.length} deliveries for ${product?.title}.`,
+      });
+      navigate("/dashboard");
+    } catch (e: any) {
+      toast({ title: "Subscription Failed", description: e.message, variant: "destructive" });
+    } finally {
+      setIsSubscribing(false);
+    }
+  };
 
   if (!product) {
     return (
@@ -176,32 +259,68 @@ const ProductDetail = () => {
                 </div>
                 {/* Sticky Purchase Bar */}
                 <div className="flex flex-wrap gap-3 sticky top-20 bg-card/95 backdrop-blur-sm p-4 rounded-2xl border border-border">
+                  {/* Price info for better context */}
+                  <div className="w-full flex justify-between items-baseline mb-2 px-2">
+                    <span className="text-2xl font-black text-[#1B4D3E]">₹{product?.price}</span>
+                    <span className="text-sm text-muted-foreground uppercase font-bold tracking-wider">Per {product?.unit}</span>
+                  </div>
+
                   <Button
                     variant={useCartStore((state) => state.isInCart(slug || "")) ? "outline" : "hero"}
-                    className="flex-1 gap-2"
+                    className="flex-1 gap-2 h-12 text-base font-bold shadow-sm"
                     onClick={() => product && useCartStore.getState().addItem({
                       id: slug,
                       name: product.title,
-                      price: 0, // Should be fetched from product data if available
+                      price: product.price,
+                      unit: product.unit,
                       image: product.image
                     })}
                   >
                     {useCartStore((state) => state.isInCart(slug || "")) ? (
                       <>
-                        <Check className="w-4 h-4" /> Added
+                        <Check className="w-5 h-5" /> In Cart
                       </>
                     ) : (
                       <>
-                        <ShoppingCart className="w-4 h-4" /> Add to Cart
+                        <ShoppingCart className="w-5 h-5" /> Buy Once
                       </>
                     )}
                   </Button>
-                  <Link to="/erp/login" className="flex-1 text-center">
-                    <Button variant="hero-outline" className="w-full">Take a Trial</Button>
-                  </Link>
+
+                  <Button 
+                    variant="hero-outline" 
+                    className="flex-1 gap-2 h-12 text-base font-bold shadow-sm border-2"
+                    onClick={() => setIsSubscribeModalOpen(true)}
+                  >
+                    <Repeat className="w-5 h-5" /> Subscribe
+                  </Button>
+                  
+                  <div className="w-full pt-2">
+                    <Link to="/erp/login" className="block text-center">
+                      <Button variant="ghost" className="w-full text-xs text-muted-foreground hover:bg-transparent hover:text-primary">
+                        First time? Take a Trial →
+                      </Button>
+                    </Link>
+                  </div>
                 </div>
               </div>
             </div>
+
+            {/* Subscribe Modal */}
+            {product && (
+              <SubscribeModal
+                isOpen={isSubscribeModalOpen}
+                onClose={() => setIsSubscribeModalOpen(false)}
+                product={{
+                  id: slug || "",
+                  name: product.title,
+                  price: product.price,
+                  unit: product.unit,
+                  image: product.image
+                }}
+                onConfirm={handleSubscribeConfirm}
+              />
+            )}
 
             {/* What it is */}
             <div>

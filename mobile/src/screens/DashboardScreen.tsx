@@ -267,7 +267,7 @@ export default function DashboardScreen({ navigation }: any) {
                                 <View className="w-14 h-14 bg-[#1B4D3E]/10 rounded-full items-center justify-center mb-4">
                                     <Package color="#1B4D3E" size={28} />
                                 </View>
-                                <Text className="font-bold text-gray-900 text-center text-sm px-1" numberOfLines={2}>Subscribe</Text>
+                                <Text className="font-bold text-gray-900 text-center text-sm px-1" numberOfLines={2}>Buy Products</Text>
                             </TouchableOpacity>
 
                             <TouchableOpacity
@@ -443,7 +443,7 @@ export default function DashboardScreen({ navigation }: any) {
                                 onPress={() => navigation.navigate('Products')}
                                 className="bg-[#1B4D3E] py-3 rounded-xl mt-2 items-center"
                             >
-                                <Text className="text-white font-bold">Start a Subscription</Text>
+                                <Text className="text-white font-bold">Buy Products</Text>
                             </TouchableOpacity>
                         </View>
                     )}

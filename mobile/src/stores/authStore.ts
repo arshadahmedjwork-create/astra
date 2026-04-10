@@ -81,6 +81,33 @@ export const useAuthStore = create<AuthState>()(
                     const phone = session.user.phone;
                     const phoneRaw = phone.startsWith('+91') ? phone.slice(3) : phone;
 
+                    // TEST BYPASS for 8888888888
+                    if (phoneRaw === '8888888888') {
+                        set({
+                            customer: {
+                                id: 'test-customer-id',
+                                customer_id: 'ASTRA-TEST-001',
+                                mobile: phone,
+                                full_name: 'Test Customer (Bypass)',
+                                wallet_balance: 1000,
+                                address: {
+                                    id: 'test-addr',
+                                    door_no: '100',
+                                    street: 'Test Street',
+                                    landmark: 'Test Office',
+                                    area: 'Test Area',
+                                    city: 'Chennai',
+                                    state: 'TN',
+                                    pincode: '600001',
+                                    alt_mobile: phoneRaw
+                                }
+                            },
+                            driver: null,
+                            isAuthenticated: true
+                        });
+                        return;
+                    }
+
                     // Check both tables
                     const [customerRes, driverRes] = await Promise.all([
                         supabase.from('customers').select('*, address:addresses(*)').or(`mobile.eq.${phone},mobile.eq.${phoneRaw}`).single(),
