@@ -231,6 +231,10 @@ export default function SubscribeSheet({ visible, onClose, product, onConfirm, o
 
     if (!visible || !product) return null;
 
+    const pType = product.purchase_type || 'both';
+    const showBuyOnce = pType === 'both' || pType === 'daily';
+    const showSub     = pType === 'both' || pType === 'subscription';
+
     const ctaLabel = onConfirm
         ? (selectedDates.length === 0 ? 'Select dates to continue' : `Confirm ${selectedDates.length} Date${selectedDates.length !== 1 ? 's' : ''} →`)
         : (selectedDates.length === 0 ? 'Select dates to continue' : `Subscribe Now · ₹${total}`);
@@ -275,7 +279,7 @@ export default function SubscribeSheet({ visible, onClose, product, onConfirm, o
                             <View style={{ padding: 24, gap: 24 }}>
                                 
                                 {/* ─── OPTION 1: BUY ONCE ─── */}
-                                {(product.purchase_type === 'both' || product.purchase_type === 'daily') && (
+                                {showBuyOnce && (
                                     <View style={{ backgroundColor: 'white', padding: 20, borderRadius: 24, shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 10, elevation: 2 }}>
                                         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 4 }}>
                                             <Text style={{ fontSize: 16, fontWeight: '900', color: '#111827' }}>Choice 1: One-Time Order</Text>
@@ -307,7 +311,7 @@ export default function SubscribeSheet({ visible, onClose, product, onConfirm, o
                                 )}
 
                                 { /* Divider - Only show if both options are available */ }
-                                {product.purchase_type === 'both' && (
+                                {showBuyOnce && showSub && (
                                     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
                                         <View style={{ flex: 1, height: 1, backgroundColor: '#E5E7EB' }} />
                                         <Text style={{ fontSize: 10, fontWeight: '900', color: '#9CA3AF', textTransform: 'uppercase' }}>OR</Text>
@@ -316,7 +320,7 @@ export default function SubscribeSheet({ visible, onClose, product, onConfirm, o
                                 )}
 
                                 {/* ─── OPTION 2: SUBSCRIPTION ─── */}
-                                {(product.purchase_type === 'both' || product.purchase_type === 'subscription') && (
+                                {showSub && (
                                     <View style={{ backgroundColor: 'white', padding: 20, borderRadius: 24, shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 10, elevation: 2 }}>
                                         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 16 }}>
                                             <View style={{ width: 36, height: 36, backgroundColor: '#ECFDF5', borderRadius: 12, alignItems: 'center', justifyContent: 'center' }}>

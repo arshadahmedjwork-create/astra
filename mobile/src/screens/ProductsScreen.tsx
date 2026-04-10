@@ -62,6 +62,7 @@ function ProductCard({
             marginBottom: 16,
             borderWidth: 1,
             borderColor: isSubscribed ? '#bbf7d0' : '#f3f4f6',
+            backgroundColor: isSubscribed ? '#f0fdf4' : 'white',
             shadowColor: '#000',
             shadowOpacity: 0.04,
             shadowRadius: 8,
@@ -113,15 +114,17 @@ function ProductCard({
 
                     {/* Unified Purchase Action */}
                     <TouchableOpacity
-                        onPress={() => onSubscribe(product)}
+                        onPress={() => isSubscribed ? onEdit() : onSubscribe(product)}
                         activeOpacity={0.8}
                         style={{
-                            backgroundColor: '#1B4D3E',
+                            backgroundColor: isSubscribed ? '#ffffff' : '#1B4D3E',
                             paddingHorizontal: 20,
                             paddingVertical: 10,
                             borderRadius: 16,
                             flexDirection: 'row',
                             alignItems: 'center',
+                            borderWidth: isSubscribed ? 1 : 0,
+                            borderColor: '#1B4D3E',
                             gap: 8,
                             shadowColor: '#1B4D3E',
                             shadowOpacity: 0.2,
@@ -129,8 +132,18 @@ function ProductCard({
                             elevation: 3,
                         }}
                     >
-                        <Text style={{ color: 'white', fontWeight: '900', fontSize: 13 }}>Purchase</Text>
-                        <ArrowLeft color="white" size={14} style={{ transform: [{ rotate: '180deg' }] }} />
+                        <Text style={{ 
+                            color: isSubscribed ? '#1B4D3E' : 'white', 
+                            fontWeight: '900', 
+                            fontSize: 13 
+                        }}>
+                            {isSubscribed ? 'Manage' : (product.purchase_type === 'subscription' ? 'Subscribe' : 'Purchase')}
+                        </Text>
+                        {isSubscribed ? (
+                            <Repeat color="#1B4D3E" size={14} />
+                        ) : (
+                            <ArrowLeft color="white" size={14} style={{ transform: [{ rotate: '180deg' }] }} />
+                        )}
                     </TouchableOpacity>
                 </View>
             </View>

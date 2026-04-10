@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { ShoppingBag, Repeat } from 'lucide-react';
+import { ShoppingBag, Repeat, Calendar } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import ERPLayout from '@/components/erp/ERPLayout';
+import { useAuthStore } from '@/stores/authStore';
 import { supabase } from '@/lib/supabase';
 import SubscribeModal, { type SubscribeModalProduct } from '@/components/erp/SubscribeModal';
 
@@ -34,6 +35,8 @@ const MyProducts = () => {
     const [products, setProducts] = useState<Product[]>([]);
     const [loading, setLoading] = useState(true);
     const [subscribeProduct, setSubscribeProduct] = useState<SubscribeModalProduct | null>(null);
+    const [activeSubProductIds, setActiveSubProductIds] = useState<Set<string>>(new Set());
+    const { customer } = useAuthStore();
 
     useEffect(() => {
         const fetchProducts = async () => {
@@ -45,10 +48,29 @@ const MyProducts = () => {
                 .order('category');
 
             if (data) setProducts(data);
+        };
+
+        const fetchSubscriptions = async () => {
+            if (!customer?.id) return;
+            const { data } = await supabase
+                .from('subscriptions')
+                .select('product_id')
+                .eq('customer_id', customer.id)
+                .in('status', ['active', 'paused', 'completed']); // completed might be soon-to-be-renewed
+            
+            if (data) {
+                setActiveSubProductIds(new Set(data.map(s => s.product_id)));
+            }
+        };
+
+        const load = async () => {
+            setLoading(true);
+            await Promise.all([fetchProducts(), fetchSubscriptions()]);
             setLoading(false);
         };
-        fetchProducts();
-    }, []);
+
+        load();
+    }, [customer?.id]);
 
     return (
         <ERPLayout>
@@ -108,19 +130,29 @@ const MyProducts = () => {
                                     </div>
 
                                     {/* Single Subscribe CTA */}
-                                    <Button
-                                        onClick={() => setSubscribeProduct({
-                                            id: product.id,
-                                            name: product.name,
-                                            price: product.price,
-                                            unit: product.unit,
-                                            category: product.category,
-                                        })}
-                                        className="w-full mt-5 h-11 rounded-xl font-black text-sm forest-gradient shadow-md shadow-primary/20 gap-2"
-                                    >
-                                        <Repeat className="w-4 h-4" />
-                                        Subscribe / Pre-Order
-                                    </Button>
+                                    {activeSubProductIds.has(product.id) ? (
+                                        <Button
+                                            onClick={() => window.location.assign('/erp/subscriptions')}
+                                            className="w-full mt-5 h-11 rounded-xl font-black text-sm bg-secondary text-secondary-foreground border border-border hover:bg-secondary/80 shadow-sm gap-2"
+                                        >
+                                            <Calendar className="w-4 h-4 text-primary" />
+                                            Manage Subscription
+                                        </Button>
+                                    ) : (
+                                        <Button
+                                            onClick={() => setSubscribeProduct({
+                                                id: product.id,
+                                                name: product.name,
+                                                price: product.price,
+                                                unit: product.unit,
+                                                category: product.category,
+                                            })}
+                                            className="w-full mt-5 h-11 rounded-xl font-black text-sm forest-gradient shadow-md shadow-primary/20 gap-2"
+                                        >
+                                            <Repeat className="w-4 h-4" />
+                                            Subscribe / Pre-Order
+                                        </Button>
+                                    )}
                                 </div>
                             </motion.div>
                         ))}
