@@ -205,10 +205,12 @@ ALTER TABLE sample_requests ENABLE ROW LEVEL SECURITY;
 ALTER TABLE otp_verification ENABLE ROW LEVEL SECURITY;
 ALTER TABLE admins ENABLE ROW LEVEL SECURITY;
 
--- Public read on products
+-- Public read and Admin CRUD on products
 ALTER TABLE products ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Products are viewable by everyone" ON products
-  FOR SELECT USING (true);
+CREATE POLICY "Products are viewable by everyone" ON products FOR SELECT USING (true);
+CREATE POLICY "Admins can insert products" ON products FOR INSERT WITH CHECK (true);
+CREATE POLICY "Admins can update products" ON products FOR UPDATE USING (true);
+CREATE POLICY "Admins can delete products" ON products FOR DELETE USING (true);
 
 -- Customers: allow insert for registration, select/update own data
 CREATE POLICY "Anyone can register" ON customers
