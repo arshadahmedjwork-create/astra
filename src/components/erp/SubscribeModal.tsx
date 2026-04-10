@@ -9,18 +9,20 @@ import { format, startOfDay, isBefore } from 'date-fns';
 import { generateDatesFromFrequency, toggleDate, calculateSubscriptionTotal, type FrequencyType } from '@/lib/subscriptionUtils';
 import { cn } from "@/lib/utils";
 
+export interface SubscribeModalProduct {
+    id: string;
+    name: string;
+    price: number;
+    unit: string;
+    category?: string;
+    image?: string;
+    purchase_type?: 'daily' | 'subscription' | 'both';
+}
+
 interface SubscribeModalProps {
     isOpen: boolean;
     onClose: () => void;
-    product: {
-        id: string;
-        name: string;
-        price: number;
-        unit: string;
-        category?: string;
-        image?: string;
-        purchase_type?: 'daily' | 'subscription' | 'both';
-    } | null;
+    product: SubscribeModalProduct | null;
     onConfirm: (dates: string[], frequency: FrequencyType, quantity: number) => void;
 }
 
