@@ -247,6 +247,7 @@ const AdminInventory = () => {
                                 />
                             </div>
 
+                            <div className="space-y-2">
                                 <Label>Image URL (Optional)</Label>
                                 <Input
                                     value={formData.image_url}
