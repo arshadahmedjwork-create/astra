@@ -16,6 +16,7 @@ interface Product {
     price: number;
     unit: string;
     image_url: string | null;
+    purchase_type?: 'daily' | 'subscription' | 'both';
 }
 
 const PRODUCT_IMAGES: Record<string, any> = {
@@ -212,6 +213,8 @@ export default function ProductsScreen({ navigation }: any) {
                                         name:  p.name,
                                         price: p.price,
                                         unit:  p.unit,
+                                        category: p.category,
+                                        purchase_type: p.purchase_type,
                                     })
                                 }
                                 onAddToCart={p => {

@@ -19,6 +19,8 @@ export interface SubscribeProduct {
     name: string;
     price: number;
     unit: string;
+    category?: string;
+    purchase_type?: 'daily' | 'subscription' | 'both';
 }
 
 interface Props {
@@ -77,6 +79,17 @@ export default function SubscribeSheet({ visible, onClose, product, onConfirm, o
     const [success,     setSuccess]     = useState(false);
 
     const today = todayStr();
+
+    React.useEffect(() => {
+        if (product?.category === 'Milk') {
+            const start = new Date();
+            const end = new Date();
+            end.setMonth(start.getMonth() + 1);
+            
+            setRangeStart(today);
+            setRangeEnd(end.toISOString().split('T')[0]);
+        }
+    }, [product?.id]);
 
     const selectedDates = useMemo((): string[] => {
         if (!product) return [];
@@ -253,159 +266,165 @@ export default function SubscribeSheet({ visible, onClose, product, onConfirm, o
                             <View style={{ padding: 24, gap: 24 }}>
                                 
                                 {/* ─── OPTION 1: BUY ONCE ─── */}
-                                <View style={{ backgroundColor: 'white', padding: 20, borderRadius: 24, shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 10, elevation: 2 }}>
-                                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 4 }}>
-                                        <Text style={{ fontSize: 16, fontWeight: '900', color: '#111827' }}>Choice 1: One-Time Order</Text>
-                                        <View style={{ backgroundColor: '#FEF3C7', paddingHorizontal: 8, paddingVertical: 2, borderRadius: 8 }}>
-                                            <Text style={{ color: '#92400E', fontSize: 8, fontWeight: '900', textTransform: 'uppercase' }}>Popular</Text>
+                                {(product.purchase_type === 'both' || product.purchase_type === 'daily') && (
+                                    <View style={{ backgroundColor: 'white', padding: 20, borderRadius: 24, shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 10, elevation: 2 }}>
+                                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 4 }}>
+                                            <Text style={{ fontSize: 16, fontWeight: '900', color: '#111827' }}>Choice 1: One-Time Order</Text>
+                                            <View style={{ backgroundColor: '#FEF3C7', paddingHorizontal: 8, paddingVertical: 2, borderRadius: 8 }}>
+                                                <Text style={{ color: '#92400E', fontSize: 8, fontWeight: '900', textTransform: 'uppercase' }}>Popular</Text>
+                                            </View>
                                         </View>
+                                        <Text style={{ fontSize: 11, color: '#6B7280', marginBottom: 16 }}>Just need it once? No commitment required.</Text>
+                                        
+                                        <TouchableOpacity
+                                            onPress={() => { if (onBuyOnce) { onBuyOnce(product); handleClose(); } }}
+                                            activeOpacity={0.8}
+                                            style={{ 
+                                                backgroundColor: '#F9FAFB', 
+                                                borderWidth: 1.5, 
+                                                borderColor: '#E5E7EB',
+                                                borderRadius: 16, 
+                                                paddingVertical: 14, 
+                                                flexDirection: 'row', 
+                                                alignItems: 'center', 
+                                                justifyContent: 'center', 
+                                                gap: 8 
+                                            }}
+                                        >
+                                            <ShoppingCart color="#1B4D3E" size={18} />
+                                            <Text style={{ color: '#111827', fontWeight: '900', fontSize: 15 }}>Add to My Cart</Text>
+                                        </TouchableOpacity>
                                     </View>
-                                    <Text style={{ fontSize: 11, color: '#6B7280', marginBottom: 16 }}>Just need it once? No commitment required.</Text>
-                                    
-                                    <TouchableOpacity
-                                        onPress={() => { if (onBuyOnce) { onBuyOnce(product); handleClose(); } }}
-                                        activeOpacity={0.8}
-                                        style={{ 
-                                            backgroundColor: '#F9FAFB', 
-                                            borderWidth: 1.5, 
-                                            borderColor: '#E5E7EB',
-                                            borderRadius: 16, 
-                                            paddingVertical: 14, 
-                                            flexDirection: 'row', 
-                                            alignItems: 'center', 
-                                            justifyContent: 'center', 
-                                            gap: 8 
-                                        }}
-                                    >
-                                        <ShoppingCart color="#1B4D3E" size={18} />
-                                        <Text style={{ color: '#111827', fontWeight: '900', fontSize: 15 }}>Add to My Cart</Text>
-                                    </TouchableOpacity>
-                                </View>
+                                )}
 
-                                {/* Divider */}
-                                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-                                    <View style={{ flex: 1, height: 1, backgroundColor: '#E5E7EB' }} />
-                                    <Text style={{ fontSize: 10, fontWeight: '900', color: '#9CA3AF', textTransform: 'uppercase' }}>OR</Text>
-                                    <View style={{ flex: 1, height: 1, backgroundColor: '#E5E7EB' }} />
-                                </View>
+                                { /* Divider - Only show if both options are available */ }
+                                {product.purchase_type === 'both' && (
+                                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+                                        <View style={{ flex: 1, height: 1, backgroundColor: '#E5E7EB' }} />
+                                        <Text style={{ fontSize: 10, fontWeight: '900', color: '#9CA3AF', textTransform: 'uppercase' }}>OR</Text>
+                                        <View style={{ flex: 1, height: 1, backgroundColor: '#E5E7EB' }} />
+                                    </View>
+                                )}
 
                                 {/* ─── OPTION 2: SUBSCRIPTION ─── */}
-                                <View style={{ backgroundColor: 'white', padding: 20, borderRadius: 24, shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 10, elevation: 2 }}>
-                                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 16 }}>
-                                        <View style={{ width: 36, height: 36, backgroundColor: '#ECFDF5', borderRadius: 12, alignItems: 'center', justifyContent: 'center' }}>
-                                            <Repeat color="#1B4D3E" size={20} />
+                                {(product.purchase_type === 'both' || product.purchase_type === 'subscription') && (
+                                    <View style={{ backgroundColor: 'white', padding: 20, borderRadius: 24, shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 10, elevation: 2 }}>
+                                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 16 }}>
+                                            <View style={{ width: 36, height: 36, backgroundColor: '#ECFDF5', borderRadius: 12, alignItems: 'center', justifyContent: 'center' }}>
+                                                <Repeat color="#1B4D3E" size={20} />
+                                            </View>
+                                            <View>
+                                                <Text style={{ fontSize: 16, fontWeight: '900', color: '#111827' }}>Choice 2: Buy Products (Sub)</Text>
+                                                <Text style={{ fontSize: 10, color: '#16A34A', fontWeight: '800' }}>Schedule regular deliveries</Text>
+                                            </View>
                                         </View>
-                                        <View>
-                                            <Text style={{ fontSize: 16, fontWeight: '900', color: '#111827' }}>Choice 2: Buy Products (Sub)</Text>
-                                            <Text style={{ fontSize: 10, color: '#16A34A', fontWeight: '800' }}>Schedule regular deliveries</Text>
-                                        </View>
-                                    </View>
 
-                                    {/* Frequency tabs */}
-                                    <View style={{ marginBottom: 20 }}>
-                                        <Text style={{ fontSize: 10, fontWeight: '900', color: '#9ca3af', textTransform: 'uppercase', letterSpacing: 1.2, marginBottom: 10 }}>
-                                            Delivery Frequency
-                                        </Text>
-                                        <View style={{ flexDirection: 'row', gap: 8 }}>
-                                            {FREQ_OPTIONS.map(opt => (
+                                        {/* Frequency tabs */}
+                                        <View style={{ marginBottom: 20 }}>
+                                            <Text style={{ fontSize: 10, fontWeight: '900', color: '#9ca3af', textTransform: 'uppercase', letterSpacing: 1.2, marginBottom: 10 }}>
+                                                Delivery Frequency
+                                            </Text>
+                                            <View style={{ flexDirection: 'row', gap: 8 }}>
+                                                {FREQ_OPTIONS.map(opt => (
+                                                    <TouchableOpacity
+                                                        key={opt.key}
+                                                        onPress={() => { setFrequency(opt.key); setRangeStart(null); setRangeEnd(null); setCustomDates([]); }}
+                                                        style={{
+                                                            flex: 1, paddingVertical: 12, paddingHorizontal: 4,
+                                                            borderRadius: 18, borderWidth: 1.5, alignItems: 'center',
+                                                            backgroundColor: frequency === opt.key ? '#1B4D3E' : 'white',
+                                                            borderColor:     frequency === opt.key ? '#1B4D3E' : '#e5e7eb',
+                                                        }}
+                                                    >
+                                                        <Text style={{ fontSize: 11, fontWeight: '900', color: frequency === opt.key ? 'white' : '#111827' }}>
+                                                            {opt.label}
+                                                        </Text>
+                                                        <Text style={{ fontSize: 8, marginTop: 2, color: frequency === opt.key ? 'rgba(255,255,255,0.6)' : '#9ca3af', textAlign: 'center' }}>
+                                                            {opt.desc}
+                                                        </Text>
+                                                    </TouchableOpacity>
+                                                ))}
+                                            </View>
+                                        </View>
+
+                                        {/* Calendar */}
+                                        <View style={{ marginBottom: 20 }}>
+                                            <Text style={{ fontSize: 10, fontWeight: '900', color: '#9ca3af', textTransform: 'uppercase', letterSpacing: 1.2, marginBottom: 6 }}>
+                                                {frequency === 'custom' ? '🟢 Toggle dates' : '🟢 Tap start, then end date'}
+                                            </Text>
+
+                                            {frequency !== 'custom' && (rangeStart || rangeEnd) && (
+                                                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: '#f0fdf4', paddingHorizontal: 12, paddingVertical: 8, borderRadius: 12, borderWidth: 1, borderColor: '#bbf7d0', marginBottom: 8 }}>
+                                                    <CalendarDays color="#16a34a" size={14} />
+                                                    <Text style={{ fontSize: 11, fontWeight: '700', color: '#15803d', flex: 1 }}>
+                                                        {rangeStart && !rangeEnd
+                                                            ? `Start: ${rangeStart}`
+                                                            : `${rangeStart} → ${rangeEnd}`}
+                                                    </Text>
+                                                </View>
+                                            )}
+
+                                            <Calendar
+                                                onDayPress={handleDayPress}
+                                                markedDates={markedDates}
+                                                markingType={frequency === 'custom' ? 'simple' : 'period'}
+                                                minDate={today}
+                                                theme={CALENDAR_THEME}
+                                                style={{ borderRadius: 20, borderWidth: 1, borderColor: '#F3F4F6', overflow: 'hidden' }}
+                                            />
+                                        </View>
+
+                                        {/* Quantity */}
+                                        <View style={{ marginBottom: 24 }}>
+                                            <Text style={{ fontSize: 10, fontWeight: '900', color: '#9ca3af', textTransform: 'uppercase', letterSpacing: 1.2, marginBottom: 10 }}>
+                                                Qty per Delivery
+                                            </Text>
+                                            <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: '#f9fafb', borderRadius: 20, borderWidth: 1, borderColor: '#f3f4f6', padding: 10, alignSelf: 'flex-start', gap: 16 }}>
                                                 <TouchableOpacity
-                                                    key={opt.key}
-                                                    onPress={() => { setFrequency(opt.key); setRangeStart(null); setRangeEnd(null); setCustomDates([]); }}
-                                                    style={{
-                                                        flex: 1, paddingVertical: 12, paddingHorizontal: 4,
-                                                        borderRadius: 18, borderWidth: 1.5, alignItems: 'center',
-                                                        backgroundColor: frequency === opt.key ? '#1B4D3E' : 'white',
-                                                        borderColor:     frequency === opt.key ? '#1B4D3E' : '#e5e7eb',
-                                                    }}
+                                                    onPress={() => setQuantity(Math.max(1, quantity - 1))}
+                                                    style={{ width: 36, height: 36, backgroundColor: 'white', borderWidth: 1, borderColor: '#e5e7eb', borderRadius: 12, alignItems: 'center', justifyContent: 'center' }}
                                                 >
-                                                    <Text style={{ fontSize: 11, fontWeight: '900', color: frequency === opt.key ? 'white' : '#111827' }}>
-                                                        {opt.label}
-                                                    </Text>
-                                                    <Text style={{ fontSize: 8, marginTop: 2, color: frequency === opt.key ? 'rgba(255,255,255,0.6)' : '#9ca3af', textAlign: 'center' }}>
-                                                        {opt.desc}
-                                                    </Text>
+                                                    <Minus color="#1B4D3E" size={18} />
                                                 </TouchableOpacity>
-                                            ))}
-                                        </View>
-                                    </View>
-
-                                    {/* Calendar */}
-                                    <View style={{ marginBottom: 20 }}>
-                                        <Text style={{ fontSize: 10, fontWeight: '900', color: '#9ca3af', textTransform: 'uppercase', letterSpacing: 1.2, marginBottom: 6 }}>
-                                            {frequency === 'custom' ? '🟢 Toggle dates' : '🟢 Tap start, then end date'}
-                                        </Text>
-
-                                        {frequency !== 'custom' && (rangeStart || rangeEnd) && (
-                                            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: '#f0fdf4', paddingHorizontal: 12, paddingVertical: 8, borderRadius: 12, borderWidth: 1, borderColor: '#bbf7d0', marginBottom: 8 }}>
-                                                <CalendarDays color="#16a34a" size={14} />
-                                                <Text style={{ fontSize: 11, fontWeight: '700', color: '#15803d', flex: 1 }}>
-                                                    {rangeStart && !rangeEnd
-                                                        ? `Start: ${rangeStart}`
-                                                        : `${rangeStart} → ${rangeEnd}`}
-                                                </Text>
+                                                <View style={{ alignItems: 'center', minWidth: 36 }}>
+                                                    <Text style={{ fontSize: 20, fontWeight: '900', color: '#111827' }}>{quantity}</Text>
+                                                    <Text style={{ fontSize: 8, color: '#9ca3af', textTransform: 'uppercase', fontWeight: '700' }}>{product.unit}</Text>
+                                                </View>
+                                                <TouchableOpacity
+                                                    onPress={() => setQuantity(quantity + 1)}
+                                                    style={{ width: 36, height: 36, backgroundColor: 'white', borderWidth: 1, borderColor: '#e5e7eb', borderRadius: 12, alignItems: 'center', justifyContent: 'center' }}
+                                                >
+                                                    <Plus color="#1B4D3E" size={18} />
+                                                </TouchableOpacity>
                                             </View>
-                                        )}
-
-                                        <Calendar
-                                            onDayPress={handleDayPress}
-                                            markedDates={markedDates}
-                                            markingType={frequency === 'custom' ? 'simple' : 'period'}
-                                            minDate={today}
-                                            theme={CALENDAR_THEME}
-                                            style={{ borderRadius: 20, borderWidth: 1, borderColor: '#F3F4F6', overflow: 'hidden' }}
-                                        />
-                                    </View>
-
-                                    {/* Quantity */}
-                                    <View style={{ marginBottom: 24 }}>
-                                        <Text style={{ fontSize: 10, fontWeight: '900', color: '#9ca3af', textTransform: 'uppercase', letterSpacing: 1.2, marginBottom: 10 }}>
-                                            Qty per Delivery
-                                        </Text>
-                                        <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: '#f9fafb', borderRadius: 20, borderWidth: 1, borderColor: '#f3f4f6', padding: 10, alignSelf: 'flex-start', gap: 16 }}>
-                                            <TouchableOpacity
-                                                onPress={() => setQuantity(Math.max(1, quantity - 1))}
-                                                style={{ width: 36, height: 36, backgroundColor: 'white', borderWidth: 1, borderColor: '#e5e7eb', borderRadius: 12, alignItems: 'center', justifyContent: 'center' }}
-                                            >
-                                                <Minus color="#1B4D3E" size={18} />
-                                            </TouchableOpacity>
-                                            <View style={{ alignItems: 'center', minWidth: 36 }}>
-                                                <Text style={{ fontSize: 20, fontWeight: '900', color: '#111827' }}>{quantity}</Text>
-                                                <Text style={{ fontSize: 8, color: '#9ca3af', textTransform: 'uppercase', fontWeight: '700' }}>{product.unit}</Text>
-                                            </View>
-                                            <TouchableOpacity
-                                                onPress={() => setQuantity(quantity + 1)}
-                                                style={{ width: 36, height: 36, backgroundColor: 'white', borderWidth: 1, borderColor: '#e5e7eb', borderRadius: 12, alignItems: 'center', justifyContent: 'center' }}
-                                            >
-                                                <Plus color="#1B4D3E" size={18} />
-                                            </TouchableOpacity>
                                         </View>
-                                    </View>
 
-                                    {/* CTA */}
-                                    <TouchableOpacity
-                                        onPress={handleCTA}
-                                        disabled={loading || selectedDates.length === 0}
-                                        style={{
-                                            height: 56, borderRadius: 16, alignItems: 'center', justifyContent: 'center',
-                                            flexDirection: 'row', gap: 8,
-                                            backgroundColor: selectedDates.length === 0 ? '#E5E7EB' : '#1B4D3E',
-                                            shadowColor: '#1B4D3E', shadowOpacity: 0.2, shadowRadius: 8, elevation: 4
-                                        }}
-                                    >
-                                        {loading ? (
-                                            <ActivityIndicator color="white" />
-                                        ) : (
-                                            <>
-                                                <Text style={{ fontWeight: '900', fontSize: 16, color: selectedDates.length === 0 ? '#9ca3af' : 'white' }}>
-                                                    {ctaLabel}
-                                                </Text>
-                                                {selectedDates.length > 0 && onConfirm && (
-                                                    <ArrowRight color="white" size={18} />
-                                                )}
-                                            </>
-                                        )}
-                                    </TouchableOpacity>
-                                </View>
+                                        {/* CTA */}
+                                        <TouchableOpacity
+                                            onPress={handleCTA}
+                                            disabled={loading || selectedDates.length === 0}
+                                            style={{
+                                                height: 56, borderRadius: 16, alignItems: 'center', justifyContent: 'center',
+                                                flexDirection: 'row', gap: 8,
+                                                backgroundColor: selectedDates.length === 0 ? '#E5E7EB' : '#1B4D3E',
+                                                shadowColor: '#1B4D3E', shadowOpacity: 0.2, shadowRadius: 8, elevation: 4
+                                            }}
+                                        >
+                                            {loading ? (
+                                                <ActivityIndicator color="white" />
+                                            ) : (
+                                                <>
+                                                    <Text style={{ fontWeight: '900', fontSize: 16, color: selectedDates.length === 0 ? '#9ca3af' : 'white' }}>
+                                                        {ctaLabel}
+                                                    </Text>
+                                                    {selectedDates.length > 0 && onConfirm && (
+                                                        <ArrowRight color="white" size={18} />
+                                                    )}
+                                                </>
+                                            )}
+                                        </TouchableOpacity>
+                                    </View>
+                                )}
                             </View>
                             <View style={{ height: 40 }} />
                         </ScrollView>

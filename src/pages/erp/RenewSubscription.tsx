@@ -16,6 +16,7 @@ interface Product {
     category: string;
     price: number;
     unit: string;
+    purchase_type?: 'daily' | 'subscription' | 'both';
 }
 
 interface SubscriptionRow {
@@ -28,6 +29,7 @@ interface SubscriptionRow {
     unitPrice: number;
     quantity: number;
     price: number;
+    customDates?: string[];
 }
 
 const RenewSubscription = () => {
@@ -48,8 +50,9 @@ const RenewSubscription = () => {
             // Fetch Products
             const { data: prodData } = await supabase
                 .from('products')
-                .select('id, name, category, price, unit')
-                .eq('active', true);
+                .select('id, name, category, price, unit, purchase_type')
+                .eq('active', true)
+                .in('purchase_type', ['subscription', 'both']);
 
             if (prodData) {
                 setProducts(prodData);
@@ -83,6 +86,7 @@ const RenewSubscription = () => {
             unitPrice: 0,
             quantity: 1,
             price: 0,
+            customDates: [],
         }]);
     };
 
@@ -96,6 +100,24 @@ const RenewSubscription = () => {
                 if (product) {
                     updated.unitPrice = product.price;
                     updated.price = product.price * updated.quantity;
+
+                    // Milk Logic: Suggest 1 month duration
+                    if (product.category === 'Milk' && updated.startDate) {
+                        const start = new Date(updated.startDate + 'T00:00:00');
+                        const end = new Date(start);
+                        end.setMonth(start.getMonth() + 1);
+                        updated.endDate = end.toISOString().split('T')[0];
+                    }
+                }
+            }
+
+            if (field === 'startDate' && updated.productId) {
+                const product = products.find(p => p.id === updated.productId);
+                if (product?.category === 'Milk') {
+                    const start = new Date(value + 'T00:00:00');
+                    const end = new Date(start);
+                    end.setMonth(start.getMonth() + 1);
+                    updated.endDate = end.toISOString().split('T')[0];
                 }
             }
             if (field === 'quantity') {
@@ -130,7 +152,7 @@ const RenewSubscription = () => {
                         new Date(r.endDate   + 'T00:00:00'),
                         r.frequencyType,
                     )
-                    : [];
+                    : r.customDates || [];
                 return {
                     customer_id:    customer!.id,
                     product_id:     r.productId,
@@ -285,31 +307,68 @@ const RenewSubscription = () => {
                                                     <SelectItem value="daily">Daily</SelectItem>
                                                     <SelectItem value="alternate">Alternate Days</SelectItem>
                                                     <SelectItem value="weekdays">Weekdays Only</SelectItem>
+                                                    <SelectItem value="custom">Custom Dates</SelectItem>
                                                 </SelectContent>
                                             </Select>
                                         </div>
 
-                                        {/* Date Range */}
+                                        {/* Date Range or Custom Dates Picker */}
                                         <div className="flex gap-1">
-                                            <div className="flex-1">
-                                                <label className="text-xs text-muted-foreground md:hidden mb-1 block">Start</label>
-                                                <Input
-                                                    type="date"
-                                                    value={row.startDate}
-                                                    onChange={(e) => updateRow(row.id, 'startDate', e.target.value)}
-                                                    className="h-9 text-xs"
-                                                />
-                                            </div>
-                                            <div className="flex-1">
-                                                <label className="text-xs text-muted-foreground md:hidden mb-1 block">End</label>
-                                                <Input
-                                                    type="date"
-                                                    min={row.startDate}
-                                                    value={row.endDate}
-                                                    onChange={(e) => updateRow(row.id, 'endDate', e.target.value)}
-                                                    className="h-9 text-xs"
-                                                />
-                                            </div>
+                                            {row.frequencyType === 'custom' ? (
+                                                <div className="flex-1 relative">
+                                                    <label className="text-xs text-muted-foreground md:hidden mb-1 block">Custom Dates</label>
+                                                    <Dialog>
+                                                        <DialogTrigger asChild>
+                                                            <Button variant="outline" className="h-9 w-full text-xs gap-2 justify-start px-2 overflow-hidden bg-background">
+                                                                <CalendarDays className="w-3.5 h-3.5 text-primary shrink-0" />
+                                                                <span className="truncate">{row.customDates?.length ? `${row.customDates.length} days selected` : 'Pick Dates'}</span>
+                                                            </Button>
+                                                        </DialogTrigger>
+                                                        <DialogContent className="sm:max-w-[400px]">
+                                                            <DialogHeader>
+                                                                <DialogTitle>Select Delivery Dates</DialogTitle>
+                                                            </DialogHeader>
+                                                            <div className="p-4 flex justify-center">
+                                                                <DayPicker
+                                                                    mode="multiple"
+                                                                    min={1}
+                                                                    selected={row.customDates?.map(d => new Date(d + 'T00:00:00'))}
+                                                                    onSelect={(days) => {
+                                                                        const dayStrings = (days || []).map(d => d.toISOString().split('T')[0]).sort();
+                                                                        updateRow(row.id, 'customDates', dayStrings);
+                                                                        if (dayStrings.length) {
+                                                                            updateRow(row.id, 'startDate', dayStrings[0]);
+                                                                            updateRow(row.id, 'endDate', dayStrings[dayStrings.length - 1]);
+                                                                        }
+                                                                    }}
+                                                                />
+                                                            </div>
+                                                        </DialogContent>
+                                                    </Dialog>
+                                                </div>
+                                            ) : (
+                                                <>
+                                                    <div className="flex-1">
+                                                        <label className="text-xs text-muted-foreground md:hidden mb-1 block">Start</label>
+                                                        <Input
+                                                            type="date"
+                                                            value={row.startDate}
+                                                            onChange={(e) => updateRow(row.id, 'startDate', e.target.value)}
+                                                            className="h-9 text-xs"
+                                                        />
+                                                    </div>
+                                                    <div className="flex-1">
+                                                        <label className="text-xs text-muted-foreground md:hidden mb-1 block">End</label>
+                                                        <Input
+                                                            type="date"
+                                                            min={row.startDate}
+                                                            value={row.endDate}
+                                                            onChange={(e) => updateRow(row.id, 'endDate', e.target.value)}
+                                                            className="h-9 text-xs"
+                                                        />
+                                                    </div>
+                                                </>
+                                            )}
                                         </div>
 
                                         {/* Unit Price */}

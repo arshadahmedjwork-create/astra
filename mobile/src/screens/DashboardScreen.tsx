@@ -59,6 +59,8 @@ export default function DashboardScreen({ navigation }: any) {
     const [driverStats, setDriverStats] = React.useState<any>({ pending: 0, completed: 0 });
     const [loading, setLoading] = React.useState(true);
     const [showDailyPrompt, setShowDailyPrompt] = React.useState(false);
+    const [todayOrder, setTodayOrder] = React.useState<any>(null);
+    const [actionLoading, setActionLoading] = React.useState(false);
 
     const fetchActiveOrder = async () => {
         if (!customer?.id) return;
@@ -162,10 +164,18 @@ export default function DashboardScreen({ navigation }: any) {
     }, [customer?.id, driver?.id]);
 
     const checkDailyPrompt = async () => {
+        if (!customer?.id) return;
         try {
-            const today = new Date().toDateString();
-            const lastConfirmed = await AsyncStorage.getItem('astra_daily_confirmed');
-            if (lastConfirmed !== today) {
+            const todayStr = new Date().toISOString().split('T')[0];
+            const { data } = await supabase
+                .from('orders')
+                .select('*')
+                .eq('customer_id', customer.id)
+                .eq('delivery_date', todayStr)
+                .maybeSingle();
+
+            if (data && !data.is_confirmed && data.status !== 'cancelled' && data.status !== 'delivered') {
+                setTodayOrder(data);
                 setShowDailyPrompt(true);
             }
         } catch (e) {
@@ -173,13 +183,27 @@ export default function DashboardScreen({ navigation }: any) {
         }
     };
 
-    const handleDailyConfirm = async () => {
+    const handleDailyAction = async (skip = false) => {
+        if (!todayOrder?.id) return;
+        setActionLoading(true);
         try {
-            const today = new Date().toDateString();
-            await AsyncStorage.setItem('astra_daily_confirmed', today);
+            const { error } = await supabase
+                .from('orders')
+                .update({ 
+                    is_confirmed: !skip,
+                    status: skip ? 'cancelled' : 'pending' 
+                })
+                .eq('id', todayOrder.id);
+            
+            if (error) throw error;
+            
             setShowDailyPrompt(false);
-        } catch (e) {
-            console.log('Error saving daily confirm:', e);
+            Alert.alert(skip ? 'Skipped' : 'Confirmed', skip ? "You've skipped today's delivery." : "Thank you! We're on the way.");
+            fetchActiveOrder(); // Refresh dashboard
+        } catch (e: any) {
+            Alert.alert('Error', e.message);
+        } finally {
+            setActionLoading(false);
         }
     };
 
@@ -464,13 +488,25 @@ export default function DashboardScreen({ navigation }: any) {
                         <Text className="text-gray-500 text-center mt-2 mb-8 leading-5">
                             Please confirm your delivery for today to ensure everything is on track!
                         </Text>
-                        <TouchableOpacity
-                            onPress={handleDailyConfirm}
-                            className="bg-[#1B4D3E] w-full py-4 rounded-2xl flex-row items-center justify-center shadow-lg shadow-[#1B4D3E]/20"
-                        >
-                            <CheckCircle color="white" size={20} />
-                            <Text className="text-white font-bold ml-2 text-lg">Confirm Today's Order</Text>
-                        </TouchableOpacity>
+                        
+                        <View className="w-full gap-3">
+                            <TouchableOpacity
+                                onPress={() => handleDailyAction(false)}
+                                disabled={actionLoading}
+                                className="bg-[#1B4D3E] w-full py-4 rounded-2xl flex-row items-center justify-center shadow-lg shadow-[#1B4D3E]/20"
+                            >
+                                {actionLoading ? <ActivityIndicator color="white" size="small" /> : <CheckCircle color="white" size={20} />}
+                                <Text className="text-white font-bold ml-2 text-lg">Confirm Today's Order</Text>
+                            </TouchableOpacity>
+
+                            <TouchableOpacity
+                                onPress={() => handleDailyAction(true)}
+                                disabled={actionLoading}
+                                className="w-full py-4 rounded-2xl flex-row items-center justify-center border border-gray-200"
+                            >
+                                <Text className="text-gray-500 font-bold text-base">I don't need today's delivery</Text>
+                            </TouchableOpacity>
+                        </View>
                     </View>
                 </View>
             </Modal>

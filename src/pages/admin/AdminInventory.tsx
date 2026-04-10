@@ -46,6 +46,7 @@ const AdminInventory = () => {
         stock_quantity: 0,
         active: true,
         is_sample: false,
+        purchase_type: 'both' as 'daily' | 'subscription' | 'both',
     });
 
     const [previewProduct, setPreviewProduct] = useState<any | null>(null);
@@ -86,6 +87,7 @@ const AdminInventory = () => {
                 stock_quantity: parseInt(formData.stock_quantity.toString()) || 0,
                 active: formData.active,
                 is_sample: formData.is_sample,
+                purchase_type: formData.purchase_type,
             };
 
             if (editingProduct) {
@@ -131,6 +133,7 @@ const AdminInventory = () => {
             stock_quantity: product.stock_quantity || 0,
             active: product.active,
             is_sample: product.is_sample,
+            purchase_type: product.purchase_type || 'both',
         });
         setEditingProduct(product);
         setIsAddModalOpen(true);
@@ -147,6 +150,7 @@ const AdminInventory = () => {
             stock_quantity: 0,
             active: true,
             is_sample: false,
+            purchase_type: 'both',
         });
         setEditingProduct(null);
         setIsAddModalOpen(true);
@@ -243,13 +247,26 @@ const AdminInventory = () => {
                                 />
                             </div>
 
-                            <div className="space-y-2">
                                 <Label>Image URL (Optional)</Label>
                                 <Input
                                     value={formData.image_url}
                                     onChange={e => setFormData({ ...formData, image_url: e.target.value })}
                                     placeholder="https://example.com/image.jpg"
                                 />
+                            </div>
+
+                            <div className="space-y-2">
+                                <Label>Purchase Availability</Label>
+                                <select
+                                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background"
+                                    value={formData.purchase_type}
+                                    onChange={e => setFormData({ ...formData, purchase_type: e.target.value as any })}
+                                >
+                                    <option value="both">Both (Daily & Subscription)</option>
+                                    <option value="daily">Daily Only (One-time)</option>
+                                    <option value="subscription">Subscription Only</option>
+                                </select>
+                                <p className="text-[10px] text-muted-foreground">Control if this product is available in the store, for subscriptions, or both.</p>
                             </div>
 
                             <div className="flex gap-6 pt-2">
@@ -309,6 +326,7 @@ const AdminInventory = () => {
                                 <th className="px-4 py-3 font-medium text-center">Stock</th>
                                 <th className="px-4 py-3 font-medium text-center">Status</th>
                                 <th className="px-4 py-3 font-medium text-center">Sample</th>
+                                <th className="px-4 py-3 font-medium text-center">Availability</th>
                                 <th className="px-4 py-3 font-medium text-right">Actions</th>
                             </tr>
                         </thead>
@@ -362,6 +380,15 @@ const AdminInventory = () => {
                                                 <span className="text-xs text-blue-600 font-medium">Yes</span> :
                                                 <span className="text-xs text-muted-foreground">No</span>
                                             }
+                                        </td>
+                                        <td className="px-4 py-3 text-center">
+                                            <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${
+                                                product.purchase_type === 'daily' ? 'bg-orange-100 text-orange-700' :
+                                                product.purchase_type === 'subscription' ? 'bg-primary/10 text-primary' :
+                                                'bg-secondary text-secondary-foreground'
+                                            }`}>
+                                                {product.purchase_type || 'both'}
+                                            </span>
                                         </td>
                                         <td className="px-4 py-3">
                                             <div className="flex items-center justify-end gap-2">

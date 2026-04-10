@@ -20,6 +20,7 @@ import {
 } from 'lucide-react';
 import { useAuthStore } from '@/stores/authStore';
 import { useCartStore } from '@/stores/useCartStore';
+import { supabase } from '@/lib/supabase';
 import astraLogo from '@/assets/astra-logo.png';
 import { Button } from '../ui/button';
 
@@ -43,19 +44,39 @@ const Marquee = () => {
 
 const DailyPrompt = () => {
     const [isVisible, setIsVisible] = useState(false);
+    const [todayOrder, setTodayOrder] = useState<any>(null);
+    const { customer } = useAuthStore();
     
     useEffect(() => {
-        const today = new Date().toDateString();
-        const lastConfirmed = localStorage.getItem('astra_daily_confirmed');
-        if (lastConfirmed !== today) {
-            setIsVisible(true);
-        }
-    }, []);
+        if (!customer?.id) return;
+        const checkToday = async () => {
+            const todayStr = new Date().toISOString().split('T')[0];
+            const { data } = await supabase
+                .from('orders')
+                .select('*')
+                .eq('customer_id', customer.id)
+                .eq('delivery_date', todayStr)
+                .maybeSingle();
 
-    const handleConfirm = () => {
-        const today = new Date().toDateString();
-        localStorage.setItem('astra_daily_confirmed', today);
-        setIsVisible(false);
+            if (data && !data.is_confirmed && data.status !== 'cancelled' && data.status !== 'delivered') {
+                setTodayOrder(data);
+                setIsVisible(true);
+            }
+        };
+        checkToday();
+    }, [customer?.id]);
+
+    const handleConfirm = async () => {
+        if (!todayOrder?.id) return;
+        try {
+            await supabase
+                .from('orders')
+                .update({ is_confirmed: true })
+                .eq('id', todayOrder.id);
+            setIsVisible(false);
+        } catch (e) {
+            console.error('Failed to confirm:', e);
+        }
     };
 
     if (!isVisible) return null;

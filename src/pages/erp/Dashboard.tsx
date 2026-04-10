@@ -30,6 +30,8 @@ const Dashboard = () => {
     const [pausedDates, setPausedDates] = useState<Date[]>([]);
     const [deliveredDates, setDeliveredDates] = useState<Date[]>([]);
     const [activeOrders, setActiveOrders] = useState<any[]>([]);
+    const [todayOrder, setTodayOrder] = useState<any>(null);
+    const [actionLoading, setActionLoading] = useState(false);
 
     useEffect(() => {
         if (!customer?.id) return;
@@ -50,6 +52,10 @@ const Dashboard = () => {
                 setPausedDates(data.filter(o => o.status === 'paused').map(o => new Date(o.delivery_date)));
                 setDeliveredDates(data.filter(o => o.status === 'delivered').map(o => new Date(o.delivery_date)));
                 setActiveOrders(data.filter(o => o.status === 'get_to_deliver'));
+
+                const todayStr = new Date().toISOString().split('T')[0];
+                const today = data.find(o => o.delivery_date === todayStr);
+                setTodayOrder(today);
             }
         };
         fetchOrders();
@@ -60,6 +66,30 @@ const Dashboard = () => {
         if (hour < 12) return 'Good Morning';
         if (hour < 17) return 'Good Afternoon';
         return 'Good Evening';
+    };
+
+    const handleConfirmToday = async (id: string, skip = false) => {
+        setActionLoading(true);
+        try {
+            const { error } = await supabase
+                .from('orders')
+                .update({ 
+                    is_confirmed: !skip,
+                    status: skip ? 'cancelled' : 'pending' 
+                })
+                .eq('id', id);
+
+            if (error) throw error;
+            setTodayOrder((prev: any) => ({ ...prev, is_confirmed: !skip, status: skip ? 'cancelled' : prev.status }));
+            toast({ 
+                title: skip ? 'Delivery Skipped' : 'Delivery Confirmed', 
+                description: skip ? "You've skipped today's delivery." : "Thank you! We're on the way." 
+            });
+        } catch (error: any) {
+            toast({ title: 'Action failed', description: error.message, variant: 'destructive' });
+        } finally {
+            setActionLoading(false);
+        }
     };
 
     return (
@@ -87,6 +117,56 @@ const Dashboard = () => {
                         </div>
                     </div>
                 </motion.div>
+
+                {/* Daily Confirmation Card */}
+                {todayOrder && todayOrder.status !== 'delivered' && todayOrder.status !== 'cancelled' && !todayOrder.is_confirmed && (
+                    <motion.div
+                        initial={{ opacity: 0, scale: 0.95 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        className="bg-primary/10 border border-primary/30 rounded-2xl p-6 flex flex-col md:flex-row items-center justify-between gap-6 shadow-lg shadow-primary/5"
+                    >
+                        <div className="flex items-center gap-5">
+                            <div className="w-14 h-14 bg-primary text-white rounded-2xl flex items-center justify-center">
+                                <Bell className="w-7 h-7 animate-bounce" />
+                            </div>
+                            <div>
+                                <h3 className="text-xl font-bold text-foreground">Confirm Today's Delivery</h3>
+                                <p className="text-sm text-muted-foreground">Fresh milk is scheduled for you. Please confirm to proceed!</p>
+                            </div>
+                        </div>
+                        <div className="flex gap-3 w-full md:w-auto">
+                            <button
+                                onClick={() => handleConfirmToday(todayOrder.id, true)}
+                                disabled={actionLoading}
+                                className="flex-1 md:flex-none px-6 py-3 rounded-xl border border-primary/20 hover:bg-white transition-colors font-bold text-sm"
+                            >
+                                I don't need today's delivery
+                            </button>
+                            <button
+                                onClick={() => handleConfirmToday(todayOrder.id)}
+                                disabled={actionLoading}
+                                className="flex-1 md:flex-none forest-gradient text-white px-8 py-3 rounded-xl font-bold text-sm shadow-md hover:scale-105 transition-transform flex items-center justify-center gap-2"
+                            >
+                                {actionLoading ? <RefreshCw className="w-4 h-4 animate-spin" /> : <CheckCircle2 className="w-4 h-4" />}
+                                Confirm Order
+                            </button>
+                        </div>
+                    </motion.div>
+                )}
+
+                {todayOrder && (todayOrder.is_confirmed || todayOrder.status === 'cancelled') && (
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        className={`p-4 rounded-xl border ${todayOrder.status === 'cancelled' ? 'bg-red-50 border-red-100 text-red-700' : 'bg-emerald-50 border-emerald-100 text-emerald-700'} flex items-center justify-center gap-2 font-bold text-sm`}
+                    >
+                        {todayOrder.status === 'cancelled' ? (
+                            <>Delivery Skipped for Today</>
+                        ) : (
+                            <><CheckCircle2 className="w-4 h-4" /> Delivery Confirmed for Today!</>
+                        )}
+                    </motion.div>
+                )}
 
                 {/* Active Deliveries Section */}
                 {activeOrders.length > 0 && (

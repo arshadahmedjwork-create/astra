@@ -15,6 +15,7 @@ interface Product {
     unit: string;
     image_url: string | null;
     is_sample: boolean;
+    purchase_type?: 'daily' | 'subscription' | 'both';
 }
 
 const productImages: Record<string, string> = {
@@ -40,6 +41,7 @@ const MyProducts = () => {
                 .from('products')
                 .select('*')
                 .eq('active', true)
+                .in('purchase_type', ['daily', 'both'])
                 .order('category');
 
             if (data) setProducts(data);
