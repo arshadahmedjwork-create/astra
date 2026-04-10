@@ -74,6 +74,9 @@ const AdminOrders = () => {
     const [isAddingNewDriver,  setIsAddingNewDriver]   = useState(false);
     const [newDriverData,      setNewDriverData]       = useState({ full_name: '', phone: '', vehicle_no: '' });
     const [assigning,          setAssigning]           = useState(false);
+    
+    // View Items modal
+    const [viewingOrder,       setViewingOrder]        = useState<any | null>(null);
 
     const { toast } = useToast();
     const isFuture = selectedDate > today;
@@ -110,7 +113,8 @@ const AdminOrders = () => {
                     id, order_date, delivery_date, status, total_amount, driver_id, subscription_id,
                     drivers (full_name),
                     customers ( id, customer_id, full_name, mobile ),
-                    subscriptions ( id, quantity, product_id )
+                    subscriptions ( id, quantity, product_id ),
+                    order_items ( id, quantity, products ( name, unit ) )
                 `)
                 .eq('delivery_date', selectedDate)
                 .order('created_at', { ascending: false });
@@ -125,13 +129,23 @@ const AdminOrders = () => {
             const enriched = (data || []).map(order => {
                 const customer     = Array.isArray(order.customers)    ? order.customers[0]    : order.customers;
                 const subscription = Array.isArray(order.subscriptions) ? order.subscriptions[0] : order.subscriptions;
+                const items        = order.order_items || [];
                 const address      = addressData?.find(a => a.customer_id === customer?.id) || {};
-                let productName = 'Custom Order';
+                
+                let productName = '';
                 if (subscription) {
                     const p = productData?.find(p => p.id === subscription.product_id);
-                    if (p) productName = `${subscription.quantity}x ${p.name} (${p.unit})`;
+                    if (p) productName = `${subscription.quantity}x ${p.name}`;
+                } else if (items.length > 0) {
+                    productName = items.map((it: any) => {
+                        const p = Array.isArray(it.products) ? it.products[0] : it.products;
+                        return `${it.quantity}x ${p?.name || 'Item'}`;
+                    }).join(', ');
+                } else {
+                    productName = 'No Items Found';
                 }
-                return { ...order, customers: customer, subscriptions: subscription, address, productName, _source: 'order' };
+
+                return { ...order, customers: customer, subscriptions: subscription, items, address, productName, _source: 'order' };
             });
 
             setOrders(enriched);
@@ -503,8 +517,18 @@ const AdminOrders = () => {
 
                                             {/* Item */}
                                             <td className="px-4 py-3">
-                                                <div className="font-medium">{row.productName}</div>
+                                                <div className="font-medium max-w-[200px] truncate" title={row.productName}>
+                                                    {row.productName}
+                                                </div>
                                                 <div className="text-xs font-semibold text-primary">₹{row.total_amount}</div>
+                                                {row.items?.length > 1 && (
+                                                    <button 
+                                                        onClick={() => setViewingOrder(row)}
+                                                        className="text-[10px] text-blue-600 hover:underline font-bold mt-0.5"
+                                                    >
+                                                        +{row.items.length - 1} more items
+                                                    </button>
+                                                )}
                                             </td>
 
                                             {/* Status */}
@@ -673,6 +697,61 @@ const AdminOrders = () => {
                                 {orderToAssign?._source === 'planned' ? 'Pre-schedule & Assign' : 'Assign & Start Tracking'}
                             </Button>
                         )}
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
+            {/* ── View Items Modal ─────────────────────────────────────────── */}
+            <Dialog open={!!viewingOrder} onOpenChange={v => !v && setViewingOrder(null)}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Order Items</DialogTitle>
+                    </DialogHeader>
+                    {viewingOrder && (
+                        <div className="space-y-4">
+                            <div className="flex justify-between items-start border-b pb-3">
+                                <div>
+                                    <div className="font-bold text-lg">{viewingOrder.customers?.full_name}</div>
+                                    <div className="text-xs text-muted-foreground">{viewingOrder.customers?.customer_id}</div>
+                                </div>
+                                <div className="text-right">
+                                    <div className="text-xs text-muted-foreground">Total Amount</div>
+                                    <div className="font-black text-xl text-primary">₹{viewingOrder.total_amount}</div>
+                                </div>
+                            </div>
+                            
+                            <div className="space-y-2">
+                                {viewingOrder.items?.map((it: any, idx: number) => {
+                                    const p = Array.isArray(it.products) ? it.products[0] : it.products;
+                                    return (
+                                        <div key={idx} className="flex justify-between items-center p-3 bg-secondary/10 rounded-lg border border-border">
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-8 h-8 rounded bg-primary/10 flex items-center justify-center font-bold text-primary text-xs">
+                                                    {it.quantity}
+                                                </div>
+                                                <div>
+                                                    <div className="font-bold text-sm">{p?.name || 'Unknown Item'}</div>
+                                                    <div className="text-[10px] text-muted-foreground uppercase">{p?.unit}</div>
+                                                </div>
+                                            </div>
+                                            <div className="font-bold text-sm">
+                                                ₹{(it.unit_price || 0) * it.quantity}
+                                            </div>
+                                        </div>
+                                    );
+                                })}
+                                
+                                {viewingOrder._source === 'planned' || (viewingOrder.items?.length === 0 && viewingOrder.productName) ? (
+                                    <div className="flex justify-between items-center p-3 bg-primary/5 rounded-lg border border-primary/20">
+                                        <div className="font-bold text-sm">{viewingOrder.productName}</div>
+                                        <div className="font-bold text-sm text-primary">₹{viewingOrder.total_amount}</div>
+                                    </div>
+                                ) : null}
+                            </div>
+                        </div>
+                    )}
+                    <DialogFooter>
+                        <Button onClick={() => setViewingOrder(null)}>Close</Button>
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
