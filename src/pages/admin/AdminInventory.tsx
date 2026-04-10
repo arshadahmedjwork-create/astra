@@ -77,6 +77,7 @@ const AdminInventory = () => {
         e.preventDefault();
         setSaving(true);
         try {
+            console.log('Saving product with data:', formData);
             const payload = {
                 name: formData.name,
                 category: formData.category,
@@ -97,6 +98,7 @@ const AdminInventory = () => {
             } else {
                 const { error } = await supabase.from('products').insert([payload]);
                 if (error) throw error;
+                console.log('Product saved successfully.');
                 toast({ title: 'Success', description: 'Product added successfully.' });
             }
 
