@@ -55,7 +55,6 @@ function ProductCard({
 }) {
     return (
         <View style={{
-            backgroundColor: 'white',
             borderRadius: 24,
             overflow: 'hidden',
             flexDirection: 'row',
