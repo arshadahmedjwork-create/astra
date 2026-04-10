@@ -107,10 +107,10 @@ const AdminOrders = () => {
             const { data, error } = await supabase
                 .from('orders')
                 .select(`
-                    id, order_date, delivery_date, status, total_amount, driver_id,
+                    id, order_date, delivery_date, status, total_amount, driver_id, subscription_id,
                     drivers (full_name),
                     customers ( id, customer_id, full_name, mobile ),
-                    subscriptions ( quantity, product_id )
+                    subscriptions ( id, quantity, product_id )
                 `)
                 .eq('delivery_date', selectedDate)
                 .order('created_at', { ascending: false });
