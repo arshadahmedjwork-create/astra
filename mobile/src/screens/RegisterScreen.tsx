@@ -189,21 +189,6 @@ export default function RegisterScreen({ navigation }: any) {
         } finally {
             setLoading(false);
         }
-    };
-    
-    const InputField = ({ label, value, onChangeText, placeholder, ...props }: any) => (
-        <View className="mb-4">
-            <Text className="text-sm font-semibold text-gray-700 mb-2">{label}</Text>
-            <TextInput
-                className="bg-gray-50 border border-gray-200 rounded-xl p-4 text-gray-900"
-                value={value}
-                onChangeText={onChangeText}
-                placeholder={placeholder}
-                placeholderTextColor="#9ca3af"
-                {...props}
-            />
-        </View>
-    );
 
     return (
         <SafeAreaView className="flex-1 bg-white">
@@ -481,3 +466,17 @@ export default function RegisterScreen({ navigation }: any) {
         </SafeAreaView>
     );
 }
+
+const InputField = ({ label, value, onChangeText, placeholder, ...props }: any) => (
+    <View className="mb-4">
+        <Text className="text-sm font-semibold text-gray-700 mb-2">{label}</Text>
+        <TextInput
+            className="bg-gray-50 border border-gray-200 rounded-xl p-4 text-gray-900"
+            value={value}
+            onChangeText={onChangeText}
+            placeholder={placeholder}
+            placeholderTextColor="#9ca3af"
+            {...props}
+        />
+    </View>
+);
