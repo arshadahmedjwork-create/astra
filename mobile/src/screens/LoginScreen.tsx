@@ -14,7 +14,7 @@ import { supabase } from '../lib/supabase';
 import { sendOtp, verifyOtp, retryOtp } from '../lib/msg91';
 import { useAuthStore } from '../stores/authStore';
 
-export default function LoginScreen() {
+export default function LoginScreen({ navigation }: any) {
     const [mobile, setMobile] = useState('');
     const [otp, setOtp] = useState('');
     const [step, setStep] = useState<'phone' | 'otp'>('phone');
@@ -252,6 +252,16 @@ export default function LoginScreen() {
                         </TouchableOpacity>
                     </View>
                 )}
+
+                <View className="mt-8 pt-6 border-t border-gray-100 items-center">
+                    <Text className="text-gray-500 text-sm">Don't have an account?</Text>
+                    <TouchableOpacity 
+                        onPress={() => navigation.navigate('Register')}
+                        className="mt-1"
+                    >
+                        <Text className="text-[#1B4D3E] font-bold text-base">Register Now</Text>
+                    </TouchableOpacity>
+                </View>
             </View>
         </KeyboardAvoidingView>
     );

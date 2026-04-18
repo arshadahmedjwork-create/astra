@@ -1,41 +1,141 @@
 /**
- * MSG91 OTP Widget Integration — Web
- * 
- * (TEST MODE: OTP SYSTEM BYPASSED)
- * Use 123456 for all accounts.
+ * MSG91 OTP & SMS API Integration — Web
  */
 
-/*
 const AUTH_KEY = import.meta.env.VITE_MSG91_AUTH_KEY as string;
-const WIDGET_ID = import.meta.env.VITE_MSG91_WIDGET_ID as string;
-const TOKEN_AUTH = import.meta.env.VITE_MSG91_TOKEN_AUTH as string;
-*/
+
+// Template IDs
+export const TEMPLATES = {
+    OTP: '60dd634f76297c6d9859b4e2',
+    REGISTRATION: '60defad58575d253c8315b35',
+    DELIVERY: '608a3efc3d5a91579c4e001d',
+};
 
 /**
- * Initialises and opens the MSG91 OTP widget for the given mobile number.
- * (TEST MODE: Automatically triggers success)
+ * Sends a 6-digit OTP to the given mobile number.
  */
-export function initMsg91Widget(
-    mobile: string,
-    onSuccess: (data: { message: string; access_token: string }) => void,
-    _onFailure: (error: unknown) => void
-) {
-    console.log('[MSG91] TEST MODE: Bypassing widget init for ' + mobile);
+export async function sendOtp(mobile: string): Promise<void> {
+    const url = `https://control.msg91.com/api/v5/otp?template_id=${TEMPLATES.OTP}&mobile=91${mobile}&authkey=${AUTH_KEY}`;
     
-    // Ask for the test OTP in a prompt for simplicity in test mode
-    const otp = window.prompt("TEST MODE: Enter OTP (use 123456)");
-    
-    if (otp === "123456") {
-        onSuccess({ message: "Success", access_token: "test-token" });
-    } else {
-        alert("Invalid Test OTP");
+    try {
+        const response = await fetch(url, { method: 'POST' });
+        const data = await response.json();
+        if (data.type === 'error') throw new Error(data.message);
+        console.log('[MSG91] OTP sent successfully');
+    } catch (error) {
+        console.error('[MSG91] Error sending OTP:', error);
+        throw error;
     }
 }
 
 /**
- * Verifies the JWT access-token.
- * (TEST MODE: Always returns true)
+ * Verifies the OTP the user entered.
  */
-export async function verifyMsg91Token(_accessToken: string): Promise<boolean> {
-    return true;
+export async function verifyOtp(mobile: string, otp: string): Promise<boolean> {
+    const url = `https://control.msg91.com/api/v5/otp/verify?otp=${otp}&mobile=91${mobile}&authkey=${AUTH_KEY}`;
+    
+    try {
+        const response = await fetch(url, { method: 'GET' });
+        const data = await response.json();
+        return data.type === 'success';
+    } catch (error) {
+        console.error('[MSG91] Error verifying OTP:', error);
+        return false;
+    }
 }
+
+/**
+ * Sends a registration confirmation SMS.
+ * Template: Thank You for Registration with Astra Dairy. Your Customer Id: ##var##
+ */
+export async function sendRegistrationSms(mobile: string, customerId: string): Promise<void> {
+    const url = 'https://control.msg91.com/api/v5/flow/';
+    const payload = {
+        template_id: TEMPLATES.REGISTRATION,
+        short_url: '1', // 1 for on, 0 for off
+        recipients: [
+            {
+                mobiles: `91${mobile}`,
+                var: customerId
+            }
+        ]
+    };
+
+    try {
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: {
+                'authkey': AUTH_KEY,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(payload)
+        });
+        const data = await response.json();
+        console.log('[MSG91] Registration SMS result:', data);
+    } catch (error) {
+        console.error('[MSG91] Error sending Registration SMS:', error);
+    }
+}
+
+/**
+ * Sends a delivery confirmation SMS.
+ * Template: Dear PATRON, CID NO: ##var1## Your Milk Subscription ##var2## has been delivered. Your balance count: ##var3## Date: ##var4## Thanks, Astra Dairy Farms Pvt Ltd
+ */
+export async function sendDeliverySms(
+    mobile: string, 
+    cid: string, 
+    subscription: string, 
+    balance: string | number, 
+    date: string
+): Promise<void> {
+    const url = 'https://control.msg91.com/api/v5/flow/';
+    const payload = {
+        template_id: TEMPLATES.DELIVERY,
+        short_url: '1',
+        recipients: [
+            {
+                mobiles: `91${mobile}`,
+                var1: cid,
+                var2: subscription,
+                var3: balance.toString(),
+                var4: date
+            }
+        ]
+    };
+
+    try {
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: {
+                'authkey': AUTH_KEY,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(payload)
+        });
+        const data = await response.json();
+        console.log('[MSG91] Delivery SMS result:', data);
+    } catch (error) {
+        console.error('[MSG91] Error sending Delivery SMS:', error);
+    }
+}
+
+// Legacy export for Backward Compatibility if needed temporarily
+export const initMsg91Widget = async (
+    mobile: string,
+    onSuccess: (data: any) => void,
+    onFailure: (error: any) => void
+) => {
+    // This is now handled by custom UI in login page calling sendOtp directly
+    // But we implement a basic version that triggers our new logic
+    try {
+        await sendOtp(mobile);
+        const otp = window.prompt("Enter the 6-digit OTP sent to your mobile:");
+        if (otp) {
+            const verified = await verifyOtp(mobile, otp);
+            if (verified) onSuccess({ message: "Success" });
+            else onFailure("Invalid OTP");
+        }
+    } catch (err) {
+        onFailure(err);
+    }
+};

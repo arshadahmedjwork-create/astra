@@ -15,6 +15,8 @@ import { Link } from 'react-router-dom';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { cn } from '@/lib/utils';
+import { sendDeliverySms } from '@/lib/msg91';
+import { getRemainingDeliveries, formatDeliveryDate } from '@/lib/subscriptionUtils';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -220,7 +222,25 @@ const AdminOrders = () => {
 
             if (newStatus === 'delivered') {
                 const order = orders.find(o => o.id === orderId);
-                if (order) await sendDeliveryEmail(order);
+                if (order) {
+                    await sendDeliveryEmail(order);
+                    
+                    // Send Delivery SMS
+                    try {
+                        const sub = order.subscriptions;
+                        const mobile = order.customers?.mobile;
+                        const cid = order.customers?.customer_id;
+                        const productName = order.productName;
+                        const remaining = sub?.selected_dates ? getRemainingDeliveries(sub.selected_dates) : 0;
+                        const date = order.delivery_date ? formatDeliveryDate(order.delivery_date) : formatDeliveryDate(new Date().toISOString().split('T')[0]);
+                        
+                        if (mobile && cid) {
+                            await sendDeliverySms(mobile, cid, productName, remaining, date);
+                        }
+                    } catch (smsError) {
+                        console.error('Failed to send delivery SMS:', smsError);
+                    }
+                }
             }
             toast({ title: 'Success', description: `Order marked as ${newStatus.replace(/_/g, ' ')}` });
             fetchOrders();

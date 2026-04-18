@@ -30,6 +30,8 @@ import {
     type LatLng as GeoCoord,
     type OptimizationResult,
 } from '../lib/routeOptimizer';
+import { sendDeliverySms } from '../lib/msg91';
+import { getRemainingDeliveries, formatDeliveryDate } from '../lib/subscriptionUtils';
 
 const { width: SCREEN_W, height: SCREEN_H } = Dimensions.get('window');
 
@@ -64,7 +66,7 @@ export default function DriverMode({ navigation }: any) {
         if (!driver?.id) return;
         const { data } = await supabase
             .from('orders')
-            .select('*, customers(id, full_name, mobile, addresses(*))')
+            .select('*, customers(id, customer_id, full_name, mobile, addresses(*)), subscriptions(*, products(name))')
             .eq('driver_id', driver.id)
             .in('status', ['pending', 'preparing', 'get_to_deliver']);
 
@@ -159,9 +161,29 @@ export default function DriverMode({ navigation }: any) {
         // Refresh orders then re-optimize from current location
         const { data } = await supabase
             .from('orders')
-            .select('*, customers(id, full_name, mobile, addresses(*))')
+            .select('*, customers(id, customer_id, full_name, mobile, addresses(*)), subscriptions(*, products(name))')
             .eq('driver_id', driver?.id)
             .in('status', ['pending', 'preparing', 'get_to_deliver']);
+
+        // Send Delivery SMS
+        try {
+            const deliveredOrder = orders.find(o => o.id === orderId);
+            if (deliveredOrder) {
+                const cust = deliveredOrder.customers;
+                const sub = deliveredOrder.subscriptions;
+                const mobile = cust?.mobile;
+                const cid = cust?.customer_id;
+                const productName = sub?.products?.name || 'Astra Milk';
+                const remaining = sub?.selected_dates ? getRemainingDeliveries(sub.selected_dates) : 0;
+                const date = deliveredOrder.delivery_date ? formatDeliveryDate(deliveredOrder.delivery_date) : formatDeliveryDate(new Date().toISOString().split('T')[0]);
+
+                if (mobile && cid) {
+                    await sendDeliverySms(mobile, cid, productName, remaining, date);
+                }
+            }
+        } catch (smsError) {
+            console.error('Failed to send delivery SMS:', smsError);
+        }
 
         const remaining = data ?? [];
         setOrders(remaining);

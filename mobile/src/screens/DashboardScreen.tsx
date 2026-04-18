@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, ScrollView, Alert, ActivityIndicator, Modal, SafeAreaView, Animated, Easing } from 'react-native';
+import { View, Text, TouchableOpacity, ScrollView, Alert, ActivityIndicator, Modal, SafeAreaView, Animated, Easing, Platform, StatusBar } from 'react-native';
 import { useAuthStore } from '../stores/authStore';
 import { supabase } from '../lib/supabase';
 import { LogOut, Package, Repeat, User, ShoppingCart, Navigation, BellRing, CheckCircle, Wallet, CreditCard } from 'lucide-react-native';
@@ -22,8 +22,17 @@ const Marquee = () => {
         startAnimation();
     }, []);
 
+    const paddingTop = Platform.OS === 'android' ? StatusBar.currentHeight : 0;
+    
     return (
-        <View style={{ backgroundColor: '#FEF3C7', paddingVertical: 6, borderBottomWidth: 1, borderBottomColor: '#FDE68A', overflow: 'hidden' }}>
+        <View style={{ 
+            backgroundColor: '#FEF3C7', 
+            paddingTop: paddingTop,
+            paddingVertical: 6, 
+            borderBottomWidth: 1, 
+            borderBottomColor: '#FDE68A', 
+            overflow: 'hidden' 
+        }}>
             <Animated.Text
                 style={{
                     transform: [{ translateX: scrollX }],
