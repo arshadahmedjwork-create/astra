@@ -58,6 +58,16 @@
     },
     "updates": {
       "url": "https://u.expo.dev/cacb3866-a5bf-42e9-819a-7217e77eb773"
-    }
+    },
+    "plugins": [
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "kotlinVersion": "2.0.0"
+          }
+        }
+      ]
+    ]
   }
 }
