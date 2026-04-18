@@ -2,7 +2,7 @@
   "expo": {
     "name": "mobile",
     "slug": "mobile",
-    "version": "1.0.3",
+    "version": "2.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
@@ -14,7 +14,7 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.astradairy.mobile",
-      "buildNumber": "4",
+      "buildNumber": "5",
       "infoPlist": {
         "NSLocationWhenInUseUsageDescription": "Astra Dairy needs your location to deliver fresh milk to your doorstep.",
         "NSLocationAlwaysAndWhenInUseUsageDescription": "Astra Dairy needs background location to track your delivery in real-time.",
@@ -27,7 +27,7 @@
     },
     "android": {
       "package": "com.astradairy.mobile",
-      "versionCode": 4,
+      "versionCode": 5,
       "targetSdkVersion": 35,
       "compileSdkVersion": 35,
       "permissions": [
