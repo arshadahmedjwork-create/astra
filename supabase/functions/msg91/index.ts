@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2"
+import * as bcrypt from "https://deno.land/x/bcrypt@v0.4.1/mod.ts"
 
 const MSG91_AUTH_KEY = Deno.env.get('MSG91_AUTH_KEY')
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')
@@ -106,6 +107,38 @@ serve(async (req) => {
           status: 200,
         })
       }
+    } else if (type === 'registerCustomer') {
+      const { password, ...customerDetails } = body.details;
+      
+      // 1. Hash password securely on the server
+      const hash = await bcrypt.hash(password);
+      
+      // 2. Insert customer into database
+      const { data: customerData, error: customerError } = await supabase
+        .from('customers')
+        .insert({
+          ...customerDetails,
+          password_hash: hash,
+        })
+        .select()
+        .single();
+        
+      if (customerError) throw new Error(`Registration error: ${customerError.message}`);
+
+      // 3. Prepare registration SMS payload
+      payload = {
+        template_id: TEMPLATES.REGISTRATION,
+        sender: SENDER_ID,
+        short_url: '1',
+        DLT_TE_ID: DLT_IDS.REGISTRATION,
+        recipients: [{ mobiles: `91${customerDetails.mobile}`, var: customerData.customer_id }]
+      }
+      
+      // Return success along with customer data
+      return new Response(JSON.stringify({ type: 'success', customer: customerData }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 200,
+      });
     } else if (type === 'registration') {
       payload = {
         template_id: TEMPLATES.REGISTRATION,

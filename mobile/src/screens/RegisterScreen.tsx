@@ -20,7 +20,6 @@ import {
 import * as ImagePicker from 'expo-image-picker';
 import * as Location from 'expo-location';
 import MapView, { Marker } from 'react-native-maps';
-import bcrypt from 'bcryptjs';
 import { supabase } from '../lib/supabase';
 import { sendRegistrationSms } from '../lib/msg91';
 
@@ -131,36 +130,29 @@ export default function RegisterScreen({ navigation }: any) {
     const handleSubmit = async () => {
         setLoading(true);
         try {
-            // Hashing password
-            const salt = await bcrypt.genSalt(10);
-            const hash = await bcrypt.hash(password, salt);
-            
-            // Register Customer
-            const { data: customerData, error: customerError } = await supabase
-                .from('customers')
-                .insert({
-                    full_name: fullName,
-                    gender: gender,
-                    mobile: mobile,
-                    email: email || null,
-                    password_hash: hash,
-                    dob: dob || null,
-                    photo_base64: photo || null,
-                    marital_status: maritalStatus || null,
-                    marriage_date: maritalStatus === 'Married' ? marriageDate || null : null,
-                })
-                .select()
-                .single();
-                
-            if (customerError) throw customerError;
-            
-            // Send registration SMS
-            try {
-                await sendRegistrationSms(mobile, customerData.customer_id);
-            } catch (smsError) {
-                console.error('Failed to send registration SMS:', smsError);
+            // Register Customer via Edge Function (Server-side hash & SMS)
+            const { data: registrationData, error: registrationError } = await supabase.functions.invoke('msg91', {
+                body: {
+                    type: 'registerCustomer',
+                    details: {
+                        full_name: fullName,
+                        gender: gender,
+                        mobile: mobile,
+                        email: email || null,
+                        password: password, // Plain password sent over HTTPS, hashed on server
+                        dob: dob || null,
+                        photo_base64: photo || null,
+                        marital_status: maritalStatus || null,
+                        marriage_date: maritalStatus === 'Married' ? marriageDate || null : null,
+                    }
+                }
+            });
+
+            if (registrationError || registrationData?.type === 'error') {
+                throw new Error(registrationError?.message || registrationData?.message || 'Registration failed');
             }
-            
+
+            const customerData = registrationData.customer;
             // Insert Address
             const { error: addressError } = await supabase
                 .from('addresses')
