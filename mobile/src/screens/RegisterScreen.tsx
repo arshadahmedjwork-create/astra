@@ -189,6 +189,7 @@ export default function RegisterScreen({ navigation }: any) {
         } finally {
             setLoading(false);
         }
+    };
 
     return (
         <SafeAreaView className="flex-1 bg-white">
