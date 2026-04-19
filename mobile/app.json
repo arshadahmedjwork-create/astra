@@ -28,8 +28,8 @@
     "android": {
       "package": "com.astradairy.mobile",
       "versionCode": 6,
-      "targetSdkVersion": 35,
-      "compileSdkVersion": 35,
+      "targetSdkVersion": 36,
+      "compileSdkVersion": 36,
       "permissions": [
         "ACCESS_COARSE_LOCATION",
         "ACCESS_FINE_LOCATION",
@@ -49,25 +49,26 @@
     },
     "extra": {
       "eas": {
-        "projectId": "cacb3866-a5bf-42e9-819a-7217e77eb773"
+        "projectId": "01000d55-1e16-4d0d-be8c-4eafab5964bb"
       }
     },
-    "owner": "arshad26ahmed",
     "runtimeVersion": {
       "policy": "sdkVersion"
     },
     "updates": {
-      "url": "https://u.expo.dev/cacb3866-a5bf-42e9-819a-7217e77eb773"
+      "url": "https://u.expo.dev/01000d55-1e16-4d0d-be8c-4eafab5964bb"
     },
     "plugins": [
       [
         "expo-build-properties",
         {
           "android": {
-            "kotlinVersion": "2.2.10"
+            "kotlinVersion": "2.1.21",
+            "newArchEnabled": true
           }
         }
       ]
-    ]
+    ],
+    "owner": "arshd_ahmed"
   }
 }
