@@ -13,7 +13,7 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
     View, Text, TouchableOpacity, ScrollView, SafeAreaView,
-    ActivityIndicator, Alert, Linking, Dimensions, Platform,
+    ActivityIndicator, Alert, Linking, Dimensions, Platform, Modal,
 } from 'react-native';
 import MapView, { Marker, Polyline, PROVIDER_DEFAULT, type Region } from 'react-native-maps';
 import * as Location from 'expo-location';
@@ -58,6 +58,7 @@ export default function DriverMode({ navigation }: any) {
     // UI
     const [viewMode,        setViewMode]        = useState<'list' | 'map'>('list');
     const [expandedId,      setExpandedId]      = useState<string | null>(null);
+    const [showLocationDisclosure, setShowLocationDisclosure] = useState(false);
 
     const mapRef = useRef<MapView>(null);
 
@@ -103,11 +104,34 @@ export default function DriverMode({ navigation }: any) {
     };
 
     const startTracking = async () => {
+        const { status: foregroundStatus } = await Location.getForegroundPermissionsAsync();
+        const { status: backgroundStatus } = await Location.getBackgroundPermissionsAsync();
+
+        if (foregroundStatus !== 'granted' || backgroundStatus !== 'granted') {
+            setShowLocationDisclosure(true);
+            return;
+        }
+
         const loc = await requestLocation();
         if (!loc) return;
         setDriverLatLng(loc);
         setTracking(true);
         if (driver?.id) await startBackgroundLocation(driver.id);
+    };
+
+    const handleAcceptDisclosure = async () => {
+        setShowLocationDisclosure(false);
+        const loc = await requestLocation();
+        if (!loc) return;
+        
+        // Wait a bit for the UI to clear before asking for background
+        setTimeout(async () => {
+            const success = driver?.id ? await startBackgroundLocation(driver.id) : false;
+            if (success) {
+                setDriverLatLng(loc);
+                setTracking(true);
+            }
+        }, 500);
     };
 
     const stopTracking = async () => {
@@ -580,6 +604,50 @@ export default function DriverMode({ navigation }: any) {
                     </View>
                 </ScrollView>
             )}
+            {/* ══ LOCATION DISCLOSURE MODAL ═══════════════════════════════════════════════ */}
+            <Modal
+                visible={showLocationDisclosure}
+                transparent={true}
+                animationType="fade"
+            >
+                <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.8)', justifyContent: 'center', alignItems: 'center', padding: 20 }}>
+                    <View style={{ backgroundColor: 'white', borderRadius: 32, padding: 32, width: '100%', maxWidth: 400 }}>
+                        <View style={{ backgroundColor: '#fef3c7', width: 64, height: 64, borderRadius: 32, alignItems: 'center', justifyContent: 'center', alignSelf: 'center', marginBottom: 24 }}>
+                            <MapPin color="#d97706" size={32} />
+                        </View>
+                        
+                        <Text style={{ fontSize: 24, fontWeight: '900', color: '#111827', textAlign: 'center', marginBottom: 16 }}>
+                            Location Access
+                        </Text>
+                        
+                        <Text style={{ fontSize: 15, color: '#4b5563', textAlign: 'center', lineHeight: 22, marginBottom: 24 }}>
+                            Astra Dairy collects location data to enable <Text style={{ fontWeight: 'bold', color: '#111827' }}>real-time delivery tracking</Text> for customers.
+                            {"\n\n"}
+                            This allows customers to see their milk delivery's progress <Text style={{ fontWeight: 'bold', color: '#111827' }}>even when this app is closed or not in use</Text> during your delivery shift.
+                        </Text>
+                        
+                        <View style={{ gap: 12 }}>
+                            <TouchableOpacity
+                                onPress={handleAcceptDisclosure}
+                                style={{ backgroundColor: '#1B4D3E', paddingVertical: 18, borderRadius: 16, alignItems: 'center' }}
+                            >
+                                <Text style={{ color: 'white', fontWeight: '900', fontSize: 16 }}>I Understand & Agree</Text>
+                            </TouchableOpacity>
+                            
+                            <TouchableOpacity
+                                onPress={() => setShowLocationDisclosure(false)}
+                                style={{ paddingVertical: 14, alignItems: 'center' }}
+                            >
+                                <Text style={{ color: '#9ca3af', fontWeight: '700' }}>Not Now</Text>
+                            </TouchableOpacity>
+                        </View>
+                        
+                        <Text style={{ fontSize: 11, color: '#9ca3af', textAlign: 'center', marginTop: 20 }}>
+                            You can stop location sharing at any time by clicking "End Duty".
+                        </Text>
+                    </View>
+                </View>
+            </Modal>
         </SafeAreaView>
     );
 }
