@@ -4,6 +4,7 @@ import { Wallet, Plus, History, ArrowUpRight, ArrowDownLeft, AlertCircle, CheckC
 import ERPLayout from '@/components/erp/ERPLayout';
 import { useAuthStore } from '@/stores/authStore';
 import { supabase } from '@/lib/supabase';
+import { useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 
@@ -25,9 +26,10 @@ const WalletPage = () => {
     useEffect(() => {
         if (!customer?.id) return;
         fetchTransactions();
-    }, [customer?.id]);
+    }, [customer?.id, fetchTransactions]);
 
-    const fetchTransactions = async () => {
+    const fetchTransactions = useCallback(async () => {
+        if (!customer?.id) return;
         const { data, error } = await supabase
             .from('wallet_transactions')
             .select('*')
@@ -38,7 +40,7 @@ const WalletPage = () => {
             setTransactions(data);
         }
         setLoading(false);
-    };
+    }, [customer?.id]);
 
     const handleAddFunds = async () => {
         if (!addAmount || isNaN(Number(addAmount))) {

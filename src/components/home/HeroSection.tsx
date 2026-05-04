@@ -23,16 +23,13 @@ const products = [
   { name: "Ghee", image: ghee, href: "/products/ghee" },
   { name: "Curd", image: curd, href: "/products/curd" },
   { name: "Flavoured Milk", image: carrotMilk, href: "/products/flavoured-milk" },
-  { name: "Non-Dairy", image: coconutOil, href: "/non-dairy" },
 ];
 
 const leftBottles = [
   { name: "Pasteurised", image: bottlePasteurised },
-  { name: "Homogenised", image: bottleHomogenised },
 ];
 const rightBottles = [
-  { name: "Sesame Oil", image: bottleSesameOil },
-  { name: "Coconut Oil", image: bottleCoconutOil },
+  { name: "Homogenised", image: bottleHomogenised },
 ];
 
 const HeroSection = () => {
@@ -80,19 +77,19 @@ const HeroSection = () => {
 
         {/* ═══ HERO TEXT — fades out in Phase A, layered OVER bottle ═══ */}
         <motion.div
-          className="absolute inset-0 flex flex-col items-center justify-center z-30 px-4 text-center pointer-events-none"
+          className="absolute inset-0 flex flex-col items-center pt-[12vh] sm:pt-[15vh] md:pt-[18vh] z-30 px-4 text-center pointer-events-none"
           style={{ opacity: heroTextOpacity, y: heroTextY }}
         >
           <h1
-            className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl xl:text-9xl font-black text-foreground leading-[0.95] tracking-tighter mb-4"
-            style={{ textShadow: "0 2px 40px rgba(255,255,255,0.5)" }}
+            className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl xl:text-9xl font-black text-foreground leading-[0.95] tracking-tighter mb-6"
+            style={{ textShadow: "0 4px 40px rgba(255,255,255,0.7)" }}
           >
             Pure, fresh milk.
             <br />
             <span className="text-primary">No shortcuts.</span>
           </h1>
-          <p className="text-base md:text-lg text-foreground/80 max-w-xl leading-relaxed mt-2"
-            style={{ textShadow: "0 1px 20px rgba(255,255,255,0.6)" }}>
+          <p className="text-base md:text-xl text-foreground/90 max-w-2xl leading-relaxed font-medium bg-white/10 backdrop-blur-sm rounded-2xl p-4 md:p-6 border border-white/20 shadow-xl"
+            style={{ textShadow: "0 2px 10px rgba(255,255,255,0.8)" }}>
             At Astra Dairy, nothing gets in the way of producing the freshest, most natural dairy products.
             <br className="hidden md:block" />
             No hormones. No preservatives. No factory farms. Just pure goodness.
@@ -103,15 +100,15 @@ const HeroSection = () => {
         <motion.div className="absolute inset-0 flex flex-col z-10" style={{ opacity: showcaseOpacity }}>
           {/* Products Header */}
           <motion.div
-            className="flex-shrink-0 flex justify-center pt-16 md:pt-20"
+            className="flex-shrink-0 flex justify-center pt-8 md:pt-16"
             style={{ opacity: headerOpacity, y: headerY }}
           >
             <div className="text-center">
-              <p className="text-sm font-bold uppercase tracking-[0.3em] text-accent mb-2">
+              <p className="text-xs font-bold uppercase tracking-[0.4em] text-accent mb-3">
                 From Our Farm to Your Table
               </p>
-              <h2 className="text-4xl md:text-5xl lg:text-6xl font-black text-foreground tracking-tight">
-                Products
+              <h2 className="text-5xl md:text-6xl lg:text-7xl font-serif font-black text-foreground tracking-tight">
+                Our Products
               </h2>
             </div>
           </motion.div>
@@ -129,7 +126,7 @@ const HeroSection = () => {
                     <img
                       src={b.image}
                       alt={b.name}
-                      className="h-28 md:h-44 lg:h-56 w-auto object-contain drop-shadow-lg"
+                      className="h-24 md:h-36 lg:h-48 w-auto object-contain drop-shadow-lg"
                       style={{ transform: i === 0 ? "scale(0.85)" : "scale(0.95)" }}
                     />
                     <span className="text-[9px] md:text-xs font-bold text-muted-foreground mt-2 uppercase tracking-wider">
@@ -144,14 +141,16 @@ const HeroSection = () => {
                 className="flex flex-col items-center relative"
                 style={{ y: bottleY, scale: bottleScale }}
               >
-                <img
+                <motion.img
                   src={bottleBanner}
                   alt="Astra Dairy farm fresh milk in glass bottle"
-                  className="h-36 md:h-56 lg:h-72 w-auto drop-shadow-[0_20px_60px_rgba(0,0,0,0.25)]"
+                  className="h-32 md:h-56 lg:h-64 w-auto drop-shadow-[0_25px_50px_rgba(0,0,0,0.2)]"
+                  animate={{ y: [0, -10, 0] }}
+                  transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
                   loading="eager"
                 />
                 <motion.span
-                  className="text-[9px] md:text-xs font-bold text-accent mt-2 uppercase tracking-wider"
+                  className="text-[10px] md:text-xs font-bold text-accent mt-4 uppercase tracking-[0.2em]"
                   style={{ opacity: flankOpacity }}
                 >
                   Farm Fresh
@@ -168,7 +167,7 @@ const HeroSection = () => {
                     <img
                       src={b.image}
                       alt={b.name}
-                      className="h-28 md:h-44 lg:h-56 w-auto object-contain drop-shadow-lg"
+                      className="h-24 md:h-36 lg:h-48 w-auto object-contain drop-shadow-lg"
                       style={{ transform: i === 1 ? "scale(0.85)" : "scale(0.95)" }}
                     />
                     <span className="text-[9px] md:text-xs font-bold text-muted-foreground mt-2 uppercase tracking-wider">
@@ -182,24 +181,24 @@ const HeroSection = () => {
 
           {/* ═══ BOTTOM STRIP: Product Category Cards ═══ */}
           <motion.div
-            className="flex-shrink-0 px-4 pb-6 md:pb-10"
+            className="flex-shrink-0 px-4 pb-4 md:pb-8"
             style={{ opacity: productsOpacity, y: productsY }}
           >
-            <div className="grid grid-cols-3 md:grid-cols-6 gap-3 md:gap-5 max-w-5xl mx-auto">
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3 md:gap-5 max-w-5xl mx-auto">
               {products.map((product) => (
                 <Link key={product.name} to={product.href} className="group block text-center">
-                  <div className="relative bg-card/80 backdrop-blur-sm rounded-2xl border border-border p-3 md:p-4 transition-all duration-500 hover:shadow-2xl hover:-translate-y-2 overflow-hidden">
+                  <div className="relative p-3 md:p-4 transition-all duration-500 hover:-translate-y-2">
                     <div className="absolute inset-0 bg-gradient-to-t from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-2xl" />
                     <div className="aspect-square flex items-center justify-center relative mb-2">
                       <img
                         src={product.image}
                         alt={product.name}
-                        className="w-full h-full object-contain p-1 transition-transform duration-700 group-hover:scale-110"
+                        className="w-full h-full object-contain p-1 transition-transform duration-700 group-hover:scale-110 mix-blend-multiply"
                         loading="lazy"
                       />
                       <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-3/4 h-3 bg-foreground/5 rounded-full blur-md" />
                     </div>
-                    <h3 className="text-xs md:text-sm font-black text-foreground relative z-10 tracking-tight">
+                    <h3 className="text-[9px] md:text-xs font-bold text-muted-foreground relative z-10 tracking-wider uppercase mt-2">
                       {product.name}
                     </h3>
                   </div>

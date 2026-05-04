@@ -43,7 +43,7 @@ interface AuthState {
     customer: Customer | null;
     driver: Driver | null;
     isAuthenticated: boolean;
-    setAuth: (session: any, user: Customer | null, driver: Driver | null) => void;
+    setAuth: (session: unknown, user: Customer | null, driver: Driver | null) => void;
     updateCustomer: (customer: Customer) => void;
     logout: () => Promise<void>;
     checkSession: () => Promise<void>;

@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { MapPin, Phone, Mail } from "lucide-react";
+import { MapPin, Phone, Mail, Instagram, Facebook, Twitter, Youtube } from "lucide-react";
 import astraLogo from "@/assets/astra-logo.png";
 
 const productLinks = [
@@ -29,19 +29,37 @@ const Footer = () => {
       <div className="container mx-auto px-4 lg:px-8 py-16">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10">
           {/* Brand */}
-          <div className="space-y-4">
-            <Link to="/" className="flex items-center gap-2">
-              <img src={astraLogo} alt="Astra Dairy" className="h-10 w-10 object-contain brightness-0 invert" />
-              <span className="text-xl font-bold">
-                Astra<span className="text-accent">Dairy</span>
-              </span>
-            </Link>
-            <p className="text-sm text-primary-foreground/60 leading-relaxed">
-              Delivering farm fresh cow's milk in glass bottles to your home. Pure, natural, and organic.
-            </p>
-            <p className="text-xs text-primary-foreground/40">
-              FSSAI License No: 12419012000655
-            </p>
+          <div className="space-y-6">
+            <div className="space-y-4">
+              <Link to="/" className="flex items-center gap-2">
+                <img src={astraLogo} alt="Astra Dairy" className="h-10 w-10 object-contain brightness-0 invert" />
+                <span className="text-xl font-bold">
+                  Astra<span className="text-accent">Dairy</span>
+                </span>
+              </Link>
+              <p className="text-sm text-primary-foreground/60 leading-relaxed">
+                Delivering farm fresh cow's milk in glass bottles to your home. Pure, natural, and organic.
+              </p>
+              <p className="text-xs text-primary-foreground/40">
+                FSSAI License No: 12419012000655
+              </p>
+            </div>
+            
+            {/* Social Links */}
+            <div className="flex items-center gap-4">
+              <a href="https://instagram.com" target="_blank" rel="noopener noreferrer" className="w-10 h-10 rounded-full bg-primary-foreground/10 flex items-center justify-center hover:bg-accent hover:text-primary transition-all duration-300 hover:-translate-y-1">
+                <Instagram className="w-5 h-5" />
+              </a>
+              <a href="https://facebook.com" target="_blank" rel="noopener noreferrer" className="w-10 h-10 rounded-full bg-primary-foreground/10 flex items-center justify-center hover:bg-accent hover:text-primary transition-all duration-300 hover:-translate-y-1">
+                <Facebook className="w-5 h-5" />
+              </a>
+              <a href="https://twitter.com" target="_blank" rel="noopener noreferrer" className="w-10 h-10 rounded-full bg-primary-foreground/10 flex items-center justify-center hover:bg-accent hover:text-primary transition-all duration-300 hover:-translate-y-1">
+                <Twitter className="w-5 h-5" />
+              </a>
+              <a href="https://youtube.com" target="_blank" rel="noopener noreferrer" className="w-10 h-10 rounded-full bg-primary-foreground/10 flex items-center justify-center hover:bg-accent hover:text-primary transition-all duration-300 hover:-translate-y-1">
+                <Youtube className="w-5 h-5" />
+              </a>
+            </div>
           </div>
 
           {/* Products */}

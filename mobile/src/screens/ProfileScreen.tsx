@@ -50,7 +50,7 @@ export default function ProfileScreen({ navigation }: any) {
                 return;
             }
 
-            let loc = await Location.getCurrentPositionAsync({
+            const loc = await Location.getCurrentPositionAsync({
                 accuracy: Location.Accuracy.High,
             });
 

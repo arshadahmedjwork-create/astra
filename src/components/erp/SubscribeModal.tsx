@@ -57,7 +57,7 @@ const SubscribeModal: React.FC<SubscribeModalProps> = ({ isOpen, onClose, produc
             setFrequency('custom');
             setRange({ from: undefined, to: undefined });
         }
-    }, [isOpen, product?.id, product?.category, product?.purchase_type]);
+    }, [isOpen, product, today]);
 
     const isDailyOnly = product?.purchase_type === 'daily';
 
@@ -82,7 +82,7 @@ const SubscribeModal: React.FC<SubscribeModalProps> = ({ isOpen, onClose, produc
         <Dialog open={isOpen} onOpenChange={(v) => !v && onClose()}>
             <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
-                    <DialogTitle className="flex items-center gap-2 text-2xl font-bold text-[#1B4D3E]">
+                    <DialogTitle className="flex items-center gap-2 text-2xl font-serif font-black text-[#1B4D3E]">
                         {isDailyOnly ? <CalendarDays className="w-6 h-6" /> : <Repeat className="w-6 h-6" />}
                         {isDailyOnly ? 'Quick Order' : 'Start Subscription'}
                     </DialogTitle>
@@ -176,12 +176,12 @@ const SubscribeModal: React.FC<SubscribeModalProps> = ({ isOpen, onClose, produc
                         <div className="border border-border rounded-2xl p-2 bg-white shadow-sm overflow-hidden">
                             <Calendar
                                 mode={frequency === 'custom' ? "multiple" : "range"}
-                                selected={frequency === 'custom' ? selectedDates : (range as any)}
-                                onSelect={(val: any) => {
+                                selected={frequency === 'custom' ? selectedDates : (range as { from: Date; to?: Date })}
+                                onSelect={(val) => {
                                     if (frequency === 'custom') {
-                                        setSelectedDates(val || []);
+                                        setSelectedDates((val as Date[]) || []);
                                     } else {
-                                        setRange(val || { from: undefined, to: undefined });
+                                        setRange((val as { from: Date | undefined; to: Date | undefined }) || { from: undefined, to: undefined });
                                     }
                                 }}
                                 disabled={(date) => isBefore(date, today) || (product?.category === 'Milk')}

@@ -17,29 +17,16 @@ import ERPLayout from '@/components/erp/ERPLayout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
+import { Order, Driver } from '@/types';
+import { useCallback } from 'react';
 
 const OrderTracking = () => {
     const { orderId } = useParams();
-    const [order, setOrder] = useState<any>(null);
-    const [driver, setDriver] = useState<any>(null);
+    const [order, setOrder] = useState<Order | null>(null);
+    const [driver, setDriver] = useState<Driver | null>(null);
     const [loading, setLoading] = useState(true);
 
-    useEffect(() => {
-        if (orderId) {
-            fetchOrderDetails();
-        }
-    }, [orderId]);
-
-    useEffect(() => {
-        if (order?.driver_id) {
-            const subscription = subscribeToDriverUpdates();
-            return () => {
-                supabase.removeChannel(subscription);
-            };
-        }
-    }, [order?.driver_id]);
-
-    const fetchOrderDetails = async () => {
+    const fetchOrderDetails = useCallback(async () => {
         try {
             const { data, error } = await supabase
                 .from('orders')
@@ -59,9 +46,9 @@ const OrderTracking = () => {
         } finally {
             setLoading(false);
         }
-    };
+    }, [orderId]);
 
-    const subscribeToDriverUpdates = () => {
+    const subscribeToDriverUpdates = useCallback(() => {
         return supabase
             .channel('driver-location')
             .on(
@@ -73,11 +60,26 @@ const OrderTracking = () => {
                     filter: order?.driver_id ? `id=eq.${order.driver_id}` : undefined
                 },
                 (payload) => {
-                    setDriver(payload.new);
+                    setDriver(payload.new as Driver);
                 }
             )
             .subscribe();
-    };
+    }, [order?.driver_id]);
+
+    useEffect(() => {
+        if (orderId) {
+            fetchOrderDetails();
+        }
+    }, [orderId, fetchOrderDetails]);
+
+    useEffect(() => {
+        if (order?.driver_id) {
+            const subscription = subscribeToDriverUpdates();
+            return () => {
+                supabase.removeChannel(subscription);
+            };
+        }
+    }, [order?.driver_id, subscribeToDriverUpdates]);
 
     const getStatusStep = () => {
         if (!order) return 0;
@@ -176,7 +178,7 @@ const OrderTracking = () => {
                                 <Package className="w-4 h-4" /> Order Items
                             </h3>
                             <div className="space-y-3">
-                                {order?.order_items?.map((item: any) => (
+                                {order?.order_items?.map((item) => (
                                     <div key={item.id} className="flex justify-between text-sm">
                                         <span className="text-muted-foreground">{item.quantity}x {item.products?.name || 'Product'}</span>
                                         <span className="font-medium text-foreground">₹{item.total_price}</span>

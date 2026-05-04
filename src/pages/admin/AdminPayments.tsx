@@ -3,17 +3,19 @@ import { supabase } from '@/lib/supabase';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Search, Loader2, CreditCard, UserRound, ArrowDownToLine } from 'lucide-react';
+import { useCallback } from 'react';
+import { Payment } from '@/types';
 
 const AdminPayments = () => {
-    const [payments, setPayments] = useState<any[]>([]);
+    const [payments, setPayments] = useState<Payment[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState('');
 
     useEffect(() => {
         fetchPayments();
-    }, []);
+    }, [fetchPayments]);
 
-    const fetchPayments = async () => {
+    const fetchPayments = useCallback(async () => {
         setLoading(true);
         try {
             const { data, error } = await supabase
@@ -43,7 +45,7 @@ const AdminPayments = () => {
         } finally {
             setLoading(false);
         }
-    };
+    }, []);
 
     const filteredPayments = payments.filter(payment =>
         payment.transaction_id?.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -63,7 +65,7 @@ const AdminPayments = () => {
     return (
         <div className="space-y-6">
             <div>
-                <h1 className="text-3xl font-bold text-foreground">Payment History</h1>
+                <h1 className="text-3xl font-serif font-black text-foreground">Payment History</h1>
                 <p className="text-muted-foreground mt-1">View all transactions completed by customers</p>
             </div>
 

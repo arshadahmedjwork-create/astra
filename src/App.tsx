@@ -2,16 +2,16 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { lazy, Suspense } from "react";
+import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
+import { lazy, Suspense, useEffect } from "react";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import ProtectedRoute from "./components/erp/ProtectedRoute";
+import ScrollToTop from "@/components/layout/ScrollToTop";
 
 const About = lazy(() => import("./pages/About"));
 const Products = lazy(() => import("./pages/Products"));
 const ProductDetail = lazy(() => import("./pages/ProductDetail"));
-const NonDairy = lazy(() => import("./pages/NonDairy"));
 const Gallery = lazy(() => import("./pages/Gallery"));
 const Media = lazy(() => import("./pages/Media"));
 const FAQ = lazy(() => import("./pages/FAQ"));
@@ -61,19 +61,30 @@ const Loading = () => (
   </div>
 );
 
+const RouteScrollToTop = () => {
+  const { pathname } = useLocation();
+  
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [pathname]);
+  
+  return null;
+};
+
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
       <Toaster />
       <Sonner />
       <BrowserRouter>
+        <RouteScrollToTop />
+        <ScrollToTop />
         <Suspense fallback={<Loading />}>
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/about" element={<About />} />
             <Route path="/products" element={<Products />} />
             <Route path="/products/:slug" element={<ProductDetail />} />
-            <Route path="/non-dairy" element={<NonDairy />} />
             <Route path="/gallery" element={<Gallery />} />
             <Route path="/media" element={<Media />} />
             <Route path="/faq" element={<FAQ />} />

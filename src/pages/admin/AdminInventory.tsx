@@ -13,6 +13,8 @@ import {
 } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent } from '@/components/ui/card';
+import { useCallback } from 'react';
+import { Product } from '@/types';
 
 const productImages: Record<string, string> = {
     'Cow Milk': '/assets/product-raw-milk.png',
@@ -27,14 +29,14 @@ const productImages: Record<string, string> = {
 };
 
 const AdminInventory = () => {
-    const [products, setProducts] = useState<any[]>([]);
+    const [products, setProducts] = useState<Product[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState('');
     const { toast } = useToast();
 
     // Modal state
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-    const [editingProduct, setEditingProduct] = useState<any | null>(null);
+    const [editingProduct, setEditingProduct] = useState<Product | null>(null);
     const [saving, setSaving] = useState(false);
     const [formData, setFormData] = useState({
         name: '',
@@ -49,13 +51,13 @@ const AdminInventory = () => {
         purchase_type: 'both' as 'daily' | 'subscription' | 'both',
     });
 
-    const [previewProduct, setPreviewProduct] = useState<any | null>(null);
+    const [previewProduct, setPreviewProduct] = useState<Product | null>(null);
 
     useEffect(() => {
         fetchProducts();
-    }, []);
+    }, [fetchProducts]);
 
-    const fetchProducts = async () => {
+    const fetchProducts = useCallback(async () => {
         setLoading(true);
         try {
             const { data, error } = await supabase
@@ -65,13 +67,13 @@ const AdminInventory = () => {
                 .order('name', { ascending: true });
 
             if (error) throw error;
-            if (data) setProducts(data);
-        } catch (error: any) {
+            if (data) setProducts(data as Product[]);
+        } catch (error) {
             toast({ title: 'Error', description: 'Failed to load products.', variant: 'destructive' });
         } finally {
             setLoading(false);
         }
-    };
+    }, [toast]);
 
     const handleSaveProduct = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -105,8 +107,9 @@ const AdminInventory = () => {
             setIsAddModalOpen(false);
             setEditingProduct(null);
             fetchProducts();
-        } catch (error: any) {
-            toast({ title: 'Error', description: error.message || 'Failed to save product.', variant: 'destructive' });
+        } catch (error) {
+            const err = error as Error;
+            toast({ title: 'Error', description: err.message || 'Failed to save product.', variant: 'destructive' });
         } finally {
             setSaving(false);
         }
@@ -119,12 +122,12 @@ const AdminInventory = () => {
             if (error) throw error;
             toast({ title: 'Success', description: 'Product deleted.' });
             fetchProducts();
-        } catch (error: any) {
+        } catch (error) {
             toast({ title: 'Error', description: 'Cannot delete product if it is linked to orders/subscriptions.', variant: 'destructive' });
         }
     };
 
-    const openEditModal = (product: any) => {
+    const openEditModal = (product: Product) => {
         setFormData({
             name: product.name,
             category: product.category,
@@ -167,7 +170,7 @@ const AdminInventory = () => {
         <div className="space-y-6">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <div>
-                    <h1 className="text-3xl font-bold text-foreground">Inventory Management</h1>
+                    <h1 className="text-3xl font-serif font-black text-foreground">Inventory Management</h1>
                     <p className="text-muted-foreground mt-1">Add, edit, or remove products</p>
                 </div>
 
@@ -263,7 +266,7 @@ const AdminInventory = () => {
                                 <select
                                     className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background"
                                     value={formData.purchase_type}
-                                    onChange={e => setFormData({ ...formData, purchase_type: e.target.value as any })}
+                                    onChange={e => setFormData({ ...formData, purchase_type: e.target.value as 'daily' | 'subscription' | 'both' })}
                                 >
                                     <option value="both">Both (Daily & Subscription)</option>
                                     <option value="daily">Order Once Only (No Subscription)</option>

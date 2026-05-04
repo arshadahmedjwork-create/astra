@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import {
@@ -10,6 +10,17 @@ import {
     CalendarClock,
     PackageCheck
 } from 'lucide-react';
+// Local shape for the recent-orders query (joined with customers)
+interface RecentOrder {
+    id: string;
+    order_date: string;
+    status: string;
+    total_amount: number;
+    customers: {
+        full_name: string;
+        customer_id: string;
+    } | null;
+}
 import {
     AreaChart,
     Area,
@@ -32,31 +43,12 @@ const AdminDashboard = () => {
         monthlyRevenue: 0,
     });
 
-    const [recentOrders,  setRecentOrders]  = useState<any[]>([]);
+    const [recentOrders,  setRecentOrders]  = useState<RecentOrder[]>([]);
     const [deliveryChart, setDeliveryChart] = useState<{ name: string; deliveries: number }[]>([]);
     const [productChart,  setProductChart]  = useState<{ name: string; value: number }[]>([]);
     const [loading, setLoading] = useState(true);
 
-    useEffect(() => {
-        fetchDashboardData();
-
-        // Real-time — re-fetch when orders or subscriptions change
-        const channel = supabase
-            .channel('admin-dashboard-rt')
-            .on('postgres_changes', { event: '*', schema: 'public', table: 'orders' },        () => fetchDashboardData())
-            .on('postgres_changes', { event: '*', schema: 'public', table: 'subscriptions' }, () => fetchDashboardData())
-            .subscribe();
-
-        // Also poll every 30 s as a fallback
-        const timer = setInterval(fetchDashboardData, 30_000);
-
-        return () => {
-            supabase.removeChannel(channel);
-            clearInterval(timer);
-        };
-    }, []);
-
-    const fetchDashboardData = async () => {
+    const fetchDashboardData = useCallback(async () => {
         setLoading(true);
         try {
             const today = new Date().toISOString().split('T')[0];
@@ -102,8 +94,8 @@ const AdminDashboard = () => {
                 const key = d.toISOString().split('T')[0];
                 dayCounts[key] = 0;
             }
-            (revenueRows || []).forEach((row: any) => {
-                if (row.delivery_date in dayCounts) dayCounts[row.delivery_date]++;
+            (revenueRows || []).forEach((row) => {
+                if (row.delivery_date && row.delivery_date in dayCounts) dayCounts[row.delivery_date]++;
             });
             const deliveryChartData = Object.entries(dayCounts).map(([date, count]) => ({
                 name: dayLabels[new Date(date + 'T00:00:00').getDay()],
@@ -112,9 +104,10 @@ const AdminDashboard = () => {
 
             // ── Build product demand chart ────────────────────────────────────
             const productMap: Record<string, number> = {};
-            (productRows || []).forEach((row: any) => {
-                const name = row.products?.name || 'Unknown';
-                productMap[name] = (productMap[name] || 0) + (row.quantity || 1);
+            (productRows || []).forEach((row) => {
+                const rowAny = row as unknown as { products: { name: string }, quantity: number };
+                const name = rowAny.products?.name || 'Unknown';
+                productMap[name] = (productMap[name] || 0) + (rowAny.quantity || 1);
             });
             const productChartData = Object.entries(productMap)
                 .sort((a, b) => b[1] - a[1])
@@ -129,7 +122,7 @@ const AdminDashboard = () => {
                 .select('total_amount')
                 .eq('status', 'delivered')
                 .gte('delivery_date', monthStart.toISOString().split('T')[0]);
-            const monthlyRevenue = (revData || []).reduce((s: number, r: any) => s + (r.total_amount || 0), 0);
+            const monthlyRevenue = (revData || []).reduce((s: number, r) => s + (r.total_amount || 0), 0);
 
             setStats({
                 totalCustomers:     customerCount || 0,
@@ -138,7 +131,7 @@ const AdminDashboard = () => {
                 pendingSamples:     sampleCount || 0,
                 monthlyRevenue,
             });
-            if (orders)          setRecentOrders(orders);
+            if (orders)          setRecentOrders(orders as unknown as RecentOrder[]);
             if (deliveryChartData.length) setDeliveryChart(deliveryChartData);
             if (productChartData.length)  setProductChart(productChartData);
         } catch (error) {
@@ -146,12 +139,31 @@ const AdminDashboard = () => {
         } finally {
             setLoading(false);
         }
-    };
+    }, []);
+
+    useEffect(() => {
+        fetchDashboardData();
+
+        // Real-time — re-fetch when orders or subscriptions change
+        const channel = supabase
+            .channel('admin-dashboard-rt')
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'orders' },        () => fetchDashboardData())
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'subscriptions' }, () => fetchDashboardData())
+            .subscribe();
+
+        // Also poll every 30 s as a fallback
+        const timer = setInterval(fetchDashboardData, 30_000);
+
+        return () => {
+            supabase.removeChannel(channel);
+            clearInterval(timer);
+        };
+    }, [fetchDashboardData]);
 
     return (
         <div className="space-y-6">
             <div>
-                <h1 className="text-3xl font-bold text-foreground">Dashboard Overview</h1>
+                <h1 className="text-3xl font-serif font-black text-foreground">Dashboard Overview</h1>
                 <p className="text-muted-foreground mt-1">Welcome back, here's what's happening today.</p>
             </div>
 
@@ -269,7 +281,7 @@ const AdminDashboard = () => {
                                     <Tooltip
                                         contentStyle={{ backgroundColor: 'hsl(var(--card))', borderColor: 'hsl(var(--border))', borderRadius: '8px' }}
                                         itemStyle={{ color: 'hsl(var(--foreground))' }}
-                                        formatter={(v: any) => [`${v} deliveries`, 'Count']}
+                                        formatter={(v: number) => [`${v} deliveries`, 'Count']}
                                     />
                                     <Area type="monotone" dataKey="deliveries" stroke="hsl(var(--primary))" strokeWidth={3} fillOpacity={1} fill="url(#colorDelivery)" />
                                 </AreaChart>
@@ -293,7 +305,7 @@ const AdminDashboard = () => {
                                     <Tooltip
                                         cursor={{ fill: 'hsl(var(--secondary))' }}
                                         contentStyle={{ backgroundColor: 'hsl(var(--card))', borderColor: 'hsl(var(--border))', borderRadius: '8px' }}
-                                        formatter={(v: any) => [`${v} units`, 'Subscribed qty']}
+                                        formatter={(v: number) => [`${v} units`, 'Subscribed qty']}
                                     />
                                     <Bar dataKey="value" fill="hsl(var(--primary))" radius={[0, 4, 4, 0]} barSize={22} />
                                 </BarChart>

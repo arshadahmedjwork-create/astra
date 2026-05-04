@@ -9,6 +9,7 @@ import {
 import ERPLayout from '@/components/erp/ERPLayout';
 import { useAuthStore } from '@/stores/authStore';
 import { supabase } from '@/lib/supabase';
+import { useCallback } from 'react';
 
 interface Payment {
     id: string;
@@ -36,24 +37,25 @@ const PaymentHistory = () => {
     const [selectedPayment, setSelectedPayment] = useState<Payment | null>(null);
     const [loading, setLoading] = useState(true);
 
-    useEffect(() => {
+    const fetchPayments = useCallback(async () => {
         if (!customer?.id) return;
 
-        const fetchPayments = async () => {
-            const { data } = await supabase
-                .from('payments')
-                .select('*')
-                .eq('customer_id', customer.id)
-                .order('payment_date', { ascending: false });
+        const { data } = await supabase
+            .from('payments')
+            .select('*')
+            .eq('customer_id', customer.id)
+            .order('payment_date', { ascending: false });
 
-            if (data) {
-                setPayments(data);
-                setFilteredPayments(data.slice(0, quickView));
-            }
-            setLoading(false);
-        };
+        if (data) {
+            setPayments(data);
+            setFilteredPayments(data.slice(0, quickView));
+        }
+        setLoading(false);
+    }, [customer?.id, quickView]);
+
+    useEffect(() => {
         fetchPayments();
-    }, [customer?.id]);
+    }, [fetchPayments]);
 
     useEffect(() => {
         let filtered = payments;
@@ -84,8 +86,8 @@ const PaymentHistory = () => {
                     animate={{ opacity: 1, y: 0 }}
                     className="mb-8"
                 >
-                    <h1 className="text-2xl md:text-3xl font-bold text-foreground flex items-center gap-2">
-                        <CreditCard className="w-7 h-7 text-primary" />
+                    <h1 className="text-3xl md:text-4xl font-serif font-black text-foreground flex items-center gap-3">
+                        <CreditCard className="w-8 h-8 text-primary" />
                         Payment History
                     </h1>
                     <p className="text-sm text-muted-foreground mt-1">

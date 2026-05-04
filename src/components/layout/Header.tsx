@@ -16,21 +16,10 @@ const productsMenu = [
   { name: "Flavoured Milk", href: "/products/flavoured-milk" },
 ];
 
-const nonDairyMenu = [
-  { name: "Country Chicken Eggs", href: "/non-dairy" },
-  { name: "Kadaknath Eggs", href: "/non-dairy" },
-  { name: "Sesame Oil", href: "/non-dairy" },
-  { name: "Coconut Oil", href: "/non-dairy" },
-  { name: "Honey", href: "/non-dairy" },
-  { name: "Vegetables", href: "/non-dairy" },
-  { name: "Natural Rice", href: "/non-dairy" },
-];
-
 const navItems = [
   { name: "Home", href: "/" },
   { name: "About", href: "/about" },
   { name: "Products", href: "/products", megaMenu: productsMenu },
-  { name: "Non-Dairy", href: "/non-dairy", megaMenu: nonDairyMenu },
   { name: "Gallery", href: "/gallery" },
   { name: "Media Coverage", href: "/media" },
   { name: "FAQ", href: "/faq" },

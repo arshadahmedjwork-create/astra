@@ -17,6 +17,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { useNavigate } from "react-router-dom";
 import SubscribeModal from "@/components/erp/SubscribeModal";
 import { useState, useEffect } from "react";
+import { type FrequencyType } from "@/lib/subscriptionUtils";
 
 const rawMilk = "/assets/product-raw-milk.png";
 const paneer = "/assets/product-paneer.png";
@@ -171,6 +172,9 @@ const ProductDetail = () => {
   const [dbProductId, setDbProductId] = useState<string | null>(null);
   const [dbProductCategory, setDbProductCategory] = useState<string | null>(null);
 
+  const isInCart = useCartStore((state) => state.isInCart(slug || ""));
+  const addItem = useCartStore((state) => state.addItem);
+
   // Fetch actual DB product ID for subscription
   useEffect(() => {
     if (product) {
@@ -189,7 +193,7 @@ const ProductDetail = () => {
     }
   }, [product]);
 
-  const handleSubscribeConfirm = async (dates: string[], freq: any, qty: number) => {
+  const handleSubscribeConfirm = async (dates: string[], freq: FrequencyType, qty: number) => {
     if (!customer?.id) {
       toast({ title: "Login Required", description: "Please login to start a subscription.", variant: "destructive" });
       navigate("/erp/login");
@@ -223,8 +227,9 @@ const ProductDetail = () => {
         description: `Scheduled ${dates.length} deliveries for ${product?.title}.`,
       });
       navigate("/dashboard");
-    } catch (e: any) {
-      toast({ title: "Subscription Failed", description: e.message, variant: "destructive" });
+    } catch (e) {
+      const err = e as Error;
+      toast({ title: "Subscription Failed", description: err.message, variant: "destructive" });
     } finally {
       setIsSubscribing(false);
     }
@@ -253,12 +258,12 @@ const ProductDetail = () => {
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-16">
             {/* Hero */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
-              <div className="aspect-square rounded-3xl overflow-hidden bg-sage/30">
-                <img src={product.image} alt={product.title} className="w-full h-full object-cover" />
+              <div className="aspect-square rounded-3xl overflow-hidden bg-sage/30 p-8">
+                <img src={product.image} alt={product.title} className="w-full h-full object-contain" />
               </div>
               <div className="space-y-6">
                 <div>
-                  <h1 className="text-3xl md:text-4xl font-bold text-foreground mb-3">{product.title}</h1>
+                  <h1 className="text-3xl md:text-4xl font-serif font-black text-foreground mb-3">{product.title}</h1>
                   <p className="text-lg text-muted-foreground">{product.hook}</p>
                 </div>
                 {/* Sticky Purchase Bar */}
@@ -270,17 +275,17 @@ const ProductDetail = () => {
                   </div>
 
                   <Button
-                    variant={useCartStore((state) => state.isInCart(slug || "")) ? "outline" : "hero"}
+                    variant={isInCart ? "outline" : "hero"}
                     className="flex-1 gap-2 h-12 text-base font-bold shadow-sm"
-                    onClick={() => product && useCartStore.getState().addItem({
-                      id: slug,
+                    onClick={() => product && addItem({
+                      id: slug || "",
                       name: product.title,
                       price: product.price,
                       unit: product.unit,
                       image: product.image
                     })}
                   >
-                    {useCartStore((state) => state.isInCart(slug || "")) ? (
+                    {isInCart ? (
                       <>
                         <Check className="w-5 h-5" /> In Cart
                       </>
@@ -329,13 +334,13 @@ const ProductDetail = () => {
 
             {/* What it is */}
             <div>
-              <h2 className="text-2xl font-bold text-foreground mb-4">What it is</h2>
+              <h2 className="text-2xl font-serif font-bold text-foreground mb-4">What it is</h2>
               <p className="text-muted-foreground leading-relaxed">{product.description}</p>
             </div>
 
             {/* Notes */}
             <div>
-              <h2 className="text-2xl font-bold text-foreground mb-4">Notes</h2>
+              <h2 className="text-2xl font-serif font-bold text-foreground mb-4">Notes</h2>
               <ul className="space-y-2">
                 {product.notes.map((note) => (
                   <li key={note} className="flex items-start gap-3 text-muted-foreground">
@@ -348,7 +353,7 @@ const ProductDetail = () => {
 
             {/* FAQ */}
             <div>
-              <h2 className="text-2xl font-bold text-foreground mb-4">Frequently Asked Questions</h2>
+              <h2 className="text-2xl font-serif font-bold text-foreground mb-4">Frequently Asked Questions</h2>
               <Accordion type="multiple" className="space-y-2">
                 {product.faqs.map((faq, i) => (
                   <AccordionItem key={i} value={`faq-${i}`} className="border border-border rounded-xl px-4">
@@ -361,13 +366,13 @@ const ProductDetail = () => {
 
             {/* Related */}
             <div>
-              <h2 className="text-2xl font-bold text-foreground mb-6">Related Products</h2>
+              <h2 className="text-2xl font-serif font-bold text-foreground mb-6">Related Products</h2>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 {related.map((p) => (
                   <Link key={p.name} to={p.href} className="group">
                     <div className="bg-card rounded-2xl border border-border p-3 transition-all hover:shadow-lg hover:-translate-y-1">
-                      <div className="aspect-square rounded-xl overflow-hidden bg-sage/30 mb-3">
-                        <img src={p.image} alt={p.name} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" loading="lazy" />
+                      <div className="aspect-square rounded-xl overflow-hidden bg-sage/30 mb-3 p-4">
+                        <img src={p.image} alt={p.name} className="w-full h-full object-contain transition-transform duration-500 group-hover:scale-105" loading="lazy" />
                       </div>
                       <p className="text-sm font-semibold text-foreground">{p.name}</p>
                     </div>

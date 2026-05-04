@@ -8,14 +8,16 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from 'sonner';
+import { useCallback } from 'react';
+import { Driver } from '@/types';
 
 const AdminDrivers = () => {
-    const [drivers, setDrivers] = useState<any[]>([]);
+    const [drivers, setDrivers] = useState<Driver[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState('');
     const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
     const [isEditing, setIsEditing] = useState(false);
-    const [selectedDriver, setSelectedDriver] = useState<any | null>(null);
+    const [selectedDriver, setSelectedDriver] = useState<Driver | null>(null);
 
     // Form State
     const [formData, setFormData] = useState({
@@ -27,9 +29,9 @@ const AdminDrivers = () => {
 
     useEffect(() => {
         fetchDrivers();
-    }, []);
+    }, [fetchDrivers]);
 
-    const fetchDrivers = async () => {
+    const fetchDrivers = useCallback(async () => {
         setLoading(true);
         try {
             const { data, error } = await supabase
@@ -45,7 +47,7 @@ const AdminDrivers = () => {
         } finally {
             setLoading(false);
         }
-    };
+    }, []);
 
     const handleSave = async () => {
         try {
@@ -66,8 +68,9 @@ const AdminDrivers = () => {
             setIsAddDialogOpen(false);
             fetchDrivers();
             resetForm();
-        } catch (error: any) {
-            toast.error(error.message || 'Failed to save driver');
+        } catch (error) {
+            const err = error as Error;
+            toast.error(err.message || 'Failed to save driver');
         }
     };
 
@@ -81,8 +84,9 @@ const AdminDrivers = () => {
             if (error) throw error;
             toast.success('Driver deleted successfully');
             fetchDrivers();
-        } catch (error: any) {
-            toast.error(error.message || 'Failed to delete driver');
+        } catch (error) {
+            const err = error as Error;
+            toast.error(err.message || 'Failed to delete driver');
         }
     };
 
@@ -92,13 +96,13 @@ const AdminDrivers = () => {
         setSelectedDriver(null);
     };
 
-    const openEditDialog = (driver: any) => {
+    const openEditDialog = (driver: Driver) => {
         setSelectedDriver(driver);
         setFormData({
             full_name: driver.full_name,
             phone: driver.phone,
             vehicle_no: driver.vehicle_no,
-            status: driver.status
+            status: driver.status || 'inactive'
         });
         setIsEditing(true);
         setIsAddDialogOpen(true);
@@ -123,7 +127,7 @@ const AdminDrivers = () => {
         <div className="space-y-6">
             <div className="flex justify-between items-end">
                 <div>
-                    <h1 className="text-3xl font-bold text-foreground">Driver Management</h1>
+                    <h1 className="text-3xl font-serif font-black text-foreground">Driver Management</h1>
                     <p className="text-muted-foreground mt-1">Manage your delivery partners and their status</p>
                 </div>
                 <Button onClick={() => { resetForm(); setIsAddDialogOpen(true); }} className="gap-2">

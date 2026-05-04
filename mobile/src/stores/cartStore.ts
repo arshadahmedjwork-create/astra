@@ -7,13 +7,13 @@ export interface CartItem {
     name: string;
     price: number;
     quantity: number;
-    image?: any;
+    image?: number | string;
     unit?: string;
 }
 
 interface CartState {
     items: CartItem[];
-    addItem: (product: any, quantity?: number) => void;
+    addItem: (product: Omit<CartItem, 'quantity'>, quantity?: number) => void;
     removeItem: (productId: string) => void;
     updateQuantity: (productId: string, quantity: number) => void;
     clearCart: () => void;

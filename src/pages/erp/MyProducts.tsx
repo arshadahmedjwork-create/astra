@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { ShoppingBag, Repeat, Calendar } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Link } from 'react-router-dom';
 import ERPLayout from '@/components/erp/ERPLayout';
 import { useAuthStore } from '@/stores/authStore';
 import { supabase } from '@/lib/supabase';
@@ -80,9 +81,9 @@ const MyProducts = () => {
                     animate={{ opacity: 1, y: 0 }}
                     className="mb-8"
                 >
-                    <h1 className="text-2xl md:text-3xl font-bold text-foreground flex items-center gap-2">
-                        <ShoppingBag className="w-7 h-7 text-primary" />
-                        My Products
+                    <h1 className="text-3xl md:text-4xl font-serif font-black text-foreground flex items-center gap-3">
+                        <ShoppingBag className="w-8 h-8 text-primary" />
+                        Our Products
                     </h1>
                     <p className="text-sm text-muted-foreground mt-1">
                         Subscribe to recurring deliveries for your favourite products
@@ -101,25 +102,29 @@ const MyProducts = () => {
                                 initial={{ opacity: 0, y: 20 }}
                                 animate={{ opacity: 1, y: 0 }}
                                 transition={{ delay: i * 0.05 }}
-                                className="bg-card rounded-2xl border border-border overflow-hidden hover:shadow-lg transition-all duration-300 group"
+                                className={`bg-card ${i % 2 === 0 ? 'organic-radius' : 'organic-radius-reverse'} border border-border overflow-hidden hover:shadow-xl transition-all duration-500 group shadow-sm`}
                             >
                                 {/* Product image */}
-                                <div className="aspect-square bg-sage/20 overflow-hidden relative">
-                                    <img
-                                        src={productImages[product.name] || '/assets/product-raw-milk.png'}
-                                        alt={product.name}
-                                        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-                                    />
-                                    <div className="absolute top-3 left-3">
-                                        <span className="bg-card/90 backdrop-blur-sm text-xs font-semibold text-accent px-2.5 py-1 rounded-full border border-border">
-                                            {product.category}
-                                        </span>
+                                <Link to={`/products/${product.name.toLowerCase().replace(/\s+/g, '-')}`} className="block">
+                                    <div className="aspect-square bg-sage/10 overflow-hidden relative p-4">
+                                        <img
+                                            src={productImages[product.name] || '/assets/product-raw-milk.png'}
+                                            alt={product.name}
+                                            className="w-full h-full object-contain transition-transform duration-500 group-hover:scale-110 drop-shadow-md mix-blend-multiply"
+                                        />
+                                        <div className="absolute top-3 left-3">
+                                            <span className="bg-card/90 backdrop-blur-sm text-xs font-semibold text-accent px-2.5 py-1 rounded-full border border-border">
+                                                {product.category}
+                                            </span>
+                                        </div>
                                     </div>
-                                </div>
+                                </Link>
 
                                 {/* Card body */}
                                 <div className="p-5">
-                                    <h3 className="font-bold text-foreground text-lg">{product.name}</h3>
+                                    <Link to={`/products/${product.name.toLowerCase().replace(/\s+/g, '-')}`}>
+                                        <h3 className="font-bold text-foreground text-lg hover:text-primary transition-colors">{product.name}</h3>
+                                    </Link>
                                     <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{product.description}</p>
 
                                     <div className="flex items-center justify-between mt-4">
@@ -187,8 +192,9 @@ const MyProducts = () => {
                             .eq('customer_id', customer.id)
                             .in('status', ['active', 'paused', 'completed']);
                         if (data) setActiveSubProductIds(new Set(data.map(s => s.product_id)));
-                    } catch (error: any) {
-                        alert('Failed to save subscription: ' + error.message);
+                    } catch (error) {
+                        const err = error as Error;
+                        alert('Failed to save subscription: ' + err.message);
                     }
                 }}
             />

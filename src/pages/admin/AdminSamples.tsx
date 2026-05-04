@@ -5,18 +5,20 @@ import { Input } from '@/components/ui/input';
 import { Search, Loader2, FlaskConical, CheckCircle2, Phone } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
+import { useCallback } from 'react';
+import { SampleRequest } from '@/types';
 
 const AdminSamples = () => {
-    const [samples, setSamples] = useState<any[]>([]);
+    const [samples, setSamples] = useState<SampleRequest[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState('');
     const { toast } = useToast();
 
     useEffect(() => {
         fetchSamples();
-    }, []);
+    }, [fetchSamples]);
 
-    const fetchSamples = async () => {
+    const fetchSamples = useCallback(async () => {
         setLoading(true);
         try {
             const { data, error } = await supabase
@@ -44,7 +46,7 @@ const AdminSamples = () => {
         } finally {
             setLoading(false);
         }
-    };
+    }, []);
 
     const handleUpdateStatus = async (id: string, newStatus: string) => {
         try {
@@ -66,7 +68,7 @@ const AdminSamples = () => {
     return (
         <div className="space-y-6">
             <div>
-                <h1 className="text-3xl font-bold text-foreground">Sample Requests</h1>
+                <h1 className="text-3xl font-serif font-black text-foreground">Sample Requests</h1>
                 <p className="text-muted-foreground mt-1">Manage one-time trial requests from leads</p>
             </div>
 

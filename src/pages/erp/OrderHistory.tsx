@@ -8,6 +8,7 @@ import { useAuthStore } from '@/stores/authStore';
 import { supabase } from '@/lib/supabase';
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
+import { useCallback } from 'react';
 
 interface OrderItem {
     id: string;
@@ -39,9 +40,9 @@ const OrderHistory = () => {
         if (customer) {
             fetchOrders();
         }
-    }, [customer]);
+    }, [customer, fetchOrders]);
 
-    const fetchOrders = async () => {
+    const fetchOrders = useCallback(async () => {
         try {
             const { data, error } = await supabase
                 .from('orders')
@@ -57,16 +58,17 @@ const OrderHistory = () => {
 
             if (error) throw error;
             setOrders(data || []);
-        } catch (error: any) {
+        } catch (error) {
+            const err = error as Error;
             toast({
                 title: 'Error fetching orders',
-                description: error.message,
+                description: err.message,
                 variant: 'destructive'
             });
         } finally {
             setLoading(false);
         }
-    };
+    }, [customer?.id, toast]);
 
     const getStatusIcon = (status: Order['status']) => {
         switch (status) {

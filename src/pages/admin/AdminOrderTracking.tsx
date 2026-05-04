@@ -12,10 +12,17 @@ import {
     MapPin,
     RotateCcw
 } from 'lucide-react';
+import { useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
+import { Order, Driver, Customer, Address } from '@/types';
 import driverIconUrl from '@/assets/driver.png';
+
+type TrackingOrder = Order & {
+    customers?: Customer & { addresses?: Address[] };
+    drivers?: Driver;
+};
 
 // Fix Leaflet marker icon issue
 import markerIcon from 'leaflet/dist/images/marker-icon.png';
@@ -47,7 +54,7 @@ const RecenterMap = ({ coords }: { coords: [number, number] }) => {
 
 const AdminOrderTracking = () => {
     const { orderId } = useParams();
-    const [order, setOrder] = useState<any>(null);
+    const [order, setOrder] = useState<TrackingOrder | null>(null);
     const [driverLocation, setDriverLocation] = useState<[number, number]>([13.0827, 80.2707]);
     const [customerLocation, setCustomerLocation] = useState<[number, number] | null>(null);
     const [routeCoords, setRouteCoords] = useState<[number, number][]>([]);
@@ -56,9 +63,9 @@ const AdminOrderTracking = () => {
 
     useEffect(() => {
         fetchOrderDetails();
-    }, [orderId]);
+    }, [orderId, fetchOrderDetails]);
 
-    const fetchOrderDetails = async () => {
+    const fetchOrderDetails = useCallback(async () => {
         try {
             const { data, error } = await supabase
                 .from('orders')
@@ -91,15 +98,15 @@ const AdminOrderTracking = () => {
         } finally {
             setLoading(false);
         }
-    };
+    }, [orderId]);
 
-    const fetchOSRMRoute = async (start: [number, number], end: [number, number]) => {
+    const fetchOSRMRoute = useCallback(async (start: [number, number], end: [number, number]) => {
         try {
             const url = `https://router.project-osrm.org/route/v1/driving/${start[1]},${start[0]};${end[1]},${end[0]}?overview=full&geometries=geojson`;
             const response = await fetch(url);
             const data = await response.json();
             if (data.routes && data.routes.length > 0) {
-                const coords = data.routes[0].geometry.coordinates.map((c: any) => [c[1], c[0]]);
+                const coords = data.routes[0].geometry.coordinates.map((c: number[]) => [c[1], c[0]] as [number, number]);
                 setRouteCoords(coords);
                 
                 const distanceKm = data.routes[0].distance / 1000;
@@ -109,13 +116,13 @@ const AdminOrderTracking = () => {
         } catch (e) {
             console.error('Error fetching OSRM route:', e);
         }
-    };
+    }, []);
 
     useEffect(() => {
         if (customerLocation && driverLocation) {
             fetchOSRMRoute(driverLocation, customerLocation);
         }
-    }, [customerLocation]);
+    }, [customerLocation, driverLocation, fetchOSRMRoute]);
 
     useEffect(() => {
         if (!order?.driver_id) return;
@@ -141,7 +148,7 @@ const AdminOrderTracking = () => {
         return () => {
             supabase.removeChannel(channel);
         };
-    }, [order?.driver_id, customerLocation]);
+    }, [order?.driver_id, customerLocation, fetchOSRMRoute, orderId]);
 
     if (loading) {
         return (
@@ -172,7 +179,7 @@ const AdminOrderTracking = () => {
                         </Button>
                     </Link>
                     <div>
-                        <h1 className="text-2xl font-bold">Order Tracking</h1>
+                        <h1 className="text-2xl font-serif font-black text-foreground">Order Tracking</h1>
                         <p className="text-sm text-muted-foreground">Order ID: {orderId?.toString().slice(0, 8).toUpperCase()}</p>
                     </div>
                 </div>

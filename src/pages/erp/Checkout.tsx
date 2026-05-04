@@ -79,8 +79,9 @@ const Checkout = () => {
             setConfirmed(true);
             clearCart();
             toast({ title: 'Order Placed! 🎉', description: 'Your fresh dairy products are on the way.' });
-        } catch (error: any) {
-            toast({ title: 'Order Failed', description: error.message || 'Something went wrong.', variant: 'destructive' });
+        } catch (error) {
+            const err = error as Error;
+            toast({ title: 'Order Failed', description: err.message || 'Something went wrong.', variant: 'destructive' });
         } finally {
             setLoading(false);
         }

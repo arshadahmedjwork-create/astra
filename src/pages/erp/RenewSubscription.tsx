@@ -9,6 +9,10 @@ import { useToast } from '@/hooks/use-toast';
 import { useAuthStore } from '@/stores/authStore';
 import { supabase } from '@/lib/supabase';
 import { generateDatesFromFrequency } from '@/lib/subscriptionUtils';
+import { useCallback } from 'react';
+import { DayPicker } from 'react-day-picker';
+import { Subscription } from '@/types';
+import 'react-day-picker/dist/style.css';
 
 interface Product {
     id: string;
@@ -38,41 +42,54 @@ const RenewSubscription = () => {
     const [products, setProducts] = useState<Product[]>([]);
     const [categories, setCategories] = useState<string[]>([]);
     const [rows, setRows] = useState<SubscriptionRow[]>([]);
-    const [existingSubscriptions, setExistingSubscriptions] = useState<any[]>([]);
+    const [existingSubscriptions, setExistingSubscriptions] = useState<Subscription[]>([]);
     const [loading, setLoading] = useState(true);
     const [submitting, setSubmitting] = useState(false);
 
-    useEffect(() => {
-        const fetchInitialData = async () => {
-            if (!customer?.id) return;
-            setLoading(true);
+    const fetchInitialData = useCallback(async () => {
+        if (!customer?.id) return;
+        setLoading(true);
 
-            // Fetch Products
-            const { data: prodData } = await supabase
-                .from('products')
-                .select('id, name, category, price, unit, purchase_type')
-                .eq('active', true)
-                .in('purchase_type', ['subscription', 'both']);
+        // Fetch Products
+        const { data: prodData } = await supabase
+            .from('products')
+            .select('id, name, category, price, unit, purchase_type')
+            .eq('active', true)
+            .in('purchase_type', ['subscription', 'both']);
 
-            if (prodData) {
-                setProducts(prodData);
-                const cats = [...new Set(prodData.map(p => p.category))];
-                setCategories(cats);
-                addRow(prodData);
-            }
+        if (prodData) {
+            setProducts(prodData);
+            const cats = [...new Set(prodData.map(p => p.category))];
+            setCategories(cats);
+            // Only add row if none exist
+            setRows(prev => prev.length === 0 ? [{
+                id: crypto.randomUUID(),
+                category: '',
+                productId: '',
+                frequencyType: 'daily',
+                startDate: '',
+                endDate: '',
+                unitPrice: 0,
+                quantity: 1,
+                price: 0,
+                customDates: [],
+            }] : prev);
+        }
 
-            // Fetch Existing Subscriptions
-            const { data: subData } = await supabase
-                .from('subscriptions')
-                .select('*, products(name, unit)')
-                .eq('customer_id', customer.id);
-            
-            if (subData) setExistingSubscriptions(subData);
-            
-            setLoading(false);
-        };
-        fetchInitialData();
+        // Fetch Existing Subscriptions
+        const { data: subData } = await supabase
+            .from('subscriptions')
+            .select('*, products(name, unit)')
+            .eq('customer_id', customer.id);
+        
+        if (subData) setExistingSubscriptions(subData);
+        
+        setLoading(false);
     }, [customer?.id]);
+
+    useEffect(() => {
+        fetchInitialData();
+    }, [fetchInitialData]);
 
     const addRow = (prods?: Product[]) => {
         const id = crypto.randomUUID();
@@ -211,7 +228,7 @@ const RenewSubscription = () => {
         setSubmitting(false);
     };
 
-    const handleTogglePause = async (sub: any) => {
+    const handleTogglePause = async (sub: Subscription) => {
         const newStatus = sub.status === 'paused' ? 'active' : 'paused';
         const { error } = await supabase
             .from('subscriptions')
@@ -234,8 +251,8 @@ const RenewSubscription = () => {
                     animate={{ opacity: 1, y: 0 }}
                     className="mb-8"
                 >
-                    <h1 className="text-2xl md:text-3xl font-bold text-foreground flex items-center gap-2">
-                        <RefreshCw className="w-7 h-7 text-primary" />
+                    <h1 className="text-3xl md:text-4xl font-serif font-black text-foreground flex items-center gap-3">
+                        <RefreshCw className="w-8 h-8 text-primary" />
                         Renew Subscription
                     </h1>
                     <p className="text-sm text-muted-foreground mt-1">

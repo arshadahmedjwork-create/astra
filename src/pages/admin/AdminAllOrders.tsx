@@ -10,14 +10,16 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
+import { useCallback } from 'react';
+import { Order, Driver } from '@/types';
 
 const AdminAllOrders = () => {
-    const [orders, setOrders] = useState<any[]>([]);
+    const [orders, setOrders] = useState<Order[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState('');
     const [statusFilter, setStatusFilter] = useState('all');
-    const [selectedOrder, setSelectedOrder] = useState<any | null>(null);
-    const [drivers, setDrivers] = useState<any[]>([]);
+    const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+    const [drivers, setDrivers] = useState<Driver[]>([]);
     const [isAssignModalOpen, setIsAssignModalOpen] = useState(false);
     const [isAddDriverOpen, setIsAddDriverOpen] = useState(false);
     const [selectedDriverId, setSelectedDriverId] = useState<string>('');
@@ -28,14 +30,14 @@ const AdminAllOrders = () => {
     useEffect(() => {
         fetchAllOrders();
         fetchDrivers();
-    }, []);
+    }, [fetchAllOrders, fetchDrivers]);
 
-    const fetchDrivers = async () => {
+    const fetchDrivers = useCallback(async () => {
         const { data } = await supabase.from('drivers').select('*').eq('status', 'active');
         if (data) setDrivers(data);
-    };
+    }, []);
 
-    const fetchAllOrders = async () => {
+    const fetchAllOrders = useCallback(async () => {
         setLoading(true);
         try {
             const { data, error } = await supabase
@@ -57,7 +59,7 @@ const AdminAllOrders = () => {
         } finally {
             setLoading(false);
         }
-    };
+    }, []);
 
     const handleQuickAddDriver = async () => {
         if (!newDriverData.full_name || !newDriverData.phone) {
@@ -74,7 +76,8 @@ const AdminAllOrders = () => {
             toast({ title: 'Success', description: 'New driver added successfully.' });
             setIsAddDriverOpen(false);
             setNewDriverData({ full_name: '', phone: '', vehicle_no: '' });
-        } catch (error: any) {
+            fetchDrivers();
+        } catch (error) {
             toast({ title: 'Error', description: 'Failed to add driver.', variant: 'destructive' });
         }
     };
@@ -96,14 +99,14 @@ const AdminAllOrders = () => {
             toast({ title: 'Success', description: 'Driver assigned and tracking activated.' });
             setIsAssignModalOpen(false);
             fetchAllOrders();
-        } catch (error: any) {
+        } catch (error) {
             toast({ title: 'Error', description: 'Failed to assign driver.', variant: 'destructive' });
         }
     };
 
     const handleUpdateStatus = async (orderId: string, newStatus: string) => {
         try {
-            const updateData: any = { status: newStatus };
+            const updateData: Partial<Order> & { tracking_active?: boolean } = { status: newStatus as Order['status'] };
             if (newStatus === 'get_to_deliver') {
                 updateData.tracking_active = true;
             } else if (newStatus === 'delivered' || newStatus === 'cancelled') {
@@ -119,7 +122,7 @@ const AdminAllOrders = () => {
 
             toast({ title: 'Success', description: `Order marked as ${newStatus}` });
             fetchAllOrders();
-        } catch (error: any) {
+        } catch (error) {
             toast({ title: 'Error', description: 'Failed to update status.', variant: 'destructive' });
         }
     };
@@ -150,7 +153,7 @@ const AdminAllOrders = () => {
         <div className="space-y-6">
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                 <div>
-                    <h1 className="text-3xl font-bold text-foreground">Order Management</h1>
+                    <h1 className="text-3xl font-serif font-black text-foreground">Order Management</h1>
                     <p className="text-muted-foreground mt-1">View and manage all historical orders across the platform</p>
                 </div>
                 <Button className="forest-gradient gap-2" onClick={() => setIsAddDriverOpen(true)}>
@@ -305,7 +308,7 @@ const AdminAllOrders = () => {
                                         </tr>
                                     </thead>
                                     <tbody className="divide-y divide-border">
-                                        {selectedOrder.order_items?.map((item: any) => (
+                                        {selectedOrder.order_items?.map((item) => (
                                             <tr key={item.id}>
                                                 <td className="px-4 py-3 font-medium">{item.products?.name}</td>
                                                 <td className="px-4 py-3 text-center">{item.quantity}</td>

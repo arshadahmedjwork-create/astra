@@ -12,6 +12,8 @@ import {
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { useAuthStore } from '@/stores/authStore';
+import { useCallback } from 'react';
+import { Order } from '@/types';
 import ERPLayout from '@/components/erp/ERPLayout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -22,7 +24,7 @@ const LiveTrackingSearch = () => {
     const { customer } = useAuthStore();
     const navigate = useNavigate();
     const [searchId, setSearchId] = useState('');
-    const [activeOrders, setActiveOrders] = useState<any[]>([]);
+    const [activeOrders, setActiveOrders] = useState<Order[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
 
@@ -30,9 +32,10 @@ const LiveTrackingSearch = () => {
         if (customer?.id) {
             fetchActiveOrders();
         }
-    }, [customer?.id]);
+    }, [customer?.id, fetchActiveOrders]);
 
-    const fetchActiveOrders = async () => {
+    const fetchActiveOrders = useCallback(async () => {
+        if (!customer?.id) return;
         try {
             const { data, error } = await supabase
                 .from('orders')
@@ -48,7 +51,7 @@ const LiveTrackingSearch = () => {
         } finally {
             setLoading(false);
         }
-    };
+    }, [customer?.id]);
 
     const handleSearch = (e: React.FormEvent) => {
         e.preventDefault();

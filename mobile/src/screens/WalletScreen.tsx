@@ -4,9 +4,22 @@ import { Wallet, Plus, History, ArrowUpRight, ArrowDownLeft, ChevronLeft, AlertC
 import { useAuthStore } from '../stores/authStore';
 import { supabase } from '../lib/supabase';
 
-export default function WalletScreen({ navigation }: any) {
+interface WalletTransaction {
+    id: string;
+    type: 'credit' | 'debit';
+    amount: number;
+    description?: string;
+    status: string;
+    created_at: string;
+}
+
+interface NavigationProp {
+    goBack: () => void;
+}
+
+export default function WalletScreen({ navigation }: { navigation: NavigationProp }) {
     const { customer, refreshProfile } = useAuthStore();
-    const [transactions, setTransactions] = useState<any[]>([]);
+    const [transactions, setTransactions] = useState<WalletTransaction[]>([]);
     const [loading, setLoading] = useState(true);
     const [addAmount, setAddAmount] = useState('');
     const [processing, setProcessing] = useState(false);

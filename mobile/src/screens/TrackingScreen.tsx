@@ -1,19 +1,45 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, TouchableOpacity, SafeAreaView, ActivityIndicator, Image } from 'react-native';
-import MapView, { Marker, Polyline, PROVIDER_GOOGLE } from 'react-native-maps';
+import { View, Text, TouchableOpacity, SafeAreaView, ActivityIndicator, Image, ImageSourcePropType } from 'react-native';
+import MapView, { Marker, Polyline, PROVIDER_GOOGLE, LatLng } from 'react-native-maps';
 import { ChevronLeft, Phone, Clock } from 'lucide-react-native';
 import { supabase } from '../lib/supabase';
+import driverImg from '../../assets/driver.png';
 
-const driverImg = require('../../assets/driver.png');
+interface RouteParams {
+    orderId: string;
+}
 
-export default function TrackingScreen({ route, navigation }: any) {
+interface NavigationProp {
+    goBack: () => void;
+}
+
+interface TrackingScreenProps {
+    route: { params: RouteParams };
+    navigation: NavigationProp;
+}
+
+interface OrderData {
+    id: string;
+    driver_id?: string;
+    drivers?: {
+        full_name: string;
+        vehicle_no: string;
+        current_lat?: number;
+        current_lng?: number;
+    };
+    customers?: {
+        addresses?: { lat?: number; lng?: number; door_no?: string; street?: string }[];
+    };
+}
+
+export default function TrackingScreen({ route, navigation }: TrackingScreenProps) {
     const { orderId } = route.params;
-    const [order, setOrder] = useState<any>(null);
-    const [driverLocation, setDriverLocation] = useState<any>(null);
-    const [customerLocation, setCustomerLocation] = useState<any>(null);
+    const [order, setOrder] = useState<OrderData | null>(null);
+    const [driverLocation, setDriverLocation] = useState<LatLng | null>(null);
+    const [customerLocation, setCustomerLocation] = useState<LatLng | null>(null);
     const [loading, setLoading] = useState(true);
     const [eta, setEta] = useState('Calculating...');
-    const [routeCoords, setRouteCoords] = useState<any[]>([]);
+    const [routeCoords, setRouteCoords] = useState<LatLng[]>([]);
     const mapRef = React.useRef<MapView>(null);
 
     const fetchOrderDetails = async () => {
@@ -59,13 +85,13 @@ export default function TrackingScreen({ route, navigation }: any) {
         return R * c;
     };
 
-    const fetchOSRMRoute = async (start: any, end: any) => {
+    const fetchOSRMRoute = async (start: LatLng, end: LatLng) => {
         try {
             const url = `https://router.project-osrm.org/route/v1/driving/${start.longitude},${start.latitude};${end.longitude},${end.latitude}?overview=full&geometries=geojson`;
             const response = await fetch(url);
             const data = await response.json();
             if (data.routes && data.routes.length > 0) {
-                const coords = data.routes[0].geometry.coordinates.map((c: any) => ({
+                const coords: LatLng[] = data.routes[0].geometry.coordinates.map((c: number[]) => ({
                     latitude: c[1],
                     longitude: c[0]
                 }));

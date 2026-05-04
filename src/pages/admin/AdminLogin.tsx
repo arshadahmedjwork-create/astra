@@ -32,10 +32,11 @@ const AdminLogin = () => {
             await login(email, password);
             toast({ title: 'Login Successful', description: 'Welcome to Astra Admin Portal' });
             navigate('/admin/dashboard');
-        } catch (error: any) {
+        } catch (error) {
+            const err = error as Error;
             toast({
                 title: 'Access Denied',
-                description: error.message || 'Invalid admin credentials.',
+                description: err.message || 'Invalid admin credentials.',
                 variant: 'destructive'
             });
         } finally {
@@ -52,7 +53,7 @@ const AdminLogin = () => {
             >
                 <div className="flex flex-col items-center text-center mb-8">
                     <img src={astraLogo} alt="Astra Dairy" className="w-16 h-16 object-contain mb-4" />
-                    <h1 className="text-2xl font-bold flex items-center justify-center gap-2 text-foreground">
+                    <h1 className="text-2xl font-serif font-black flex items-center justify-center gap-2 text-foreground">
                         <Shield className="w-6 h-6 text-primary" />
                         Admin Portal
                     </h1>

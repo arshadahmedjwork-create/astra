@@ -23,6 +23,7 @@ import { useCartStore } from '@/stores/useCartStore';
 import { supabase } from '@/lib/supabase';
 import astraLogo from '@/assets/astra-logo.png';
 import { Button } from '../ui/button';
+import { Order } from '@/types';
 
 const Marquee = () => {
     return (
@@ -44,7 +45,7 @@ const Marquee = () => {
 
 const DailyPrompt = () => {
     const [isVisible, setIsVisible] = useState(false);
-    const [todayOrder, setTodayOrder] = useState<any>(null);
+    const [todayOrder, setTodayOrder] = useState<Order | null>(null);
     const { customer } = useAuthStore();
     
     useEffect(() => {
@@ -116,7 +117,7 @@ const DailyPrompt = () => {
 
 const sidebarItems = [
     { name: 'Dashboard', href: '/erp/dashboard', icon: LayoutDashboard },
-    { name: 'My Products', href: '/erp/products', icon: ShoppingBag },
+    { name: 'Products', href: '/erp/products', icon: ShoppingBag },
     { name: 'My Subscriptions', href: '/erp/subscriptions', icon: RefreshCw },
     { name: 'Order History', href: '/erp/orders', icon: Package },
     { name: 'Track Order', href: '/erp/track', icon: Navigation },

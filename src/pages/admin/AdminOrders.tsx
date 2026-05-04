@@ -15,6 +15,29 @@ import { Link } from 'react-router-dom';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { cn } from '@/lib/utils';
+import { Order, Driver, Subscription, OrderItem, Product, Customer, Address } from '@/types';
+
+type EnrichedOrder = Order & {
+    customers?: Customer;
+    subscriptions?: Partial<Subscription>;
+    items?: (OrderItem & { products?: { name: string; unit: string } })[];
+    address?: Partial<Address>;
+    productName: string;
+    _source: 'order';
+};
+
+type PlannedDelivery = {
+    id: string;
+    subscription_id: string;
+    customer_id: string;
+    delivery_date: string;
+    status: string;
+    quantity: number;
+    customers: Customer;
+    address: Partial<Address>;
+    productName: string;
+    _source: 'planned';
+};
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -60,23 +83,23 @@ const AdminOrders = () => {
 
     const [selectedDate,       setSelectedDate]       = useState<string>(initialDate);
     const [searchQuery,        setSearchQuery]         = useState(searchParams.get('id') || '');
-    const [orders,             setOrders]              = useState<any[]>([]);
-    const [plannedDeliveries,  setPlannedDeliveries]  = useState<any[]>([]);
+    const [orders,             setOrders]              = useState<EnrichedOrder[]>([]);
+    const [plannedDeliveries,  setPlannedDeliveries]  = useState<PlannedDelivery[]>([]);
     const [dayCounts,          setDayCounts]           = useState<Record<string, number>>({});
     const [weekOffset,         setWeekOffset]          = useState(0);
     const [loading,            setLoading]             = useState(true);
-    const [drivers,            setDrivers]             = useState<any[]>([]);
+    const [drivers,            setDrivers]             = useState<Driver[]>([]);
 
     // Assign modal
     const [isAssignModalOpen,  setIsAssignModalOpen]  = useState(false);
-    const [orderToAssign,      setOrderToAssign]       = useState<any>(null);   // order OR planned subscription
+    const [orderToAssign,      setOrderToAssign]       = useState<EnrichedOrder | PlannedDelivery | null>(null);   // order OR planned subscription
     const [selectedDriverId,   setSelectedDriverId]    = useState<string>('');
     const [isAddingNewDriver,  setIsAddingNewDriver]   = useState(false);
     const [newDriverData,      setNewDriverData]       = useState({ full_name: '', phone: '', vehicle_no: '' });
     const [assigning,          setAssigning]           = useState(false);
     
     // View Items modal
-    const [viewingOrder,       setViewingOrder]        = useState<any | null>(null);
+    const [viewingOrder,       setViewingOrder]        = useState<EnrichedOrder | null>(null);
 
     const { toast } = useToast();
     const isFuture = selectedDate > today;
@@ -93,6 +116,7 @@ const AdminOrders = () => {
 
         if (!data) return;
         const counts: Record<string, number> = {};
+        const stripDays = getNext7Days(addDays(new Date(), weekOffset * 7));
         stripDays.forEach(day => {
             counts[day] = data.filter(s =>
                 Array.isArray(s.selected_dates) && s.selected_dates.includes(day)
@@ -107,6 +131,7 @@ const AdminOrders = () => {
     const fetchOrders = useCallback(async () => {
         setLoading(true);
         try {
+            const today = toDateStr(new Date());
             const { data, error } = await supabase
                 .from('orders')
                 .select(`
@@ -137,7 +162,7 @@ const AdminOrders = () => {
                     const p = productData?.find(p => p.id === subscription.product_id);
                     if (p) productName = `${subscription.quantity}x ${p.name}`;
                 } else if (items.length > 0) {
-                    productName = items.map((it: any) => {
+                    productName = items.map((it: { quantity: number; products?: { name: string } | { name: string }[] }) => {
                         const p = Array.isArray(it.products) ? it.products[0] : it.products;
                         return `${it.quantity}x ${p?.name || 'Item'}`;
                     }).join(', ');
@@ -156,15 +181,15 @@ const AdminOrders = () => {
             } else {
                 setPlannedDeliveries([]);
             }
-        } catch (err: any) {
+        } catch (err) {
             toast({ title: 'Error', description: 'Failed to load delivery sheet.', variant: 'destructive' });
         } finally {
             setLoading(false);
         }
-    }, [selectedDate]);
+    }, [selectedDate, toast]);
 
     // ── Fetch planned deliveries from subscriptions (future-only) ─────────────
-    const fetchPlanned = async (date: string, existingOrders: any[], addrs: any[], products: any[]) => {
+    const fetchPlanned = async (date: string, existingOrders: EnrichedOrder[], addrs: Address[], products: Product[]) => {
         const { data: subs } = await supabase
             .from('subscriptions')
             .select('*, customers(id, customer_id, full_name, mobile), products(name, unit, price)')
@@ -174,8 +199,8 @@ const AdminOrders = () => {
         if (!subs) return;
 
         // Filter out subscriptions that already have an order for this date
-        const existingSubIds = new Set(existingOrders.map(o => o.subscriptions?.id || o.subscription_id));
-        const planned = subs
+        const existingSubIds = new Set(existingOrders.map(o => o.subscription_id));
+        const planned: PlannedDelivery[] = subs
             .filter(s => !existingSubIds.has(s.id))
             .map(s => {
                 const cust = Array.isArray(s.customers) ? s.customers[0] : s.customers;
@@ -183,15 +208,15 @@ const AdminOrders = () => {
                 const address = addrs.find(a => a.customer_id === cust?.id) || {};
                 return {
                     _source:     'planned',
-                    _subId:      s.id,
+                    subscription_id: s.id,
                     id:          `planned-${s.id}`,
+                    customer_id: s.customer_id,
+                    delivery_date: date,
                     status:      'planned',
+                    quantity:    s.quantity,
                     customers:   cust,
                     address,
                     productName: `${s.quantity}x ${prod?.name || 'Unknown'} (${prod?.unit || ''})`,
-                    total_amount: (s.unit_price || prod?.price || 0) * s.quantity,
-                    driver_id:   null,
-                    drivers:     null,
                 };
             });
 
@@ -201,7 +226,7 @@ const AdminOrders = () => {
     useEffect(() => {
         fetchOrders();
         fetchDrivers();
-    }, [selectedDate]);
+    }, [selectedDate, fetchOrders]);
 
     const fetchDrivers = async () => {
         const { data } = await supabase.from('drivers').select('*').eq('status', 'active');
@@ -211,7 +236,7 @@ const AdminOrders = () => {
     // ── Status update ─────────────────────────────────────────────────────────
     const handleUpdateStatus = async (orderId: string, newStatus: string) => {
         try {
-            const updateData: any = { status: newStatus };
+            const updateData: Partial<Order> & { tracking_active?: boolean } = { status: newStatus as Order['status'] };
             if (newStatus === 'get_to_deliver') updateData.tracking_active = true;
             if (newStatus === 'delivered' || newStatus === 'cancelled') updateData.tracking_active = false;
 
@@ -230,7 +255,7 @@ const AdminOrders = () => {
     };
 
     // ── Email helper ──────────────────────────────────────────────────────────
-    const sendDeliveryEmail = async (order: any) => {
+    const sendDeliveryEmail = async (order: EnrichedOrder) => {
         try {
             const serviceId  = import.meta.env.VITE_EMAILJS_SERVICE_ID;
             const templateId = import.meta.env.VITE_EMAILJS_TEMPLATE_DELIVERED_CONFORMED;
@@ -283,7 +308,7 @@ const AdminOrders = () => {
                 const { data: existing } = await supabase
                     .from('orders')
                     .select('id')
-                    .eq('subscription_id', sub._subId)
+                    .eq('subscription_id', sub.subscription_id)
                     .eq('delivery_date', selectedDate)
                     .maybeSingle();
 
@@ -324,8 +349,9 @@ const AdminOrders = () => {
             setIsAssignModalOpen(false);
             setSelectedDriverId('');
             fetchOrders();
-        } catch (e: any) {
-            toast({ title: 'Error', description: e.message || 'Failed to assign driver.', variant: 'destructive' });
+        } catch (e) {
+            const err = e as Error;
+            toast({ title: 'Error', description: err.message || 'Failed to assign driver.', variant: 'destructive' });
         } finally {
             setAssigning(false);
         }
@@ -351,7 +377,7 @@ const AdminOrders = () => {
             {/* ── Page heading ─────────────────────────────────────────────── */}
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <div>
-                    <h1 className="text-3xl font-bold text-foreground">Delivery Tracking</h1>
+                    <h1 className="text-3xl font-serif font-black text-foreground">Delivery Tracking</h1>
                     <p className="text-muted-foreground mt-1">
                         Manage deliveries · pre-assign drivers for upcoming days
                     </p>
@@ -721,7 +747,7 @@ const AdminOrders = () => {
                             </div>
                             
                             <div className="space-y-2">
-                                {viewingOrder.items?.map((it: any, idx: number) => {
+                                {viewingOrder.items?.map((it: OrderItem & { products?: { name: string; unit: string } | { name: string; unit: string }[] }, idx) => {
                                     const p = Array.isArray(it.products) ? it.products[0] : it.products;
                                     return (
                                         <div key={idx} className="flex justify-between items-center p-3 bg-secondary/10 rounded-lg border border-border">

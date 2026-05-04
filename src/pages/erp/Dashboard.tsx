@@ -6,6 +6,9 @@ import { DayPicker } from 'react-day-picker';
 import ERPLayout from '@/components/erp/ERPLayout';
 import { useAuthStore } from '@/stores/authStore';
 import { supabase } from '@/lib/supabase';
+import { Order } from '@/types';
+import { useToast } from '@/hooks/use-toast';
+import { useCallback } from 'react';
 import 'react-day-picker/dist/style.css';
 
 type DeliveryStatus = 'all' | 'paused' | 'get_to_deliver' | 'delivered';
@@ -24,42 +27,43 @@ const statusFilters = [
 
 const Dashboard = () => {
     const { customer } = useAuthStore();
+    const { toast } = useToast();
     const [activeFilter, setActiveFilter] = useState<DeliveryStatus>('all');
     const [orderSummary, setOrderSummary] = useState<OrderSummary>({ pending: 0, delivered: 0, paused: 0 });
     const [deliveryDates, setDeliveryDates] = useState<Date[]>([]);
     const [pausedDates, setPausedDates] = useState<Date[]>([]);
     const [deliveredDates, setDeliveredDates] = useState<Date[]>([]);
-    const [activeOrders, setActiveOrders] = useState<any[]>([]);
-    const [todayOrder, setTodayOrder] = useState<any>(null);
+    const [activeOrders, setActiveOrders] = useState<Order[]>([]);
+    const [todayOrder, setTodayOrder] = useState<Order | null>(null);
     const [actionLoading, setActionLoading] = useState(false);
 
-    useEffect(() => {
+    const fetchOrders = useCallback(async () => {
         if (!customer?.id) return;
+        const { data } = await supabase
+            .from('orders')
+            .select('*')
+            .eq('customer_id', customer.id);
 
-        const fetchOrders = async () => {
-            const { data } = await supabase
-                .from('orders')
-                .select('*')
-                .eq('customer_id', customer.id);
+        if (data) {
+            const pending = data.filter(o => o.status === 'pending' || o.status === 'get_to_deliver').length;
+            const delivered = data.filter(o => o.status === 'delivered').length;
+            const paused = data.filter(o => o.status === 'paused').length;
+            setOrderSummary({ pending, delivered, paused });
 
-            if (data) {
-                const pending = data.filter(o => o.status === 'pending' || o.status === 'get_to_deliver').length;
-                const delivered = data.filter(o => o.status === 'delivered').length;
-                const paused = data.filter(o => o.status === 'paused').length;
-                setOrderSummary({ pending, delivered, paused });
+            setDeliveryDates(data.filter(o => o.status === 'pending' || o.status === 'get_to_deliver').map(o => new Date(o.delivery_date)));
+            setPausedDates(data.filter(o => o.status === 'paused').map(o => new Date(o.delivery_date)));
+            setDeliveredDates(data.filter(o => o.status === 'delivered').map(o => new Date(o.delivery_date)));
+            setActiveOrders(data.filter(o => o.status === 'get_to_deliver'));
 
-                setDeliveryDates(data.filter(o => o.status === 'pending' || o.status === 'get_to_deliver').map(o => new Date(o.delivery_date)));
-                setPausedDates(data.filter(o => o.status === 'paused').map(o => new Date(o.delivery_date)));
-                setDeliveredDates(data.filter(o => o.status === 'delivered').map(o => new Date(o.delivery_date)));
-                setActiveOrders(data.filter(o => o.status === 'get_to_deliver'));
-
-                const todayStr = new Date().toISOString().split('T')[0];
-                const today = data.find(o => o.delivery_date === todayStr);
-                setTodayOrder(today);
-            }
-        };
-        fetchOrders();
+            const todayStr = new Date().toISOString().split('T')[0];
+            const today = data.find(o => o.delivery_date === todayStr);
+            setTodayOrder(today || null);
+        }
     }, [customer?.id]);
+
+    useEffect(() => {
+        fetchOrders();
+    }, [fetchOrders]);
 
     const greeting = () => {
         const hour = new Date().getHours();
@@ -80,13 +84,14 @@ const Dashboard = () => {
                 .eq('id', id);
 
             if (error) throw error;
-            setTodayOrder((prev: any) => ({ ...prev, is_confirmed: !skip, status: skip ? 'cancelled' : prev.status }));
+            setTodayOrder((prev) => prev ? ({ ...prev, is_confirmed: !skip, status: (skip ? 'cancelled' : prev.status) as Order['status'] }) : null);
             toast({ 
                 title: skip ? 'Delivery Skipped' : 'Delivery Confirmed', 
                 description: skip ? "You've skipped today's delivery." : "Thank you! We're on the way." 
             });
-        } catch (error: any) {
-            toast({ title: 'Action failed', description: error.message, variant: 'destructive' });
+        } catch (error) {
+            const err = error as Error;
+            toast({ title: 'Action failed', description: err.message, variant: 'destructive' });
         } finally {
             setActionLoading(false);
         }
@@ -99,11 +104,13 @@ const Dashboard = () => {
                 <motion.div
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="bg-card rounded-2xl border border-border p-6 md:p-8"
+                    className="bg-card organic-radius border border-border p-6 md:p-10 relative overflow-hidden group shadow-sm"
                 >
-                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                    <div className="absolute top-0 right-0 -mt-8 -mr-8 w-32 h-32 bg-primary/5 rounded-full blur-3xl group-hover:bg-primary/10 transition-colors" />
+                    <div className="absolute bottom-0 left-0 -mb-8 -ml-8 w-32 h-32 bg-accent/5 rounded-full blur-3xl" />
+                    <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4">
                         <div>
-                            <h1 className="text-2xl md:text-3xl font-bold text-foreground">
+                            <h1 className="text-3xl md:text-4xl font-serif font-black text-foreground">
                                 {greeting()}, {customer?.full_name?.split(' ')[0] || 'Customer'} 👋
                             </h1>
                             <p className="text-sm text-muted-foreground mt-1">

@@ -5,18 +5,20 @@ import { Input } from '@/components/ui/input';
 import { Search, Loader2, Repeat, CheckCircle2, PauseCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
+import { useCallback } from 'react';
+import { Subscription } from '@/types';
 
 const AdminSubscriptions = () => {
-    const [subscriptions, setSubscriptions] = useState<any[]>([]);
+    const [subscriptions, setSubscriptions] = useState<Subscription[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState('');
     const { toast } = useToast();
 
     useEffect(() => {
         fetchSubscriptions();
-    }, []);
+    }, [fetchSubscriptions]);
 
-    const fetchSubscriptions = async () => {
+    const fetchSubscriptions = useCallback(async () => {
         setLoading(true);
         try {
             const { data, error } = await supabase
@@ -47,7 +49,7 @@ const AdminSubscriptions = () => {
         } finally {
             setLoading(false);
         }
-    };
+    }, []);
 
     const handleUpdateStatus = async (id: string, newStatus: string) => {
         try {
@@ -69,7 +71,7 @@ const AdminSubscriptions = () => {
     return (
         <div className="space-y-6">
             <div>
-                <h1 className="text-3xl font-bold text-foreground">Subscriptions</h1>
+                <h1 className="text-3xl font-serif font-black text-foreground">Subscriptions</h1>
                 <p className="text-muted-foreground mt-1">Manage ongoing and paused product subscriptions</p>
             </div>
 

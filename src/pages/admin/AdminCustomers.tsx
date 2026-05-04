@@ -5,18 +5,20 @@ import { Input } from '@/components/ui/input';
 import { Search, Loader2, UserRound, Phone, MapPin, Eye, Calendar, User } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { useCallback } from 'react';
+import { Customer } from '@/types';
 
 const AdminCustomers = () => {
-    const [customers, setCustomers] = useState<any[]>([]);
+    const [customers, setCustomers] = useState<Customer[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState('');
-    const [selectedCustomer, setSelectedCustomer] = useState<any | null>(null);
+    const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
 
     useEffect(() => {
         fetchCustomers();
-    }, []);
+    }, [fetchCustomers]);
 
-    const fetchCustomers = async () => {
+    const fetchCustomers = useCallback(async () => {
         setLoading(true);
         try {
             const { data, error } = await supabase
@@ -48,7 +50,7 @@ const AdminCustomers = () => {
         } finally {
             setLoading(false);
         }
-    };
+    }, []);
 
     const filteredCustomers = customers.filter(c =>
         c.full_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -59,7 +61,7 @@ const AdminCustomers = () => {
     return (
         <div className="space-y-6">
             <div>
-                <h1 className="text-3xl font-bold text-foreground">Customer Management</h1>
+                <h1 className="text-3xl font-serif font-black text-foreground">Customer Management</h1>
                 <p className="text-muted-foreground mt-1">View and manage all registered customers</p>
             </div>
 

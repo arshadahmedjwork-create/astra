@@ -7,11 +7,12 @@ export interface CartItem {
     price: number;
     quantity: number;
     image?: string;
+    unit?: string;
 }
 
 interface CartState {
     items: CartItem[];
-    addItem: (product: any) => void;
+    addItem: (product: Omit<CartItem, 'quantity'>) => void;
     removeItem: (productId: string) => void;
     updateQuantity: (productId: string, quantity: number) => void;
     clearCart: () => void;

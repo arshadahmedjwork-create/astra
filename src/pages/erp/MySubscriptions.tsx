@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { Calendar, Play, Pause, Trash2, RefreshCw, AlertCircle, Repeat, CalendarDays, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -46,13 +46,7 @@ const MySubscriptions = () => {
     const [loading, setLoading] = useState(true);
     const [dailyCost, setDailyCost] = useState(0);
 
-    useEffect(() => {
-        if (customer) {
-            fetchSubscriptions();
-        }
-    }, [customer]);
-
-    const fetchSubscriptions = async () => {
+    const fetchSubscriptions = useCallback(async () => {
         try {
             const { data, error } = await supabase
                 .from('subscriptions')
@@ -72,16 +66,23 @@ const MySubscriptions = () => {
                 .filter(s => s.status === 'active')
                 .reduce((sum, s) => sum + (s.unit_price * s.quantity), 0);
             setDailyCost(total);
-        } catch (error: any) {
+        } catch (error) {
+            const err = error as Error;
             toast({
                 title: 'Error fetching subscriptions',
-                description: error.message,
+                description: err.message,
                 variant: 'destructive'
             });
         } finally {
             setLoading(false);
         }
-    };
+    }, [customer?.id, toast]);
+
+    useEffect(() => {
+        if (customer) {
+            fetchSubscriptions();
+        }
+    }, [customer, fetchSubscriptions]);
 
     const handleCancel = async (id: string) => {
         try {
@@ -94,8 +95,9 @@ const MySubscriptions = () => {
 
             setSubscriptions((prev) => prev.filter((s) => s.id !== id));
             toast({ title: 'Subscription Cancelled', description: 'Your subscription has been cancelled.' });
-        } catch (error: any) {
-            toast({ title: 'Error', description: error.message, variant: 'destructive' });
+        } catch (error) {
+            const err = error as Error;
+            toast({ title: 'Error', description: err.message, variant: 'destructive' });
         }
     };
 
@@ -124,15 +126,16 @@ const MySubscriptions = () => {
 
             if (error) throw error;
             
-            setSubscriptions(prev => prev.map(s => s.id === id ? { ...s, status: newStatus as any } : s));
+            setSubscriptions(prev => prev.map(s => s.id === id ? { ...s, status: newStatus as Subscription['status'] } : s));
             toast({
                 title: `Subscription ${newStatus === 'active' ? 'Resumed' : 'Paused'}`,
                 description: `Successfully ${newStatus === 'active' ? 'resumed' : 'paused'} your subscription.`,
             });
-        } catch (error: any) {
+        } catch (error) {
+            const err = error as Error;
             toast({
                 title: 'Update failed',
-                description: error.message,
+                description: err.message,
                 variant: 'destructive'
             });
         }
