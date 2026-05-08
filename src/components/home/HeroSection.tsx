@@ -126,8 +126,8 @@ const HeroSection = () => {
                     <img
                       src={b.image}
                       alt={b.name}
-                      className="h-24 md:h-36 lg:h-48 w-auto object-contain drop-shadow-lg"
-                      style={{ transform: i === 0 ? "scale(0.85)" : "scale(0.95)" }}
+                      className="h-24 md:h-36 lg:h-48 w-auto object-contain object-bottom drop-shadow-lg"
+                      style={{ transform: "scale(0.95)" }}
                     />
                     <span className="text-[9px] md:text-xs font-bold text-muted-foreground mt-2 uppercase tracking-wider">
                       {b.name}
@@ -167,8 +167,8 @@ const HeroSection = () => {
                     <img
                       src={b.image}
                       alt={b.name}
-                      className="h-24 md:h-36 lg:h-48 w-auto object-contain drop-shadow-lg"
-                      style={{ transform: i === 1 ? "scale(0.85)" : "scale(0.95)" }}
+                      className="h-24 md:h-36 lg:h-48 w-auto object-contain object-bottom drop-shadow-lg"
+                      style={{ transform: "scale(0.95)" }}
                     />
                     <span className="text-[9px] md:text-xs font-bold text-muted-foreground mt-2 uppercase tracking-wider">
                       {b.name}
@@ -187,13 +187,12 @@ const HeroSection = () => {
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3 md:gap-5 max-w-5xl mx-auto">
               {products.map((product) => (
                 <Link key={product.name} to={product.href} className="group block text-center">
-                  <div className="relative p-3 md:p-4 transition-all duration-500 hover:-translate-y-2">
-                    <div className="absolute inset-0 bg-gradient-to-t from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-2xl" />
-                    <div className="aspect-square flex items-center justify-center relative mb-2">
+                  <div className="relative p-3 md:p-4 rounded-2xl group-hover:bg-primary/5 transition-colors duration-500">
+                    <div className="aspect-square flex items-end justify-center relative mb-2">
                       <img
                         src={product.image}
                         alt={product.name}
-                        className="w-full h-full object-contain p-1 transition-transform duration-700 group-hover:scale-110 mix-blend-multiply"
+                        className="w-full h-full object-contain object-bottom p-1 transition-transform duration-500 group-hover:-translate-y-2 group-hover:scale-105 mix-blend-multiply"
                         loading="lazy"
                       />
                       <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-3/4 h-3 bg-foreground/5 rounded-full blur-md" />

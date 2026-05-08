@@ -51,11 +51,11 @@ const ProductShowcase = () => {
                   {/* Hover gradient overlay */}
                   <div className={`absolute inset-0 bg-gradient-to-t from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 ${i % 2 === 0 ? 'organic-radius' : 'organic-radius-reverse'}`} />
 
-                  <div className="aspect-square flex items-center justify-center relative mb-4">
+                  <div className="aspect-square flex items-end justify-center relative mb-4">
                     <img
                       src={product.image}
                       alt={product.name}
-                      className="w-full h-full object-contain p-2 transition-transform duration-700 group-hover:scale-110 mix-blend-multiply"
+                      className="w-full h-full object-contain object-bottom p-2 transition-transform duration-700 group-hover:scale-110 mix-blend-multiply"
                       loading="lazy"
                     />
                     {/* Shadow under product */}
