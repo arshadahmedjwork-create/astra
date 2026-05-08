@@ -32,7 +32,7 @@ const Footer = () => {
           <div className="space-y-6">
             <div className="space-y-4">
               <Link to="/" className="flex items-center gap-2">
-                <img src={astraLogo} alt="Astra Dairy" className="h-10 w-10 object-contain brightness-0 invert" />
+                <img src={astraLogo} alt="Astra Dairy" className="h-10 w-10 object-contain" />
                 <span className="text-xl font-bold">
                   Astra<span className="text-accent">Dairy</span>
                 </span>
@@ -110,7 +110,7 @@ const Footer = () => {
           {/* Delivering Cities */}
           <div>
             <h4 className="font-semibold mb-4 text-accent">Delivering In</h4>
-            <img src={astraLogo} alt="Astra Dairy" className="h-16 w-16 object-contain brightness-0 invert mb-4" />
+            <img src={astraLogo} alt="Astra Dairy" className="h-16 w-16 object-contain mb-4" />
             <p className="text-sm text-primary-foreground/60 mb-4">Chennai & surrounding areas</p>
             <div className="space-y-2 text-sm text-primary-foreground/60">
               <p className="flex items-start gap-2"><MapPin className="w-4 h-4 mt-0.5 shrink-0 text-accent" /> No. 60, Satyamurthy Nagar, Medavakkam, Chennai – 600100</p>
