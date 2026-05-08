@@ -15,7 +15,12 @@ export default {
     },
     extend: {
       fontFamily: {
-        sans: ['"Outfit"', 'system-ui', 'sans-serif'],
+        /* DM Sans — body, UI, nav, buttons, labels, captions */
+        sans:   ['"DM Sans"', 'system-ui', 'sans-serif'],
+        /* Playfair Display — campaign headlines, H1, H2 */
+        serif:  ['"Playfair Display"', 'Georgia', 'serif'],
+        /* Cormorant Garamond — premium SKU labels, packaging callouts */
+        accent: ['"Cormorant Garamond"', 'Georgia', 'serif'],
       },
       colors: {
         border: "hsl(var(--border))",
@@ -59,6 +64,9 @@ export default {
         "forest-dark": "hsl(var(--forest-dark))",
         sage: "hsl(var(--sage))",
         milk: "hsl(var(--milk))",
+        /* Official brand leaf green token */
+        leaf: "hsl(var(--leaf))",
+        charcoal: "hsl(var(--charcoal))",
         sidebar: {
           DEFAULT: "hsl(var(--sidebar-background))",
           foreground: "hsl(var(--sidebar-foreground))",

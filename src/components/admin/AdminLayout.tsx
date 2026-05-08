@@ -11,7 +11,8 @@ import {
     Menu,
     X,
     FlaskConical,
-    CreditCard
+    CreditCard,
+    Mail
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import astraLogo from '@/assets/astra-logo.png';
@@ -36,6 +37,7 @@ const AdminLayout = () => {
         { icon: Repeat, label: 'Subscriptions', path: '/admin/subscriptions' },
         { icon: CreditCard, label: 'Payments', path: '/admin/payments' },
         { icon: FlaskConical, label: 'Sample Requests', path: '/admin/samples' },
+        { icon: Mail, label: 'Messages', path: '/admin/messages' },
     ];
 
     return (

@@ -11,8 +11,8 @@ const Support = () => {
         <div className="container mx-auto px-4 lg:px-8 max-w-3xl">
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-10">
             <div className="text-center">
-              <p className="text-sm font-semibold uppercase tracking-[0.2em] text-accent mb-3">We're Here to Help</p>
-              <h1 className="text-4xl md:text-5xl font-bold text-foreground">Support</h1>
+              <p className="text-eyebrow text-accent mb-3">We're Here to Help</p>
+              <h1 className="text-section-title text-forest">Support</h1>
             </div>
 
             <div className="bg-card border border-border rounded-2xl p-8 space-y-6">

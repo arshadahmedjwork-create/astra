@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { MapPin, Phone, Mail, Instagram, Facebook, Twitter, Youtube } from "lucide-react";
 import astraLogo from "@/assets/astra-logo.png";
+import { companyInfo } from "@/constants/astraData";
 
 const productLinks = [
   { name: "Cow Milk", href: "/products/cow-milk" },
@@ -41,7 +42,7 @@ const Footer = () => {
                 Delivering farm fresh cow's milk in glass bottles to your home. Pure, natural, and organic.
               </p>
               <p className="text-xs text-primary-foreground/40">
-                FSSAI License No: 12419012000655
+                FSSAI Lic No: {companyInfo.fssai}
               </p>
             </div>
             
@@ -111,11 +112,12 @@ const Footer = () => {
           <div>
             <h4 className="font-semibold mb-4 text-accent">Delivering In</h4>
             <img src={astraLogo} alt="Astra Dairy" className="h-16 w-16 object-contain mb-4" />
-            <p className="text-sm text-primary-foreground/60 mb-4">Chennai & surrounding areas</p>
+            <p className="text-sm text-primary-foreground/60 mb-4">Chennai &amp; surrounding areas</p>
             <div className="space-y-2 text-sm text-primary-foreground/60">
-              <p className="flex items-start gap-2"><MapPin className="w-4 h-4 mt-0.5 shrink-0 text-accent" /> No. 60, Satyamurthy Nagar, Medavakkam, Chennai – 600100</p>
-              <p className="flex items-center gap-2"><Phone className="w-4 h-4 shrink-0 text-accent" /> +91 44 4856 2222</p>
-              <p className="flex items-center gap-2"><Mail className="w-4 h-4 shrink-0 text-accent" /> hello@astradairy.in</p>
+              <p className="flex items-start gap-2"><MapPin className="w-4 h-4 mt-0.5 shrink-0 text-accent" /> {companyInfo.address}</p>
+              <p className="flex items-center gap-2"><Phone className="w-4 h-4 shrink-0 text-accent" /> {companyInfo.phone1}</p>
+              <p className="flex items-center gap-2"><Phone className="w-4 h-4 shrink-0 text-accent" /> {companyInfo.phone2}</p>
+              <p className="flex items-center gap-2"><Mail className="w-4 h-4 shrink-0 text-accent" /> {companyInfo.email}</p>
             </div>
           </div>
         </div>

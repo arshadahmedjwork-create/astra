@@ -9,6 +9,8 @@ import ProductShowcase from "@/components/home/ProductShowcase";
 import WhyAstraDairy from "@/components/home/WhyAstraDairy";
 import DeliveryCTA from "@/components/home/DeliveryCTA";
 import FarmTourCTA from "@/components/home/FarmTourCTA";
+import GalleryHighlights from "@/components/home/GalleryHighlights";
+import MediaHighlights from "@/components/home/MediaHighlights";
 import SectionDivider from "@/components/ui/SectionDivider";
 
 const Index = () => {
@@ -25,6 +27,8 @@ const Index = () => {
       <SectionDivider color="fill-background" backgroundColor="bg-milk" position="top" />
       <ProductShowcase />
       <WhyAstraDairy />
+      <GalleryHighlights />
+      <MediaHighlights />
       <SectionDivider color="fill-primary" position="top" />
       <DeliveryCTA />
       <FarmTourCTA />

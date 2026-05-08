@@ -36,12 +36,6 @@ const OrderHistory = () => {
     const [orders, setOrders] = useState<Order[]>([]);
     const [loading, setLoading] = useState(true);
 
-    useEffect(() => {
-        if (customer) {
-            fetchOrders();
-        }
-    }, [customer, fetchOrders]);
-
     const fetchOrders = useCallback(async () => {
         try {
             const { data, error } = await supabase
@@ -69,6 +63,12 @@ const OrderHistory = () => {
             setLoading(false);
         }
     }, [customer?.id, toast]);
+
+    useEffect(() => {
+        if (customer) {
+            fetchOrders();
+        }
+    }, [customer, fetchOrders]);
 
     const getStatusIcon = (status: Order['status']) => {
         switch (status) {

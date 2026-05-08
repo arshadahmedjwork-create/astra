@@ -26,8 +26,8 @@ const Products = () => {
       <main className="pt-24 pb-16">
         <div className="container mx-auto px-4 lg:px-8">
           <div className="text-center mb-16">
-            <p className="text-sm font-semibold uppercase tracking-[0.2em] text-accent mb-3">Our Range</p>
-            <h1 className="text-4xl md:text-5xl font-bold text-foreground">Dairy Products</h1>
+            <p className="text-eyebrow text-accent mb-3">Our Range</p>
+            <h1 className="text-section-title text-forest">Dairy Products</h1>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-5xl mx-auto">

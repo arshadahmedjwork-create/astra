@@ -6,7 +6,6 @@ import carrotMilk from "@/assets/product-carrot-milk.png";
 import pasteurizedMilk from "@/assets/product-pasteurized-milk.png";
 import ghee from "@/assets/product-ghee.png";
 import curd from "@/assets/product-curd.png";
-import coconutOil from "@/assets/product-coconut-oil.png";
 
 const products = [
   { name: "Milk", image: pasteurizedMilk, href: "/products/cow-milk" },
@@ -19,24 +18,49 @@ const products = [
 const ProductShowcase = () => {
   return (
     <section className="py-20 lg:py-32 bg-background relative overflow-hidden">
-      <div className="container mx-auto px-4 lg:px-8">
+      {/* Subtle sage background texture for depth */}
+      <div className="absolute inset-0 bg-gradient-to-b from-background via-secondary/30 to-background pointer-events-none" />
+
+      <div className="container mx-auto px-4 lg:px-8 relative z-10">
         {/* Section header */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          className="text-center mb-6"
+          className="text-center mb-12"
         >
-          <p className="text-xs font-bold uppercase tracking-[0.4em] text-accent mb-4">
+          {/* Eyebrow — DM Sans 700 uppercase, Amber Gold */}
+          <p
+            className="mb-4"
+            style={{
+              fontFamily: "'DM Sans', system-ui, sans-serif",
+              fontSize: "clamp(0.5625rem, 0.9vw, 0.6875rem)",
+              fontWeight: 700,
+              textTransform: "uppercase",
+              letterSpacing: "0.4em",
+              color: "#F5A623",
+            }}
+          >
             From Our Farm to Your Table
           </p>
-          <h2 className="text-5xl md:text-6xl lg:text-7xl font-serif font-black text-foreground tracking-tight">
+
+          {/* Section H2 — Playfair Display 700, Forest Green */}
+          <h2
+            style={{
+              fontFamily: "'Playfair Display', serif",
+              fontSize: "clamp(2rem, 4.5vw, 3.5rem)",
+              fontWeight: 700,
+              lineHeight: 1.1,
+              letterSpacing: "-0.02em",
+              color: "#1A7A3F",
+            }}
+          >
             Our Products
           </h2>
         </motion.div>
 
-        {/* Product grid — Shatto style: large hoverable cards */}
-        <div className="flex flex-wrap justify-center gap-4 lg:gap-8 max-w-5xl mx-auto mt-12">
+        {/* Product grid */}
+        <div className="flex flex-wrap justify-center gap-4 lg:gap-8 max-w-5xl mx-auto mt-4">
           {products.map((product, i) => (
             <motion.div
               key={product.name}
@@ -47,9 +71,17 @@ const ProductShowcase = () => {
               className="w-full sm:w-[calc(50%-1rem)] md:w-[calc(33.333%-1.5rem)] lg:w-[calc(33.333%-2rem)]"
             >
               <Link to={product.href} className="group block text-center">
-                <div className={`relative bg-card ${i % 2 === 0 ? 'organic-radius' : 'organic-radius-reverse'} border border-border p-6 lg:p-10 transition-all duration-500 hover:shadow-2xl hover:-translate-y-3 overflow-hidden shadow-sm`}>
-                  {/* Hover gradient overlay */}
-                  <div className={`absolute inset-0 bg-gradient-to-t from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 ${i % 2 === 0 ? 'organic-radius' : 'organic-radius-reverse'}`} />
+                <div
+                  className={`relative bg-card ${i % 2 === 0 ? "organic-radius" : "organic-radius-reverse"} border border-border p-6 lg:p-10 transition-all duration-500 hover:shadow-2xl hover:-translate-y-3 overflow-hidden shadow-sm`}
+                  style={{
+                    borderColor: "hsl(0 0% 90%)",
+                  }}
+                >
+                  {/* Hover overlay — Forest Green tint */}
+                  <div
+                    className={`absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 ${i % 2 === 0 ? "organic-radius" : "organic-radius-reverse"}`}
+                    style={{ background: "linear-gradient(to top, rgba(26,122,63,0.05), transparent)" }}
+                  />
 
                   <div className="aspect-square flex items-end justify-center relative mb-4">
                     <img
@@ -58,13 +90,29 @@ const ProductShowcase = () => {
                       className="w-full h-full object-contain object-bottom p-2 transition-transform duration-700 group-hover:scale-110 mix-blend-multiply"
                       loading="lazy"
                     />
-                    {/* Shadow under product */}
+                    {/* Ground shadow */}
                     <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-3/4 h-4 bg-foreground/5 rounded-full blur-md" />
                   </div>
 
-                  <h3 className="text-lg md:text-xl font-black text-foreground relative z-10 tracking-tight">
+                  {/* Product name — DM Sans semibold, Charcoal Ink */}
+                  <h3
+                    className="relative z-10"
+                    style={{
+                      fontFamily: "'DM Sans', system-ui, sans-serif",
+                      fontSize: "clamp(1rem, 1.4vw, 1.2rem)",
+                      fontWeight: 600,
+                      color: "#1C1C1C",
+                      letterSpacing: "-0.01em",
+                    }}
+                  >
                     {product.name}
                   </h3>
+
+                  {/* Amber Gold hover accent line */}
+                  <div
+                    className="mx-auto mt-2 h-0.5 w-0 group-hover:w-10 transition-all duration-500 rounded-full"
+                    style={{ background: "#F5A623" }}
+                  />
                 </div>
               </Link>
             </motion.div>

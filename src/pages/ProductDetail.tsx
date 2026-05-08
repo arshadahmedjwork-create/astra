@@ -263,8 +263,8 @@ const ProductDetail = () => {
               </div>
               <div className="space-y-6">
                 <div>
-                  <h1 className="text-3xl md:text-4xl font-serif font-black text-foreground mb-3">{product.title}</h1>
-                  <p className="text-lg text-muted-foreground">{product.hook}</p>
+                  <h1 className="text-section-title text-forest mb-3">{product.title}</h1>
+                  <p className="text-lead text-charcoal/80">{product.hook}</p>
                 </div>
                 {/* Sticky Purchase Bar */}
                 <div className="flex flex-wrap gap-3 sticky top-20 bg-card/95 backdrop-blur-sm p-4 rounded-2xl border border-border">
@@ -334,13 +334,13 @@ const ProductDetail = () => {
 
             {/* What it is */}
             <div>
-              <h2 className="text-2xl font-serif font-bold text-foreground mb-4">What it is</h2>
-              <p className="text-muted-foreground leading-relaxed">{product.description}</p>
+              <h2 className="text-section-title text-forest mb-4">What it is</h2>
+              <p className="text-body text-charcoal/80 leading-relaxed">{product.description}</p>
             </div>
 
             {/* Notes */}
             <div>
-              <h2 className="text-2xl font-serif font-bold text-foreground mb-4">Notes</h2>
+              <h2 className="text-section-title text-forest mb-4">Notes</h2>
               <ul className="space-y-2">
                 {product.notes.map((note) => (
                   <li key={note} className="flex items-start gap-3 text-muted-foreground">
@@ -353,7 +353,7 @@ const ProductDetail = () => {
 
             {/* FAQ */}
             <div>
-              <h2 className="text-2xl font-serif font-bold text-foreground mb-4">Frequently Asked Questions</h2>
+              <h2 className="text-section-title text-forest mb-4">Frequently Asked Questions</h2>
               <Accordion type="multiple" className="space-y-2">
                 {product.faqs.map((faq, i) => (
                   <AccordionItem key={i} value={`faq-${i}`} className="border border-border rounded-xl px-4">
@@ -366,7 +366,7 @@ const ProductDetail = () => {
 
             {/* Related */}
             <div>
-              <h2 className="text-2xl font-serif font-bold text-foreground mb-6">Related Products</h2>
+              <h2 className="text-section-title text-forest mb-6">Related Products</h2>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 {related.map((p) => (
                   <Link key={p.name} to={p.href} className="group">
