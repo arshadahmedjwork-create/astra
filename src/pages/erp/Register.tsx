@@ -11,6 +11,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/lib/supabase';
+import { sendRegistrationSms } from '@/lib/msg91';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import astraLogo from '@/assets/astra-logo.png';
@@ -311,6 +312,13 @@ const Register = () => {
                 }
                 setLoading(false);
                 return;
+            }
+
+            // Send registration SMS
+            try {
+                await sendRegistrationSms(basic.mobile, customerData.customer_id);
+            } catch (smsError) {
+                console.error('Failed to send registration SMS:', smsError);
             }
 
             // Insert address

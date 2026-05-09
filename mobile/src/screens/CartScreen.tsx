@@ -4,15 +4,15 @@ import { useCartStore } from '../stores/cartStore';
 import { ChevronLeft, Trash2, Plus, Minus, ShoppingBag } from 'lucide-react-native';
 
 const PRODUCT_IMAGES: Record<string, any> = {
-    'Cow Milk': require('../../assets/product-raw-milk.png'),
-    'Buffalo Milk': require('../../assets/product-raw-milk.png'),
-    'A2 Milk': require('../../assets/product-raw-milk.png'),
+    'Cow Milk': require('../../assets/product_raw_milk.jpg'),
+    'Buffalo Milk': require('../../assets/product_raw_milk.jpg'),
+    'A2 Milk': require('../../assets/product_raw_milk.jpg'),
     'Paneer': require('../../assets/product-paneer.png'),
     'Ghee': require('../../assets/product-ghee.png'),
     'Curd': require('../../assets/product-curd.png'),
     'Buttermilk': require('../../assets/product-buttermilk.png'),
     'Flavoured Milk': require('../../assets/product-chocolate-milk.png'),
-    'Natural Kulfi': require('../../assets/product-kulfi.png'),
+    'Natural Kulfi': require('../../assets/product_kulfi.jpg'),
     'Carrot Milk': require('../../assets/product-carrot-milk.png'),
     'Coconut Oil': require('../../assets/product-coconut-oil.png'),
     'Sesame Oil': require('../../assets/product-sesame-oil.png'),

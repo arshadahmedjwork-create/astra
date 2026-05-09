@@ -1,41 +1,72 @@
 /**
- * MSG91 OTP Widget Integration — Web
- * 
- * (TEST MODE: OTP SYSTEM BYPASSED)
- * Use 123456 for all accounts.
+ * MSG91 OTP & SMS API Integration — Web (Via Supabase Edge Function Proxy)
  */
-
-/*
-const AUTH_KEY = import.meta.env.VITE_MSG91_AUTH_KEY as string;
-const WIDGET_ID = import.meta.env.VITE_MSG91_WIDGET_ID as string;
-const TOKEN_AUTH = import.meta.env.VITE_MSG91_TOKEN_AUTH as string;
-*/
+import { supabase } from './supabase';
 
 /**
- * Initialises and opens the MSG91 OTP widget for the given mobile number.
- * (TEST MODE: Automatically triggers success)
+ * Sends a 6-digit OTP to the given mobile number.
  */
-export function initMsg91Widget(
-    mobile: string,
-    onSuccess: (data: { message: string; access_token: string }) => void,
-    _onFailure: (error: unknown) => void
-) {
-    console.log('[MSG91] TEST MODE: Bypassing widget init for ' + mobile);
-    
-    // Ask for the test OTP in a prompt for simplicity in test mode
-    const otp = window.prompt("TEST MODE: Enter OTP (use 123456)");
-    
-    if (otp === "123456") {
-        onSuccess({ message: "Success", access_token: "test-token" });
-    } else {
-        alert("Invalid Test OTP");
+export async function sendOtp(mobile: string): Promise<void> {
+    try {
+        const { data, error } = await supabase.functions.invoke('msg91', {
+            body: { type: 'sendOtp', mobile }
+        });
+        if (error || data.type === 'error') throw new Error(error?.message || data.message);
+        console.log('[MSG91] OTP sent successfully');
+    } catch (error) {
+        console.error('[MSG91] Error sending OTP:', error);
+        throw error;
     }
 }
 
 /**
- * Verifies the JWT access-token.
- * (TEST MODE: Always returns true)
+ * Verifies the OTP the user entered.
  */
-export async function verifyMsg91Token(_accessToken: string): Promise<boolean> {
-    return true;
+export async function verifyOtp(mobile: string, otp: string): Promise<boolean> {
+    try {
+        const { data, error } = await supabase.functions.invoke('msg91', {
+            body: { type: 'verifyOtp', mobile, otp }
+        });
+        if (error) throw error;
+        return data.type === 'success';
+    } catch (error) {
+        console.error('[MSG91] Error verifying OTP:', error);
+        return false;
+    }
+}
+
+/**
+ * Sends a registration confirmation SMS.
+ */
+export async function sendRegistrationSms(mobile: string, customerId: string): Promise<void> {
+    try {
+        const { data, error } = await supabase.functions.invoke('msg91', {
+            body: { type: 'registration', mobile, customerId }
+        });
+        if (error) throw error;
+        console.log('[MSG91] Registration SMS result:', data);
+    } catch (error) {
+        console.error('[MSG91] Error sending Registration SMS:', error);
+    }
+}
+
+/**
+ * Sends a delivery confirmation SMS.
+ */
+export async function sendDeliverySms(
+    mobile: string, 
+    cid: string, 
+    subscription: string, 
+    balance: string | number, 
+    date: string
+): Promise<void> {
+    try {
+        const { data, error } = await supabase.functions.invoke('msg91', {
+            body: { type: 'delivery', mobile, cid, subscription, balance, date }
+        });
+        if (error) throw error;
+        console.log('[MSG91] Delivery SMS result:', data);
+    } catch (error) {
+        console.error('[MSG91] Error sending Delivery SMS:', error);
+    }
 }
