@@ -52,7 +52,6 @@ const AdminPayments = lazy(() => import("./pages/admin/AdminPayments"));
 const AdminDrivers = lazy(() => import("./pages/admin/AdminDrivers"));
 const AdminAllOrders = lazy(() => import("./pages/admin/AdminAllOrders"));
 const AdminOrderTracking = lazy(() => import("./pages/admin/AdminOrderTracking"));
-const AdminMessages = lazy(() => import("./pages/admin/AdminMessages"));
 
 const queryClient = new QueryClient();
 
@@ -72,83 +71,6 @@ const RouteScrollToTop = () => {
   return null;
 };
 
-import { AnimatePresence, motion } from "framer-motion";
-
-const PageTransition = ({ children }: { children: React.ReactNode }) => {
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 15 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -15 }}
-      transition={{ duration: 0.4, ease: "easeInOut" }}
-      className="w-full"
-    >
-      {children}
-    </motion.div>
-  );
-};
-
-const AnimatedRoutes = () => {
-  const location = useLocation();
-
-  return (
-    <AnimatePresence mode="wait">
-      <Routes location={location} key={location.pathname}>
-        <Route path="/" element={<PageTransition><Index /></PageTransition>} />
-        <Route path="/about" element={<PageTransition><About /></PageTransition>} />
-        <Route path="/products" element={<PageTransition><Products /></PageTransition>} />
-        <Route path="/products/:slug" element={<PageTransition><ProductDetail /></PageTransition>} />
-        <Route path="/gallery" element={<PageTransition><Gallery /></PageTransition>} />
-        <Route path="/media" element={<PageTransition><Media /></PageTransition>} />
-        <Route path="/faq" element={<PageTransition><FAQ /></PageTransition>} />
-        <Route path="/support" element={<PageTransition><Support /></PageTransition>} />
-        <Route path="/contact" element={<PageTransition><Contact /></PageTransition>} />
-        <Route path="/environment" element={<PageTransition><Environment /></PageTransition>} />
-        <Route path="/terms" element={<PageTransition><Terms /></PageTransition>} />
-        <Route path="/privacy" element={<PageTransition><Privacy /></PageTransition>} />
-
-        {/* ERP Portal Routes */}
-        <Route path="/erp/login" element={<PageTransition><ERPLogin /></PageTransition>} />
-        <Route path="/erp/register" element={<PageTransition><ERPRegister /></PageTransition>} />
-        <Route path="/erp/dashboard" element={<ProtectedRoute><PageTransition><ERPDashboard /></PageTransition></ProtectedRoute>} />
-        <Route path="/erp/products" element={<ProtectedRoute><PageTransition><ERPMyProducts /></PageTransition></ProtectedRoute>} />
-        <Route path="/erp/request-sample" element={<ProtectedRoute><PageTransition><ERPRequestSample /></PageTransition></ProtectedRoute>} />
-        <Route path="/erp/subscription" element={<ProtectedRoute><PageTransition><ERPRenewSubscription /></PageTransition></ProtectedRoute>} />
-        <Route path="/erp/payments" element={<ProtectedRoute><PageTransition><ERPPaymentHistory /></PageTransition></ProtectedRoute>} />
-        <Route path="/erp/profile" element={<ProtectedRoute><PageTransition><ERPMyProfile /></PageTransition></ProtectedRoute>} />
-        <Route path="/erp/cart" element={<ProtectedRoute><PageTransition><ERPCart /></PageTransition></ProtectedRoute>} />
-        <Route path="/erp/checkout" element={<ProtectedRoute><PageTransition><ERPCheckout /></PageTransition></ProtectedRoute>} />
-        <Route path="/erp/orders" element={<ProtectedRoute><PageTransition><ERPOrderHistory /></PageTransition></ProtectedRoute>} />
-        <Route path="/erp/subscriptions" element={<ProtectedRoute><PageTransition><ERPMySubscriptions /></PageTransition></ProtectedRoute>} />
-        <Route path="/erp/track" element={<ProtectedRoute><PageTransition><ERPLiveTracking /></PageTransition></ProtectedRoute>} />
-        <Route path="/erp/track/:orderId" element={<ProtectedRoute><PageTransition><ERPOrderTracking /></PageTransition></ProtectedRoute>} />
-        <Route path="/erp/wallet" element={<ProtectedRoute><PageTransition><ERPWallet /></PageTransition></ProtectedRoute>} />
-
-        {/* Admin Portal Routes */}
-        <Route path="/admin/login" element={<PageTransition><AdminLogin /></PageTransition>} />
-        <Route path="/admin" element={<AdminProtectedRoute />}>
-          <Route element={<PageTransition><AdminLayout /></PageTransition>}>
-            <Route index element={<AdminDashboard />} />
-            <Route path="dashboard" element={<AdminDashboard />} />
-            <Route path="inventory" element={<AdminInventory />} />
-            <Route path="orders" element={<AdminOrders />} />
-            <Route path="orders/track/:orderId" element={<AdminOrderTracking />} />
-            <Route path="customers" element={<AdminCustomers />} />
-            <Route path="subscriptions" element={<AdminSubscriptions />} />
-            <Route path="samples" element={<AdminSamples />} />
-            <Route path="payments" element={<AdminPayments />} />
-            <Route path="drivers" element={<AdminDrivers />} />
-            <Route path="all-orders" element={<AdminAllOrders />} />
-            <Route path="messages" element={<AdminMessages />} />
-          </Route>
-        </Route>
-
-        <Route path="*" element={<PageTransition><NotFound /></PageTransition>} />
-      </Routes>
-    </AnimatePresence>
-  );
-};
-
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
@@ -158,7 +80,57 @@ const App = () => (
         <RouteScrollToTop />
         <ScrollToTop />
         <Suspense fallback={<Loading />}>
-          <AnimatedRoutes />
+          <Routes>
+            <Route path="/" element={<Index />} />
+            <Route path="/about" element={<About />} />
+            <Route path="/products" element={<Products />} />
+            <Route path="/products/:slug" element={<ProductDetail />} />
+            <Route path="/gallery" element={<Gallery />} />
+            <Route path="/media" element={<Media />} />
+            <Route path="/faq" element={<FAQ />} />
+            <Route path="/support" element={<Support />} />
+            <Route path="/contact" element={<Contact />} />
+            <Route path="/environment" element={<Environment />} />
+            <Route path="/terms" element={<Terms />} />
+            <Route path="/privacy" element={<Privacy />} />
+
+            {/* ERP Portal Routes */}
+            <Route path="/erp/login" element={<ERPLogin />} />
+            <Route path="/erp/register" element={<ERPRegister />} />
+            <Route path="/erp/dashboard" element={<ProtectedRoute><ERPDashboard /></ProtectedRoute>} />
+            <Route path="/erp/products" element={<ProtectedRoute><ERPMyProducts /></ProtectedRoute>} />
+            <Route path="/erp/request-sample" element={<ProtectedRoute><ERPRequestSample /></ProtectedRoute>} />
+            <Route path="/erp/subscription" element={<ProtectedRoute><ERPRenewSubscription /></ProtectedRoute>} />
+            <Route path="/erp/payments" element={<ProtectedRoute><ERPPaymentHistory /></ProtectedRoute>} />
+            <Route path="/erp/profile" element={<ProtectedRoute><ERPMyProfile /></ProtectedRoute>} />
+            <Route path="/erp/cart" element={<ProtectedRoute><ERPCart /></ProtectedRoute>} />
+            <Route path="/erp/checkout" element={<ProtectedRoute><ERPCheckout /></ProtectedRoute>} />
+            <Route path="/erp/orders" element={<ProtectedRoute><ERPOrderHistory /></ProtectedRoute>} />
+            <Route path="/erp/subscriptions" element={<ProtectedRoute><ERPMySubscriptions /></ProtectedRoute>} />
+            <Route path="/erp/track" element={<ProtectedRoute><ERPLiveTracking /></ProtectedRoute>} />
+            <Route path="/erp/track/:orderId" element={<ProtectedRoute><ERPOrderTracking /></ProtectedRoute>} />
+            <Route path="/erp/wallet" element={<ProtectedRoute><ERPWallet /></ProtectedRoute>} />
+
+            {/* Admin Portal Routes */}
+            <Route path="/admin/login" element={<AdminLogin />} />
+            <Route path="/admin" element={<AdminProtectedRoute />}>
+              <Route element={<AdminLayout />}>
+                <Route index element={<AdminDashboard />} />
+                <Route path="dashboard" element={<AdminDashboard />} />
+                <Route path="inventory" element={<AdminInventory />} />
+                <Route path="orders" element={<AdminOrders />} />
+                <Route path="orders/track/:orderId" element={<AdminOrderTracking />} />
+                <Route path="customers" element={<AdminCustomers />} />
+                <Route path="subscriptions" element={<AdminSubscriptions />} />
+                <Route path="samples" element={<AdminSamples />} />
+                <Route path="payments" element={<AdminPayments />} />
+                <Route path="drivers" element={<AdminDrivers />} />
+                <Route path="all-orders" element={<AdminAllOrders />} />
+              </Route>
+            </Route>
+
+            <Route path="*" element={<NotFound />} />
+          </Routes>
         </Suspense>
       </BrowserRouter>
     </TooltipProvider>

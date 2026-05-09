@@ -28,6 +28,12 @@ const LiveTrackingSearch = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
 
+    useEffect(() => {
+        if (customer?.id) {
+            fetchActiveOrders();
+        }
+    }, [customer?.id, fetchActiveOrders]);
+
     const fetchActiveOrders = useCallback(async () => {
         if (!customer?.id) return;
         try {
@@ -46,12 +52,6 @@ const LiveTrackingSearch = () => {
             setLoading(false);
         }
     }, [customer?.id]);
-
-    useEffect(() => {
-        if (customer?.id) {
-            fetchActiveOrders();
-        }
-    }, [customer?.id, fetchActiveOrders]);
 
     const handleSearch = (e: React.FormEvent) => {
         e.preventDefault();

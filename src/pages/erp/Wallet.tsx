@@ -23,6 +23,11 @@ const WalletPage = () => {
     const [loading, setLoading] = useState(true);
     const [addAmount, setAddAmount] = useState('');
 
+    useEffect(() => {
+        if (!customer?.id) return;
+        fetchTransactions();
+    }, [customer?.id, fetchTransactions]);
+
     const fetchTransactions = useCallback(async () => {
         if (!customer?.id) return;
         const { data, error } = await supabase
@@ -36,11 +41,6 @@ const WalletPage = () => {
         }
         setLoading(false);
     }, [customer?.id]);
-
-    useEffect(() => {
-        if (!customer?.id) return;
-        fetchTransactions();
-    }, [customer?.id, fetchTransactions]);
 
     const handleAddFunds = async () => {
         if (!addAmount || isNaN(Number(addAmount))) {

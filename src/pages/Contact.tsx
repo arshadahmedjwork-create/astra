@@ -6,55 +6,8 @@ import { companyInfo } from "@/constants/astraData";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { useState } from "react";
-import { supabase } from "@/lib/supabase";
-import { toast } from "sonner";
 
 const Contact = () => {
-  const [formData, setFormData] = useState({
-    firstName: '',
-    lastName: '',
-    email: '',
-    subject: '',
-    message: ''
-  });
-  const [isSubmitting, setIsSubmitting] = useState(false);
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!formData.firstName || !formData.email || !formData.message) {
-      toast.error("Please fill in all required fields.");
-      return;
-    }
-
-    setIsSubmitting(true);
-    try {
-      const { error } = await supabase
-        .from('contact_messages')
-        .insert([{
-          first_name: formData.firstName,
-          last_name: formData.lastName,
-          email: formData.email,
-          subject: formData.subject,
-          message: formData.message,
-          status: 'unread'
-        }]);
-
-      if (error) throw error;
-
-      toast.success("Message sent successfully!", {
-        description: "We'll get back to you as soon as possible."
-      });
-      
-      setFormData({ firstName: '', lastName: '', email: '', subject: '', message: '' });
-    } catch (error) {
-      console.error("Error sending message:", error);
-      toast.error("Failed to send message. Please try again later.");
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
   return (
     <div className="min-h-screen flex flex-col bg-muted/20">
       <Header />
@@ -97,8 +50,6 @@ const Contact = () => {
                 ))}
               </div>
 
-
-
               {/* Contact Form */}
               <motion.div
                 initial={{ opacity: 0, x: 20 }}
@@ -107,66 +58,31 @@ const Contact = () => {
                 className="bg-card border border-border rounded-3xl p-8 shadow-xl"
               >
                 <h3 className="text-2xl font-bold text-foreground mb-6">Send us a Message</h3>
-                <form className="space-y-6" onSubmit={handleSubmit}>
+                <form className="space-y-6" onSubmit={(e) => e.preventDefault()}>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                     <div className="space-y-2">
-                      <label htmlFor="firstName" className="text-sm font-medium text-foreground">First Name *</label>
-                      <Input 
-                        id="firstName" 
-                        placeholder="John" 
-                        className="h-12 bg-muted/50" 
-                        value={formData.firstName}
-                        onChange={(e) => setFormData({...formData, firstName: e.target.value})}
-                        required
-                      />
+                      <label htmlFor="firstName" className="text-sm font-medium text-foreground">First Name</label>
+                      <Input id="firstName" placeholder="John" className="h-12 bg-muted/50" />
                     </div>
                     <div className="space-y-2">
                       <label htmlFor="lastName" className="text-sm font-medium text-foreground">Last Name</label>
-                      <Input 
-                        id="lastName" 
-                        placeholder="Doe" 
-                        className="h-12 bg-muted/50" 
-                        value={formData.lastName}
-                        onChange={(e) => setFormData({...formData, lastName: e.target.value})}
-                      />
+                      <Input id="lastName" placeholder="Doe" className="h-12 bg-muted/50" />
                     </div>
                   </div>
                   <div className="space-y-2">
-                    <label htmlFor="email" className="text-sm font-medium text-foreground">Email Address *</label>
-                    <Input 
-                      id="email" 
-                      type="email" 
-                      placeholder="john@example.com" 
-                      className="h-12 bg-muted/50" 
-                      value={formData.email}
-                      onChange={(e) => setFormData({...formData, email: e.target.value})}
-                      required
-                    />
+                    <label htmlFor="email" className="text-sm font-medium text-foreground">Email Address</label>
+                    <Input id="email" type="email" placeholder="john@example.com" className="h-12 bg-muted/50" />
                   </div>
                   <div className="space-y-2">
                     <label htmlFor="subject" className="text-sm font-medium text-foreground">Subject</label>
-                    <Input 
-                      id="subject" 
-                      placeholder="How can we help you?" 
-                      className="h-12 bg-muted/50" 
-                      value={formData.subject}
-                      onChange={(e) => setFormData({...formData, subject: e.target.value})}
-                    />
+                    <Input id="subject" placeholder="How can we help you?" className="h-12 bg-muted/50" />
                   </div>
                   <div className="space-y-2">
-                    <label htmlFor="message" className="text-sm font-medium text-foreground">Message *</label>
-                    <Textarea 
-                      id="message" 
-                      placeholder="Write your message here..." 
-                      className="min-h-[150px] bg-muted/50 resize-y" 
-                      value={formData.message}
-                      onChange={(e) => setFormData({...formData, message: e.target.value})}
-                      required
-                    />
+                    <label htmlFor="message" className="text-sm font-medium text-foreground">Message</label>
+                    <Textarea id="message" placeholder="Write your message here..." className="min-h-[150px] bg-muted/50 resize-y" />
                   </div>
-                  <Button type="submit" variant="hero" className="w-full h-12 text-lg gap-2" disabled={isSubmitting}>
-                    {isSubmitting ? <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" /> : <Send className="w-5 h-5" />}
-                    {isSubmitting ? 'Sending...' : 'Send Message'}
+                  <Button type="submit" variant="hero" className="w-full h-12 text-lg gap-2">
+                    <Send className="w-5 h-5" /> Send Message
                   </Button>
                 </form>
               </motion.div>

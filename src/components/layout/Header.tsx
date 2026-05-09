@@ -47,8 +47,8 @@ const Header = () => {
   return (
     <header
       className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${isScrolled
-        ? "bg-[#1A7A3F]/95 backdrop-blur-md shadow-lg py-2"
-        : "bg-[#1A7A3F] shadow-md py-4"
+        ? "bg-card/95 backdrop-blur-md shadow-sm py-2"
+        : "bg-transparent py-4"
         }`}
     >
       <div className="container mx-auto flex items-center justify-between px-4 lg:px-8">
@@ -61,7 +61,7 @@ const Header = () => {
               fontFamily: "'DM Sans', system-ui, sans-serif",
               fontSize: "1.2rem",
               fontWeight: 700,
-              color: "#FFFFFF",
+              color: "#1A7A3F",
             }}
           >
             Astra<span style={{ color: "#F5A623" }}>Dairy</span>
@@ -81,8 +81,8 @@ const Header = () => {
                 to={item.href}
                 className={`px-3 py-2 text-sm rounded-lg transition-colors flex items-center gap-1 ${
                   location.pathname === item.href
-                    ? "text-[#F5A623] bg-white/10 font-semibold"
-                    : "text-white/90 hover:text-white hover:bg-white/10 font-medium"
+                    ? "text-primary bg-primary/5 font-semibold"
+                    : "text-foreground/65 hover:text-primary hover:bg-primary/5 font-medium"
                 }`}
                 style={{ fontFamily: "'DM Sans', system-ui, sans-serif" }}
               >
@@ -120,16 +120,16 @@ const Header = () => {
         <div className="hidden lg:flex items-center gap-3">
           <CartSheet />
           <Link to="/erp/login">
-            <Button variant="gold" size="sm" className="shadow-md">Take a Trial</Button>
+            <Button variant="hero-outline" size="sm">Take a Trial</Button>
           </Link>
           <Link to="/erp/login">
-            <Button variant="outline" size="sm" className="border-white text-white bg-transparent hover:bg-white hover:text-[#1A7A3F]">Login</Button>
+            <Button variant="hero" size="sm">Login</Button>
           </Link>
         </div>
 
         {/* Mobile Toggle */}
         <button
-          className="lg:hidden p-2 text-white"
+          className="lg:hidden p-2 text-foreground"
           onClick={() => setMobileOpen(!mobileOpen)}
           aria-label="Toggle menu"
         >

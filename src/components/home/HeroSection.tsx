@@ -66,152 +66,152 @@ const HeroSection = () => {
       <div className="sticky top-0 h-screen overflow-hidden">
         {/* ═══ BACKGROUND ═══ */}
         <motion.div className="absolute inset-0 z-0" style={{ scale: bgScale, opacity: bgOpacity }}>
-          <img src={heroBg} alt="Premium misty farm" className="w-full h-full object-cover" loading="eager" />
-          {/* Bright, airy overlays to ensure a premium light theme */}
-          <div className="absolute inset-0 bg-white/40 backdrop-blur-[2px]" />
-          <div className="absolute inset-0 bg-gradient-to-r from-white/95 via-white/70 to-white/30" />
+          {/* HTML5 Video Background (Fallback to static image if video is missing/loading) */}
+          <video
+            autoPlay
+            muted
+            loop
+            playsInline
+            poster={heroBg}
+            className="w-full h-full object-cover"
+          >
+            <source src="/assets/hero-bg-video.mp4" type="video/mp4" />
+            <img src={heroBg} alt="Premium misty farm" className="w-full h-full object-cover" />
+          </video>
+          {/* Cinematic dark vignette — top-down + radial, gives depth without washing out colour */}
+          <div className="absolute inset-0 bg-gradient-to-b from-black/55 via-black/10 to-black/60" />
+          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_40%,rgba(0,0,0,0.45)_100%)]" />
         </motion.div>
         <div className="absolute inset-0 bg-background -z-[1]" />
 
         {/* ═══ HERO SPLIT-SCREEN ═══ */}
         <motion.div
-          className="absolute inset-0 z-30 flex flex-col md:flex-row max-w-[90rem] mx-auto w-full items-center justify-center gap-4 lg:gap-16"
+          className="absolute inset-0 z-30 flex justify-center"
           style={{ opacity: heroOpacity }}
         >
-          {/* LEFT: Text panel */}
-          <div className="relative w-full md:w-[55%] lg:w-[50%] flex flex-col justify-center px-6 sm:px-10 lg:px-12 pt-28 md:pt-12 pb-4 md:pb-0">
-            {/* Added aesthetic backdrop for trust and uniqueness */}
-            <div className="absolute inset-0 bg-white/60 backdrop-blur-md border border-[#1A7A3F]/10 rounded-3xl shadow-2xl shadow-[#1A7A3F]/5 hidden md:block -mx-4 my-20 pointer-events-none" />
+          {/* Full-bleed left gradient to prevent sharp edges on wide screens */}
+          <div className="absolute inset-y-0 left-0 w-full md:w-[60%] bg-gradient-to-r from-black/70 via-black/30 to-transparent pointer-events-none -z-10" />
 
-
-            <motion.div className="relative z-10" style={{ y: heroTextY }}>
-              {/* Eyebrow — DM Sans 700 uppercase, Amber Gold */}
-              <p
-                className="mb-3 md:mb-4"
-                style={{
-                  fontFamily: "'DM Sans', system-ui, sans-serif",
-                  fontSize: "clamp(0.5625rem, 0.9vw, 0.6875rem)",
-                  fontWeight: 700,
-                  textTransform: "uppercase",
-                  letterSpacing: "0.4em",
-                  color: "#F5A623",
-                }}
-              >
-                Farm‑Fresh · Pure · Natural
-              </p>
-
-              {/* Campaign H1 — Playfair Display 900 */}
-              <h1
-                className="leading-[1.05] tracking-tighter mb-5 md:mb-6"
-                style={{
-                  fontFamily: "'Playfair Display', serif",
-                  fontSize: "clamp(2.8rem, 6.5vw, 6rem)",
-                  fontWeight: 900,
-                  color: "#1A7A3F",
-                }}
-              >
-                Pure, fresh milk.
-                <br />
-                {/* Amber Gold — standout highlight */}
-                <span style={{ color: "#F5A623" }}>No shortcuts.</span>
-              </h1>
-
-              {/* Decorative separator line */}
-              <div className="w-20 h-1 bg-[#F5A623] rounded-full mb-6" />
-
-              {/* Lead body — DM Sans 400 */}
-              <p
-                className="max-w-sm md:max-w-md leading-relaxed text-lg"
-                style={{
-                  fontFamily: "'DM Sans', system-ui, sans-serif",
-                  fontWeight: 500,
-                  color: "#1C1C1C",
-                }}
-              >
-                At Astra Dairy, nothing gets in the way of producing the freshest,
-                most natural dairy products.
-              </p>
-              <p
-                className="max-w-sm md:max-w-md leading-relaxed mt-2 text-base"
-                style={{
-                  fontFamily: "'DM Sans', system-ui, sans-serif",
-                  fontWeight: 400,
-                  color: "rgba(28,28,28,0.7)",
-                }}
-              >
-                No hormones. No preservatives. No factory farms. Just pure goodness.
-              </p>
-
-              {/* Trust badges — updated for light theme */}
-              <div className="flex flex-wrap gap-3 mt-6 md:mt-8">
-                <span
-                  className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-bold uppercase tracking-wider bg-white shadow-sm"
+          {/* Constrain width to prevent excessive gap on wide screens */}
+          <div className="w-full max-w-[1360px] h-full mx-auto flex flex-col md:flex-row items-center justify-between px-6 sm:px-10 md:px-12 lg:px-16 pt-20 md:pt-0">
+            
+            {/* LEFT: Text panel */}
+            <div className="relative w-full md:w-[50%] flex flex-col justify-center z-10 md:pr-4">
+              <motion.div className="relative z-10" style={{ y: heroTextY }}>
+                {/* Eyebrow — DM Sans 700 uppercase, Amber Gold */}
+                <p
+                  className="mb-3 md:mb-4"
                   style={{
                     fontFamily: "'DM Sans', system-ui, sans-serif",
-                    border: "1px solid rgba(26,122,63,0.15)",
-                    color: "#1A7A3F",
-                  }}
-                >
-                  <span className="text-[#6BBF2A]">✦</span> No Hormones
-                </span>
-                <span
-                  className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-bold uppercase tracking-wider bg-white shadow-sm"
-                  style={{
-                    fontFamily: "'DM Sans', system-ui, sans-serif",
-                    border: "1px solid rgba(245,166,35,0.25)",
+                    fontSize: "clamp(0.5625rem, 0.9vw, 0.6875rem)",
+                    fontWeight: 700,
+                    textTransform: "uppercase",
+                    letterSpacing: "0.25em",
                     color: "#F5A623",
                   }}
                 >
-                  <span className="text-[#F5A623]">✦</span> No Preservatives
-                </span>
-                <span
-                  className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-bold uppercase tracking-wider bg-[#1A7A3F] shadow-md"
+                  FARM-FRESH · FAMILY-TRUSTED · DELIVERED DAILY
+                </p>
+
+                {/* Campaign H1 — Playfair Display 900 */}
+                <h1
+                  className="text-white leading-[1.05] tracking-tight mb-4 md:mb-6 max-w-2xl"
                   style={{
-                    fontFamily: "'DM Sans', system-ui, sans-serif",
-                    color: "#FFFFFF",
+                    fontFamily: "'Playfair Display', serif",
+                    fontSize: "clamp(2.5rem, 5.5vw, 4.8rem)",
+                    fontWeight: 900,
+                    textShadow: "0 2px 32px rgba(0,0,0,0.4)",
                   }}
                 >
-                  <span className="text-[#F5A623]">✦</span> Farm Direct
-                </span>
-              </div>
-            </motion.div>
-          </div>
+                  Fresh milk your family can trust every morning.
+                </h1>
 
-          {/* RIGHT: Rotating bottle panel */}
-          <div className="w-full md:w-[45%] lg:w-[50%] flex items-center justify-center relative pt-8 md:pt-20 pb-12 md:pb-0">
-            {/* Layered ground glow for depth */}
-            <div className="absolute bottom-[18%] md:bottom-[20%] left-1/2 -translate-x-1/2 w-64 md:w-96 h-12 md:h-20 rounded-full bg-primary/25 blur-3xl pointer-events-none" />
-            <div className="absolute bottom-[18%] md:bottom-[20%] left-1/2 -translate-x-1/2 w-44 md:w-64 h-6 md:h-10 rounded-full bg-white/15 blur-2xl pointer-events-none" />
-            <div className="absolute bottom-[18%] md:bottom-[20%] left-1/2 -translate-x-1/2 w-28 md:w-40 h-3 md:h-5 rounded-full bg-foreground/20 blur-md pointer-events-none" />
+                {/* Lead body — DM Sans 400 */}
+                <p
+                  className="max-w-lg leading-relaxed"
+                  style={{
+                    fontFamily: "'DM Sans', system-ui, sans-serif",
+                    fontSize: "clamp(0.9rem, 1.3vw, 1.05rem)",
+                    fontWeight: 400,
+                    color: "rgba(255,255,255,0.9)",
+                  }}
+                >
+                  From your first cup of coffee to your child’s breakfast, Astra Dairy brings clean, farm-fresh goodness home with care, consistency, and comfort.
+                </p>
+                <p
+                  className="max-w-lg leading-relaxed mt-2"
+                  style={{
+                    fontFamily: "'DM Sans', system-ui, sans-serif",
+                    fontSize: "clamp(0.85rem, 1.2vw, 1rem)",
+                    fontWeight: 600,
+                    color: "rgba(255,255,255,0.75)",
+                  }}
+                >
+                  Freshly sourced. Thoughtfully delivered. Loved daily.
+                </p>
 
-            <motion.div
-              className="relative flex flex-col items-center"
-              style={{ opacity: heroBottleOpacity }}
-            >
-              {/* Turntable wrapper */}
-              <div className="hero-turntable-stage">
-                <img
-                  src={bottleBanner}
-                  alt="Astra Dairy farm fresh milk in glass bottle"
-                  className="hero-turntable-bottle h-64 sm:h-80 md:h-[26rem] lg:h-[30rem] xl:h-[34rem] w-auto object-contain select-none"
-                  draggable={false}
-                  loading="eager"
-                />
-              </div>
+                {/* Trust badges — brand palette with backdrop blur */}
+                <div className="flex flex-wrap gap-2 md:gap-3 mt-6 md:mt-8">
+                  <span
+                    className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-[10px] md:text-xs font-bold uppercase tracking-wider backdrop-blur-sm shadow-sm"
+                    style={{
+                      fontFamily: "'DM Sans', system-ui, sans-serif",
+                      background: "rgba(26,122,63,0.3)",
+                      border: "1px solid rgba(26,122,63,0.4)",
+                      color: "#FFFFFF",
+                    }}
+                  >
+                    <span className="text-[#6BBF2A] text-sm">✦</span> Morning Fresh
+                  </span>
+                  <span
+                    className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-[10px] md:text-xs font-bold uppercase tracking-wider backdrop-blur-sm shadow-sm"
+                    style={{
+                      fontFamily: "'DM Sans', system-ui, sans-serif",
+                      background: "rgba(245,166,35,0.2)",
+                      border: "1px solid rgba(245,166,35,0.3)",
+                      color: "#FFFFFF",
+                    }}
+                  >
+                    <span className="text-[#F5A623] text-sm">✦</span> Family Trusted
+                  </span>
+                  <span
+                    className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-[10px] md:text-xs font-bold uppercase tracking-wider backdrop-blur-sm shadow-sm"
+                    style={{
+                      fontFamily: "'DM Sans', system-ui, sans-serif",
+                      background: "rgba(255,255,255,0.15)",
+                      border: "1px solid rgba(255,255,255,0.25)",
+                      color: "#FFFFFF",
+                    }}
+                  >
+                    <span className="text-[#6BBF2A] text-sm">✦</span> Farm to Doorstep
+                  </span>
+                </div>
+              </motion.div>
+            </div>
 
-              <span
-                className="mt-4 uppercase drop-shadow-sm"
-                style={{
-                  fontFamily: "'DM Sans', system-ui, sans-serif",
-                  fontSize: "clamp(0.5625rem, 0.85vw, 0.6875rem)",
-                  fontWeight: 700,
-                  letterSpacing: "0.28em",
-                  color: "#F5A623",
-                }}
+            {/* RIGHT: Rotating bottle panel */}
+            <div className="w-full md:w-[45%] flex items-center justify-center md:justify-end relative mt-8 md:mt-0 lg:-ml-12">
+              {/* Layered ground glow for depth */}
+              <div className="absolute bottom-[18%] md:bottom-[20%] left-1/2 md:left-[55%] -translate-x-1/2 w-64 md:w-96 h-12 md:h-20 rounded-full bg-primary/25 blur-3xl pointer-events-none" />
+              <div className="absolute bottom-[18%] md:bottom-[20%] left-1/2 md:left-[55%] -translate-x-1/2 w-44 md:w-64 h-6 md:h-10 rounded-full bg-white/15 blur-2xl pointer-events-none" />
+              <div className="absolute bottom-[18%] md:bottom-[20%] left-1/2 md:left-[55%] -translate-x-1/2 w-28 md:w-40 h-3 md:h-5 rounded-full bg-foreground/20 blur-md pointer-events-none" />
+
+              <motion.div
+                className="relative flex flex-col items-center md:items-end"
+                style={{ opacity: heroBottleOpacity }}
               >
-                Farm Fresh
-              </span>
-            </motion.div>
+                {/* Turntable wrapper */}
+                <div className="hero-turntable-stage relative z-20">
+                  <img
+                    src={bottleBanner}
+                    alt="Astra Dairy farm fresh milk in glass bottle"
+                    className="hero-turntable-bottle h-[18rem] sm:h-80 md:h-[28rem] lg:h-[34rem] xl:h-[38rem] w-auto object-contain select-none filter drop-shadow-2xl"
+                    draggable={false}
+                    loading="eager"
+                  />
+                </div>
+              </motion.div>
+            </div>
           </div>
         </motion.div>
 
