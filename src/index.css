@@ -338,6 +338,12 @@
 
 /* Accessibility: pause all continuous animations */
 @media (prefers-reduced-motion: reduce) {
+  /* Hide the looping hero video — the native poster attribute
+     (hero-misty-farm-bg.jpg) is used as the visible fallback automatically. */
+  .hero-bg-video {
+    display: none;
+  }
+
   .hero-turntable-bottle {
     animation: none;
     transform: rotateY(0deg);
