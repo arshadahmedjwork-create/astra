@@ -14,10 +14,6 @@ const AdminSamples = () => {
     const [searchQuery, setSearchQuery] = useState('');
     const { toast } = useToast();
 
-    useEffect(() => {
-        fetchSamples();
-    }, [fetchSamples]);
-
     const fetchSamples = useCallback(async () => {
         setLoading(true);
         try {
@@ -47,6 +43,10 @@ const AdminSamples = () => {
             setLoading(false);
         }
     }, []);
+
+    useEffect(() => {
+        fetchSamples();
+    }, [fetchSamples]);
 
     const handleUpdateStatus = async (id: string, newStatus: string) => {
         try {

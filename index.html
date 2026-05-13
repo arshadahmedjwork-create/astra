@@ -3,23 +3,184 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Astra Dairy | Farm-Fresh Organic Milk Delivered to Your Door</title>
-    <meta name="description" content="Experience the purity of Astra Dairy. We deliver farm-fresh, organic cow's milk in eco-friendly glass bottles within 12 hours of milking. Freshness you can taste, quality you can trust in Chennai." />
-    <meta name="keywords" content="Astra Dairy, organic milk Chennai, farm fresh milk, glass bottle milk delivery, pure cow milk, organic dairy products" />
+
+    <!-- ── Primary SEO ─────────────────────────────────────── -->
+    <title>Astra Dairy | Farm-Fresh Organic Milk Delivered to Your Door in Chennai</title>
+    <meta name="description" content="Experience the purity of Astra Dairy — farm-fresh, organic cow's milk delivered in eco-friendly glass bottles within hours of milking. Serving Chennai families every morning. Start your free trial today." />
+    <meta name="keywords" content="Astra Dairy, organic milk Chennai, farm fresh milk delivery, glass bottle milk, pure cow milk, dairy subscription Chennai, morning milk delivery" />
     <meta name="author" content="Astra Dairy" />
+    <meta name="robots" content="index, follow" />
     <link rel="canonical" href="https://www.astradairy.in/" />
     <link rel="icon" type="image/png" href="/favicon.png" />
 
-    <meta property="og:title" content="Astra Dairy | Pure Farm-Fresh Milk Delivery" />
-    <meta property="og:description" content="Raw, organic, and untouched. Delivered within 12 hours of milking in sustainable glass bottles." />
-    <meta property="og:type" content="website" />
-    <meta property="og:url" content="https://www.astradairy.in/" />
-    <meta property="og:image" content="/favicon.png" />
+    <!-- ── Open Graph ──────────────────────────────────────── -->
+    <meta property="og:type"        content="website" />
+    <meta property="og:site_name"   content="Astra Dairy" />
+    <meta property="og:title"       content="Astra Dairy | Pure Farm-Fresh Milk Delivered Daily" />
+    <meta property="og:description" content="Farm-fresh organic milk, paneer, ghee & curd — delivered to your door before 6:30 AM. Trusted by Chennai families. Start your free trial." />
+    <meta property="og:url"         content="https://www.astradairy.in/" />
+    <meta property="og:image"       content="https://www.astradairy.in/og-cover.jpg" />
+    <meta property="og:image:width"  content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:locale"      content="en_IN" />
 
-    <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="Astra Dairy - Freshness Reimagined" />
-    <meta name="twitter:description" content="Pure organic milk delivered fresh to your doorstep in eco-friendly glass bottles." />
-    <meta name="twitter:image" content="/favicon.png" />
+    <!-- ── Twitter / X Card ───────────────────────────────── -->
+    <meta name="twitter:card"        content="summary_large_image" />
+    <meta name="twitter:site"        content="@AstraDairy" />
+    <meta name="twitter:title"       content="Astra Dairy — Freshness Delivered Every Morning" />
+    <meta name="twitter:description" content="Pure organic milk, ghee, paneer & curd delivered fresh from our farm to your doorstep before 6:30 AM." />
+    <meta name="twitter:image"       content="https://www.astradairy.in/og-cover.jpg" />
+
+    <!-- ── Schema.org JSON-LD: Organization + LocalBusiness ── -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": ["Organization", "LocalBusiness", "FoodEstablishment"],
+      "@id": "https://www.astradairy.in/#organization",
+      "name": "Astra Dairy",
+      "alternateName": "Astra Dairy Chennai",
+      "url": "https://www.astradairy.in",
+      "logo": "https://www.astradairy.in/favicon.png",
+      "image": "https://www.astradairy.in/og-cover.jpg",
+      "description": "Astra Dairy is a premium farm-fresh dairy brand delivering organic cow milk, paneer, ghee, curd, and flavoured milk directly from the farm to doorsteps across Chennai every morning.",
+      "foundingDate": "2022",
+      "telephone": "+91-80560-00000",
+      "email": "hello@astradairy.in",
+      "address": {
+        "@type": "PostalAddress",
+        "addressLocality": "Chennai",
+        "addressRegion": "Tamil Nadu",
+        "addressCountry": "IN"
+      },
+      "areaServed": {
+        "@type": "City",
+        "name": "Chennai"
+      },
+      "servesCuisine": "Dairy Products",
+      "priceRange": "₹₹",
+      "openingHoursSpecification": {
+        "@type": "OpeningHoursSpecification",
+        "dayOfWeek": ["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"],
+        "opens": "04:00",
+        "closes": "07:00"
+      },
+      "sameAs": [
+        "https://www.instagram.com/astradairy",
+        "https://www.facebook.com/astradairy"
+      ]
+    }
+    </script>
+
+    <!-- ── Schema.org JSON-LD: Product Catalogue ─────────── -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "ItemList",
+      "name": "Astra Dairy Products",
+      "description": "Farm-fresh dairy products delivered daily across Chennai by Astra Dairy.",
+      "itemListElement": [
+        {
+          "@type": "ListItem",
+          "position": 1,
+          "item": {
+            "@type": "Product",
+            "name": "Astra Farm-Fresh Cow Milk",
+            "description": "Pure, unprocessed cow milk collected fresh from our ethically raised herd and delivered within hours of milking.",
+            "brand": { "@type": "Brand", "name": "Astra Dairy" },
+            "offers": { "@type": "Offer", "priceCurrency": "INR", "availability": "https://schema.org/InStock", "seller": { "@type": "Organization", "name": "Astra Dairy" } }
+          }
+        },
+        {
+          "@type": "ListItem",
+          "position": 2,
+          "item": {
+            "@type": "Product",
+            "name": "Astra Fresh Paneer",
+            "description": "Handcrafted paneer made daily from full-cream Astra cow milk. No preservatives.",
+            "brand": { "@type": "Brand", "name": "Astra Dairy" },
+            "offers": { "@type": "Offer", "priceCurrency": "INR", "availability": "https://schema.org/InStock", "seller": { "@type": "Organization", "name": "Astra Dairy" } }
+          }
+        },
+        {
+          "@type": "ListItem",
+          "position": 3,
+          "item": {
+            "@type": "Product",
+            "name": "Astra Pure Ghee",
+            "description": "Bilona-method pure desi ghee made from cultured butter. Rich aroma, golden colour.",
+            "brand": { "@type": "Brand", "name": "Astra Dairy" },
+            "offers": { "@type": "Offer", "priceCurrency": "INR", "availability": "https://schema.org/InStock", "seller": { "@type": "Organization", "name": "Astra Dairy" } }
+          }
+        }
+      ]
+    }
+    </script>
+
+    <!-- ── Schema.org JSON-LD: FAQPage (AEO) ─────────────── -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "FAQPage",
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": "What is Astra Dairy?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Astra Dairy is a premium farm-fresh dairy brand based in Chennai, India. We deliver organic cow milk, paneer, ghee, curd, and flavoured milk directly from our farm to customers' doorsteps every morning before 6:30 AM."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "How does Astra Dairy milk delivery work?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Our milk is collected from ethically raised, grass-fed cows each morning, cold-chained immediately, and delivered to your door before 6:30 AM in hygienic glass bottles. You can subscribe for daily delivery or order as needed."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Can I take a trial before subscribing?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Yes. Visit astradairy.in/trial to request a free trial delivery. Simply fill in your name, phone, and pincode — no payment required. Our team will call to confirm your delivery slot."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "How do Astra Dairy subscriptions work?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "You can subscribe to daily, alternate-day, or custom delivery schedules through the Astra Dairy customer portal. Your wallet balance is debited automatically each delivery. You can pause or cancel any time."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Is online payment available on Astra Dairy?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Currently, Astra Dairy supports Cash on Delivery (COD). Online payment via UPI, cards, and wallet top-up is coming soon. No fake or unverified payments are processed."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Where does Astra Dairy deliver?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Astra Dairy currently delivers across select neighbourhoods in Chennai, Tamil Nadu. Enter your pincode on the trial form to check availability."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "How do I contact Astra Dairy support?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "You can reach Astra Dairy via the Support page at astradairy.in/support, by phone, or through the Contact page. Our team responds within a few hours on business days."
+          }
+        }
+      ]
+    }
+    </script>
   </head>
 
   <body>

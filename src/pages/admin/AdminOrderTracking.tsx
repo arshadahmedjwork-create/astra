@@ -61,10 +61,6 @@ const AdminOrderTracking = () => {
     const [loading, setLoading] = useState(true);
     const [eta, setEta] = useState('Calculating...');
 
-    useEffect(() => {
-        fetchOrderDetails();
-    }, [orderId, fetchOrderDetails]);
-
     const fetchOrderDetails = useCallback(async () => {
         try {
             const { data, error } = await supabase
@@ -117,6 +113,10 @@ const AdminOrderTracking = () => {
             console.error('Error fetching OSRM route:', e);
         }
     }, []);
+
+    useEffect(() => {
+        fetchOrderDetails();
+    }, [orderId, fetchOrderDetails]);
 
     useEffect(() => {
         if (customerLocation && driverLocation) {

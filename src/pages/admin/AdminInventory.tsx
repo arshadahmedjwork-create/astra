@@ -53,10 +53,6 @@ const AdminInventory = () => {
 
     const [previewProduct, setPreviewProduct] = useState<Product | null>(null);
 
-    useEffect(() => {
-        fetchProducts();
-    }, [fetchProducts]);
-
     const fetchProducts = useCallback(async () => {
         setLoading(true);
         try {
@@ -74,6 +70,10 @@ const AdminInventory = () => {
             setLoading(false);
         }
     }, [toast]);
+
+    useEffect(() => {
+        fetchProducts();
+    }, [fetchProducts]);
 
     const handleSaveProduct = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -339,14 +339,14 @@ const AdminInventory = () => {
                         <tbody>
                             {loading ? (
                                 <tr>
-                                    <td colSpan={7} className="px-4 py-8 text-center text-muted-foreground">
+                                    <td colSpan={9} className="px-4 py-8 text-center text-muted-foreground">
                                         <Loader2 className="w-6 h-6 animate-spin mx-auto mb-2" />
                                         Loading inventory
                                     </td>
                                 </tr>
                             ) : filteredProducts.length === 0 ? (
                                 <tr>
-                                    <td colSpan={7} className="px-4 py-8 text-center text-muted-foreground">No products found.</td>
+                                    <td colSpan={9} className="px-4 py-8 text-center text-muted-foreground">No products found.</td>
                                 </tr>
                             ) : (
                                 filteredProducts.map((product) => (

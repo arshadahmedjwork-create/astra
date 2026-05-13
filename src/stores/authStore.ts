@@ -36,8 +36,8 @@ interface AuthState {
     isLoading: boolean;
 
     setCustomer: (customer: Customer | null) => void;
-    login: (mobile: string) => Promise<Customer | null>;
-    loginByCustomerId: (customerId: string) => Promise<Customer | null>;
+    login: (mobile: string, password?: string) => Promise<Customer | null>;
+    loginByCustomerId: (customerId: string, password?: string) => Promise<Customer | null>;
     logout: () => void;
     fetchProfile: (customerId: string) => Promise<Customer | null>;
     updateProfile: (id: string, data: Partial<Customer>) => Promise<boolean>;
@@ -56,18 +56,28 @@ export const useAuthStore = create<AuthState>()(
                 isAuthenticated: !!customer,
             }),
 
-            login: async (mobile: string) => {
+            login: async (mobile: string, password?: string) => {
                 set({ isLoading: true });
                 try {
                     const { data, error } = await supabase
                         .from('customers')
                         .select('*, addresses(*)')
                         .eq('mobile', mobile)
-                        .single();
+                        .maybeSingle();
 
                     if (error || !data) {
                         set({ isLoading: false });
                         return null;
+                    }
+
+                    // Verify password if provided
+                    if (password) {
+                        const bcrypt = await import('bcryptjs');
+                        const isMatch = await bcrypt.compare(password, data.password_hash);
+                        if (!isMatch) {
+                            set({ isLoading: false });
+                            return null;
+                        }
                     }
 
                     const customer: Customer = {
@@ -83,18 +93,28 @@ export const useAuthStore = create<AuthState>()(
                 }
             },
 
-            loginByCustomerId: async (customerId: string) => {
+            loginByCustomerId: async (customerId: string, password?: string) => {
                 set({ isLoading: true });
                 try {
                     const { data, error } = await supabase
                         .from('customers')
                         .select('*, addresses(*)')
                         .eq('customer_id', customerId)
-                        .single();
+                        .maybeSingle();
 
                     if (error || !data) {
                         set({ isLoading: false });
                         return null;
+                    }
+
+                    // Verify password if provided
+                    if (password) {
+                        const bcrypt = await import('bcryptjs');
+                        const isMatch = await bcrypt.compare(password, data.password_hash);
+                        if (!isMatch) {
+                            set({ isLoading: false });
+                            return null;
+                        }
                     }
 
                     const customer: Customer = {
@@ -117,7 +137,7 @@ export const useAuthStore = create<AuthState>()(
                     .from('customers')
                     .select('*, addresses(*)')
                     .eq('id', id)
-                    .single();
+                    .maybeSingle();
 
                 if (customerError || !customerData) return null;
 
@@ -138,7 +158,7 @@ export const useAuthStore = create<AuthState>()(
                     .from('customers')
                     .select('*, addresses(*)')
                     .eq('id', customer.id)
-                    .single();
+                    .maybeSingle();
 
                 if (error || !customerData) return;
 

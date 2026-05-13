@@ -10,37 +10,13 @@ import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
 import { useCallback } from 'react';
 
-interface OrderItem {
-    id: string;
-    product_id: string;
-    quantity: number;
-    unit_price: number;
-    total_price: number;
-    products: {
-        name: string;
-    } | null;
-}
-
-interface Order {
-    id: string;
-    order_date: string;
-    delivery_date: string;
-    status: 'pending' | 'get_to_deliver' | 'delivered' | 'paused' | 'cancelled';
-    total_amount: number;
-    order_items: OrderItem[];
-}
+import { Order } from '@/types';
 
 const OrderHistory = () => {
     const { customer } = useAuthStore();
     const { toast } = useToast();
     const [orders, setOrders] = useState<Order[]>([]);
     const [loading, setLoading] = useState(true);
-
-    useEffect(() => {
-        if (customer) {
-            fetchOrders();
-        }
-    }, [customer, fetchOrders]);
 
     const fetchOrders = useCallback(async () => {
         try {
@@ -69,6 +45,12 @@ const OrderHistory = () => {
             setLoading(false);
         }
     }, [customer?.id, toast]);
+
+    useEffect(() => {
+        if (customer) {
+            fetchOrders();
+        }
+    }, [customer, fetchOrders]);
 
     const getStatusIcon = (status: Order['status']) => {
         switch (status) {
@@ -132,7 +114,7 @@ const OrderHistory = () => {
                                             <p className="text-xs text-muted-foreground font-medium uppercase tracking-wider">Order Date</p>
                                             <p className="font-bold flex items-center gap-2">
                                                 <Calendar className="w-3.5 h-3.5 text-muted-foreground" />
-                                                {format(new Date(order.order_date), 'dd MMM yyyy')}
+                                                {format(new Date(order.created_at || Date.now()), 'dd MMM yyyy')}
                                             </p>
                                         </div>
                                     </div>

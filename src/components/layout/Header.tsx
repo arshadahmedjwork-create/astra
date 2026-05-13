@@ -119,7 +119,7 @@ const Header = () => {
         {/* Desktop CTAs */}
         <div className="hidden lg:flex items-center gap-3">
           <CartSheet />
-          <Link to="/erp/login">
+          <Link to="/trial">
             <Button variant="hero-outline" size="sm">Take a Trial</Button>
           </Link>
           <Link to="/erp/login">
@@ -191,7 +191,7 @@ const Header = () => {
                 <Link to="/erp/login">
                   <Button variant="hero" className="w-full">Login</Button>
                 </Link>
-                <Link to="/erp/login">
+                <Link to="/trial">
                   <Button variant="hero-outline" className="w-full">Take a Trial</Button>
                 </Link>
               </div>

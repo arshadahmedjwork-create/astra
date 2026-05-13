@@ -1,12 +1,12 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
-import { Wallet, Plus, History, ArrowUpRight, ArrowDownLeft, AlertCircle, CheckCircle2 } from 'lucide-react';
+import {
+    Wallet, History, ArrowUpRight, ArrowDownLeft,
+    AlertCircle, CheckCircle2, Clock, PhoneCall
+} from 'lucide-react';
 import ERPLayout from '@/components/erp/ERPLayout';
 import { useAuthStore } from '@/stores/authStore';
 import { supabase } from '@/lib/supabase';
-import { useCallback } from 'react';
-import { Button } from '@/components/ui/button';
-import { toast } from 'sonner';
 
 interface Transaction {
     id: string;
@@ -18,22 +18,16 @@ interface Transaction {
 }
 
 const WalletPage = () => {
-    const { customer, refreshProfile } = useAuthStore();
+    const { customer } = useAuthStore();
     const [transactions, setTransactions] = useState<Transaction[]>([]);
     const [loading, setLoading] = useState(true);
-    const [addAmount, setAddAmount] = useState('');
-
-    useEffect(() => {
-        if (!customer?.id) return;
-        fetchTransactions();
-    }, [customer?.id, fetchTransactions]);
 
     const fetchTransactions = useCallback(async () => {
         if (!customer?.id) return;
         const { data, error } = await supabase
             .from('wallet_transactions')
             .select('*')
-            .eq('customer_id', customer?.id)
+            .eq('customer_id', customer.id)
             .order('created_at', { ascending: false });
 
         if (!error && data) {
@@ -42,32 +36,10 @@ const WalletPage = () => {
         setLoading(false);
     }, [customer?.id]);
 
-    const handleAddFunds = async () => {
-        if (!addAmount || isNaN(Number(addAmount))) {
-            toast.error('Please enter a valid amount');
-            return;
-        }
-
-        toast.info('Redirecting to payment gateway...', {
-            description: 'This is a mock implementation for now.'
-        });
-
-        // Mocking successful update for now
-        const { data, error } = await supabase.rpc('add_wallet_funds', {
-            cust_id: customer?.id,
-            amount_to_add: Number(addAmount),
-            desctext: 'Wallet Top-up'
-        });
-
-        if (error) {
-            toast.error('Failed to add funds: ' + error.message);
-        } else {
-            toast.success('Funds added successfully!');
-            setAddAmount('');
-            await refreshProfile();
-            fetchTransactions();
-        }
-    };
+    useEffect(() => {
+        if (!customer?.id) return;
+        fetchTransactions();
+    }, [customer?.id, fetchTransactions]);
 
     return (
         <ERPLayout>
@@ -80,60 +52,58 @@ const WalletPage = () => {
                 >
                     <div className="relative z-10">
                         <div className="flex items-center gap-3 mb-4 opacity-80">
-                            <Wallet className="w-5 h-5" />
+                            <Wallet className="w-5 h-5" aria-hidden="true" />
                             <span className="text-sm font-medium uppercase tracking-wider">Available Balance</span>
                         </div>
                         <div className="flex items-baseline gap-2">
-                            <span className="text-4xl md:text-5xl font-black">₹{customer?.wallet_balance?.toLocaleString() || '0.00'}</span>
+                            <span className="text-4xl md:text-5xl font-black">
+                                ₹{customer?.wallet_balance?.toLocaleString('en-IN') ?? '0.00'}
+                            </span>
                         </div>
                         <p className="mt-4 text-white/60 text-xs italic">
-                            *This balance will be used for your daily subscription deductions.
+                            *This balance is used for your daily subscription deductions.
                         </p>
                     </div>
                     {/* Decorative circles */}
-                    <div className="absolute -right-10 -top-10 w-40 h-40 bg-white/10 rounded-full blur-3xl" />
-                    <div className="absolute -left-10 -bottom-10 w-40 h-40 bg-black/10 rounded-full blur-3xl" />
+                    <div className="absolute -right-10 -top-10 w-40 h-40 bg-white/10 rounded-full blur-3xl" aria-hidden="true" />
+                    <div className="absolute -left-10 -bottom-10 w-40 h-40 bg-black/10 rounded-full blur-3xl" aria-hidden="true" />
                 </motion.div>
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    {/* Quick Add */}
+                    {/* Top-up notice — gateway deferred */}
                     <motion.div
                         initial={{ opacity: 0, x: -20 }}
                         animate={{ opacity: 1, x: 0 }}
-                        className="bg-card border border-border p-6 rounded-[24px]"
+                        className="bg-card border border-border p-6 rounded-[24px] flex flex-col gap-4"
                     >
-                        <h3 className="font-bold text-foreground mb-4 flex items-center gap-2">
-                            <Plus className="w-4 h-4 text-primary" /> Add Money
+                        <h3 className="font-bold text-foreground flex items-center gap-2 text-base">
+                            <Clock className="w-4 h-4 text-primary" aria-hidden="true" />
+                            Add Money
                         </h3>
-                        <div className="space-y-4">
-                            <div className="relative">
-                                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground font-bold">₹</span>
-                                <input
-                                    type="number"
-                                    value={addAmount}
-                                    onChange={(e) => setAddAmount(e.target.value)}
-                                    placeholder="Enter Amount"
-                                    className="w-full bg-muted/50 border-border rounded-xl px-8 py-3 outline-none focus:ring-2 ring-primary/20 transition-all font-bold"
-                                />
-                            </div>
-                            <div className="grid grid-cols-3 gap-2">
-                                {[100, 500, 1000].map(amt => (
-                                    <button
-                                        key={amt}
-                                        onClick={() => setAddAmount(amt.toString())}
-                                        className="py-2 rounded-lg bg-primary/5 hover:bg-primary/10 text-primary text-xs font-bold border border-primary/10 transition-colors"
-                                    >
-                                        +₹{amt}
-                                    </button>
-                                ))}
-                            </div>
-                            <Button
-                                onClick={handleAddFunds}
-                                className="w-full forest-gradient h-12 rounded-xl"
-                            >
-                                Proceed to Pay
-                            </Button>
+
+                        {/* ── PAYMENT GATEWAY DEFERRED NOTICE ─────────────────────
+                            Online wallet top-up has been intentionally disabled until
+                            a verified payment gateway (Razorpay / Stripe) is integrated.
+                            DO NOT re-enable the RPC call here without a real payment intent.
+                        ─────────────────────────────────────────────────────────── */}
+                        <div className="flex flex-col items-center gap-3 p-4 bg-amber-50 border border-amber-200 rounded-2xl text-center">
+                            <Clock className="w-7 h-7 text-amber-500" aria-hidden="true" />
+                            <p className="text-sm font-bold text-amber-800">
+                                Online top-up coming soon
+                            </p>
+                            <p className="text-xs text-amber-700 leading-relaxed">
+                                Wallet recharges via UPI, cards, or net banking will be available
+                                shortly. Until then, please use <strong>Cash on Delivery</strong> at checkout.
+                            </p>
                         </div>
+
+                        <a
+                            href="tel:+918056000000"
+                            className="flex items-center justify-center gap-2 w-full py-3 rounded-xl border border-primary/30 text-primary text-sm font-bold hover:bg-primary/5 transition-colors"
+                        >
+                            <PhoneCall className="w-4 h-4" aria-hidden="true" />
+                            Contact support
+                        </a>
                     </motion.div>
 
                     {/* Transaction History */}
@@ -143,49 +113,64 @@ const WalletPage = () => {
                         className="md:col-span-2 bg-card border border-border p-6 rounded-[24px]"
                     >
                         <h3 className="font-bold text-foreground mb-4 flex items-center gap-2">
-                            <History className="w-4 h-4 text-primary" /> Transaction History
+                            <History className="w-4 h-4 text-primary" aria-hidden="true" />
+                            Transaction History
                         </h3>
-                        
-                        <div className="space-y-4 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
+
+                        <div className="space-y-4 max-h-[400px] overflow-y-auto pr-2">
                             {loading ? (
-                                <div className="space-y-2">
-                                    {[1, 2, 3].map(i => <div key={i} className="h-16 bg-muted animate-pulse rounded-xl" />)}
+                                <div className="space-y-2" aria-label="Loading transactions">
+                                    {[1, 2, 3].map((i) => (
+                                        <div key={i} className="h-16 bg-muted animate-pulse rounded-xl" />
+                                    ))}
                                 </div>
                             ) : transactions.length > 0 ? (
                                 transactions.map((tx) => (
-                                    <div key={tx.id} className="flex items-center justify-between p-4 bg-muted/30 rounded-2xl group hover:bg-muted/50 transition-colors">
+                                    <div
+                                        key={tx.id}
+                                        className="flex items-center justify-between p-4 bg-muted/30 rounded-2xl hover:bg-muted/50 transition-colors"
+                                    >
                                         <div className="flex items-center gap-4">
-                                            <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${
-                                                tx.type === 'credit' ? 'bg-emerald-100 text-emerald-600' : 'bg-red-100 text-red-600'
-                                            }`}>
-                                                {tx.type === 'credit' ? <ArrowDownLeft className="w-5 h-5" /> : <ArrowUpRight className="w-5 h-5" />}
+                                            <div
+                                                className={`w-10 h-10 rounded-xl flex items-center justify-center ${
+                                                    tx.type === 'credit'
+                                                        ? 'bg-emerald-100 text-emerald-600'
+                                                        : 'bg-red-100 text-red-600'
+                                                }`}
+                                                aria-hidden="true"
+                                            >
+                                                {tx.type === 'credit'
+                                                    ? <ArrowDownLeft className="w-5 h-5" />
+                                                    : <ArrowUpRight className="w-5 h-5" />
+                                                }
                                             </div>
                                             <div>
-                                                <p className="text-sm font-bold text-foreground">{tx.description || 'Transaction'}</p>
+                                                <p className="text-sm font-bold text-foreground">
+                                                    {tx.description || 'Transaction'}
+                                                </p>
                                                 <p className="text-[10px] text-muted-foreground">
                                                     {new Date(tx.created_at).toLocaleDateString('en-IN', {
                                                         day: 'numeric', month: 'short', year: 'numeric',
-                                                        hour: '2-digit', minute: '2-digit'
+                                                        hour: '2-digit', minute: '2-digit',
                                                     })}
                                                 </p>
                                             </div>
                                         </div>
                                         <div className="text-right">
-                                            <p className={`font-black ${
-                                                tx.type === 'credit' ? 'text-emerald-600' : 'text-red-600'
-                                            }`}>
+                                            <p className={`font-black ${tx.type === 'credit' ? 'text-emerald-600' : 'text-red-600'}`}>
                                                 {tx.type === 'credit' ? '+' : '-'} ₹{tx.amount}
                                             </p>
                                             <span className="text-[8px] uppercase font-black text-muted-foreground flex items-center gap-1 justify-end">
-                                                <CheckCircle2 size={10} className="text-emerald-500" /> {tx.status}
+                                                <CheckCircle2 size={10} className="text-emerald-500" aria-hidden="true" />
+                                                {tx.status}
                                             </span>
                                         </div>
                                     </div>
                                 ))
                             ) : (
-                                <div className="text-center py-10 opacity-30">
-                                    <AlertCircle className="w-10 h-10 mx-auto mb-2" />
-                                    <p className="text-sm">No transactions found</p>
+                                <div className="text-center py-10 opacity-40" role="status">
+                                    <AlertCircle className="w-10 h-10 mx-auto mb-2" aria-hidden="true" />
+                                    <p className="text-sm">No transactions yet</p>
                                 </div>
                             )}
                         </div>

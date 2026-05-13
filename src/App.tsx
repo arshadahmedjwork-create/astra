@@ -20,6 +20,7 @@ const Contact = lazy(() => import("./pages/Contact"));
 const Environment = lazy(() => import("./pages/Environment"));
 const Terms = lazy(() => import("./pages/Terms"));
 const Privacy = lazy(() => import("./pages/Privacy"));
+const Trial = lazy(() => import("./pages/Trial"));
 
 // ERP Pages
 const ERPLogin = lazy(() => import("./pages/erp/Login"));
@@ -63,11 +64,15 @@ const Loading = () => (
 
 const RouteScrollToTop = () => {
   const { pathname } = useLocation();
-  
+
   useEffect(() => {
-    window.scrollTo(0, 0);
+    // Disable browser's native scroll restoration so we fully control scroll on every navigation
+    if ('scrollRestoration' in window.history) {
+      window.history.scrollRestoration = 'manual';
+    }
+    window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
   }, [pathname]);
-  
+
   return null;
 };
 
@@ -93,6 +98,7 @@ const App = () => (
             <Route path="/environment" element={<Environment />} />
             <Route path="/terms" element={<Terms />} />
             <Route path="/privacy" element={<Privacy />} />
+            <Route path="/trial" element={<Trial />} />
 
             {/* ERP Portal Routes */}
             <Route path="/erp/login" element={<ERPLogin />} />

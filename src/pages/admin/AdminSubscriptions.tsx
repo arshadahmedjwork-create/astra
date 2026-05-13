@@ -14,10 +14,6 @@ const AdminSubscriptions = () => {
     const [searchQuery, setSearchQuery] = useState('');
     const { toast } = useToast();
 
-    useEffect(() => {
-        fetchSubscriptions();
-    }, [fetchSubscriptions]);
-
     const fetchSubscriptions = useCallback(async () => {
         setLoading(true);
         try {
@@ -50,6 +46,10 @@ const AdminSubscriptions = () => {
             setLoading(false);
         }
     }, []);
+
+    useEffect(() => {
+        fetchSubscriptions();
+    }, [fetchSubscriptions]);
 
     const handleUpdateStatus = async (id: string, newStatus: string) => {
         try {

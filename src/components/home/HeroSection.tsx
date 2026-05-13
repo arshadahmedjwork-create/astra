@@ -1,6 +1,7 @@
 import { useRef } from "react";
 import { motion, useScroll, useTransform } from "framer-motion";
 import { Link } from "react-router-dom";
+import { useReducedMotion } from "framer-motion";
 
 // ── Product assets (showcase section — DO NOT REMOVE) ──
 import paneer          from "@/assets/product-paneer.png";
@@ -35,28 +36,12 @@ const products = [
 const leftBottles  = [{ name: "Pasteurised", image: bottlePasteurised }];
 const rightBottles = [{ name: "Homogenised", image: bottleHomogenised }];
 
-const trustPoints = [
-  {
-    icon: "🌾",
-    label: "Ethically Sourced",
-    desc:  "Grass-fed herds. Open pastures. No compromises.",
-    accent: "rgba(26,122,63,0.28)",
-    border: "rgba(107,191,42,0.50)",
-  },
-  {
-    icon: "🧊",
-    label: "Cold-Chain Integrity",
-    desc:  "Farm-chilled within hours of every collection.",
-    accent: "rgba(245,166,35,0.22)",
-    border: "rgba(245,166,35,0.50)",
-  },
-  {
-    icon: "🏡",
-    label: "Family Nourishment",
-    desc:  "Trusted by thousands of families, every morning.",
-    accent: "rgba(255,255,255,0.10)",
-    border: "rgba(255,255,255,0.38)",
-  },
+const credentials = [
+  { label: "FSSAI Certified",     sub: "Lic. No. 12418002000177" },
+  { label: "Grass-Fed Herds",     sub: "Open Pasture Raised"      },
+  { label: "Farm-Chilled Daily",  sub: "Cold-Chain Integrity"     },
+  { label: "Zero Additives",      sub: "Pure as Nature Intended"  },
+  { label: "10,000+ Families",    sub: "Trusted Every Morning"    },
 ];
 
 /* ─────────────────────────────────────────────────────────────
@@ -115,8 +100,17 @@ const HeroSection = () => {
   const productsOpacity = useTransform(scrollYProgress, [0.68, 0.80], [0, 1]);
   const productsY       = useTransform(scrollYProgress, [0.68, 0.80], [50, 0]);
 
+  const prefersReducedMotion = useReducedMotion();
+
   return (
-    <div ref={containerRef} className="relative h-[550vh]" id="productsShowcase">
+    // Mobile: 300vh  |  Tablet+: 400vh  |  Desktop: 550vh
+    // Controlled via inline style so Tailwind purge doesn't drop the value
+    <div
+      ref={containerRef}
+      id="productsShowcase"
+      className="relative"
+      style={{ height: 'clamp(300vh, 50vw + 200vh, 550vh)' }}
+    >
       <div className="sticky top-0 h-screen overflow-hidden">
 
         {/* ═══════════════════════════════════════════════════════
@@ -130,14 +124,18 @@ const HeroSection = () => {
         >
           <video
             className="hero-bg-video pointer-events-none absolute inset-0 h-full w-full object-cover"
-            autoPlay
+            autoPlay={!prefersReducedMotion}
             muted
             loop
             playsInline
             preload="metadata"
             poster={heroBg}
             aria-hidden="true"
+            style={{ filter: "brightness(1.08) contrast(1.05)" }}
           >
+            {/* WebM first for better LCP on Chrome/Firefox */}
+            <source src="/assets/video/astra-hero-bg.webm" type="video/webm" />
+            {/* MP4 universal fallback */}
             <source src="/assets/video/astra-hero-bg-master.mp4" type="video/mp4" />
           </video>
 
@@ -146,11 +144,11 @@ const HeroSection = () => {
             className="pointer-events-none absolute inset-0"
             style={{
               background:
-                "linear-gradient(180deg, rgba(12,18,12,0.62) 0%, rgba(12,18,12,0.38) 50%, rgba(12,18,12,0.65) 100%)",
+                "linear-gradient(180deg, rgba(12,18,12,0.32) 0%, rgba(12,18,12,0.12) 50%, rgba(12,18,12,0.38) 100%)",
             }}
           />
-          {/* Top + bottom vignette */}
-          <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-black/50 via-transparent to-black/60" />
+          {/* Top + bottom vignette — lightened */}
+          <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-black/25 via-transparent to-black/35" />
         </motion.div>
 
         {/* Solid brand background visible once video fades */}
@@ -166,7 +164,7 @@ const HeroSection = () => {
           className="pointer-events-none absolute inset-0 z-[5]"
           style={{
             opacity: heroContentOpacity,
-            background: "rgba(8, 14, 8, 0.70)",
+            background: "rgba(8, 14, 8, 0.45)",
           }}
         />
 
@@ -195,7 +193,7 @@ const HeroSection = () => {
                 color:         "#F5A623",
               }}
             >
-              PASTURE · PURITY · PURPOSE
+              PASTURE  ·  PURITY  ·  PURPOSE  ·  PROVENANCE
             </motion.p>
 
             {/* Primary headline */}
@@ -210,7 +208,7 @@ const HeroSection = () => {
                   textShadow: "0 2px 32px rgba(0,0,0,0.7), 0 0 80px rgba(0,0,0,0.4)",
                 }}
               >
-                The finest milk,
+                Where purity
               </h1>
               <p
                 className="leading-[1.02] tracking-tight mb-8"
@@ -222,7 +220,7 @@ const HeroSection = () => {
                   textShadow: "0 2px 40px rgba(107,191,42,0.50), 0 0 80px rgba(107,191,42,0.20)",
                 }}
               >
-                naturally yours.
+                is the craft.
               </p>
             </motion.div>
 
@@ -240,56 +238,61 @@ const HeroSection = () => {
                 textShadow: "0 1px 12px rgba(0,0,0,0.6)",
               }}
             >
-              At Astra Dairy, excellence is not a promise — it is a practice.
-              From our ethically raised herd to your morning table, every bottle
-              carries the integrity of nature, the warmth of tradition, and the
-              uncompromising quality only a{" "}
-              <span style={{ color: "rgba(255,255,255,0.75)", fontWeight: 600 }}>
-                truly dedicated farm can deliver.
+              Some things cannot be engineered in a factory — they must be
+              tended, nurtured, and earned through seasons of devotion. At Astra,
+              we do not merely produce milk; we{" "}
+              <span style={{ color: "rgba(255,255,255,0.85)", fontWeight: 600, fontStyle: "italic" }}>
+                steward a living tradition
               </span>
+              {" "}— from our open pastures at first light, to your table before
+              the world has fully awakened.
             </motion.p>
 
-            {/* Trust / stat cards */}
+            {/* Elegant inline credential strip — no boxes */}
             <motion.div
-              className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-10"
+              className="flex flex-wrap items-center justify-center gap-0 mb-10"
               style={{ opacity: cardsOpacity, y: cardsY }}
             >
-              {trustPoints.map((tp) => (
-                <div
-                  key={tp.label}
-                  className="flex flex-col items-center gap-2 px-6 py-5 rounded-2xl backdrop-blur-md"
-                  style={{
-                    background:  tp.accent,
-                    border:      `1px solid ${tp.border}`,
-                    minWidth:    "168px",
-                    boxShadow:   "0 4px 24px rgba(0,0,0,0.35)",
-                  }}
-                >
-                  <span style={{ fontSize: "1.6rem", lineHeight: 1 }}>{tp.icon}</span>
-                  <span
-                    style={{
-                      fontFamily:    "'DM Sans', system-ui, sans-serif",
-                      fontSize:      "0.68rem",
-                      fontWeight:    800,
-                      textTransform: "uppercase",
-                      letterSpacing: "0.18em",
-                      color:         "#FFFFFF",
-                    }}
-                  >
-                    {tp.label}
-                  </span>
-                  <span
-                    style={{
-                      fontFamily: "'DM Sans', system-ui, sans-serif",
-                      fontSize:   "0.72rem",
-                      fontWeight: 400,
-                      color:      "rgba(255,255,255,0.82)",
-                      textAlign:  "center",
-                      lineHeight: 1.5,
-                    }}
-                  >
-                    {tp.desc}
-                  </span>
+              {credentials.map((c, i) => (
+                <div key={c.label} className="flex items-center">
+                  <div className="flex flex-col items-center px-5 py-1">
+                    <span
+                      style={{
+                        fontFamily:    "'DM Sans', system-ui, sans-serif",
+                        fontSize:      "clamp(0.6rem, 0.9vw, 0.7rem)",
+                        fontWeight:    800,
+                        textTransform: "uppercase",
+                        letterSpacing: "0.14em",
+                        color:         "#FFFFFF",
+                        lineHeight:    1.2,
+                      }}
+                    >
+                      {c.label}
+                    </span>
+                    <span
+                      style={{
+                        fontFamily: "'DM Sans', system-ui, sans-serif",
+                        fontSize:   "clamp(0.55rem, 0.8vw, 0.65rem)",
+                        fontWeight: 400,
+                        color:      "rgba(255,255,255,0.52)",
+                        letterSpacing: "0.04em",
+                        lineHeight: 1.3,
+                        marginTop:  "2px",
+                      }}
+                    >
+                      {c.sub}
+                    </span>
+                  </div>
+                  {i < credentials.length - 1 && (
+                    <div
+                      style={{
+                        width:  "1px",
+                        height: "28px",
+                        background: "rgba(255,255,255,0.20)",
+                        flexShrink: 0,
+                      }}
+                    />
+                  )}
                 </div>
               ))}
             </motion.div>
@@ -310,22 +313,22 @@ const HeroSection = () => {
                   boxShadow:     "0 4px 24px rgba(26,122,63,0.55), 0 0 0 1px rgba(107,191,42,0.3)",
                 }}
               >
-                Explore Our Collection
+                Discover the Collection
                 <span style={{ fontSize: "1.1rem" }}>→</span>
               </Link>
               <Link
-                to="/products/cow-milk"
+                to="/trial"
                 className="inline-flex items-center gap-2 px-8 py-4 rounded-full font-bold text-sm uppercase tracking-wider transition-all duration-300 hover:scale-105 hover:bg-white/20"
                 style={{
                   fontFamily:    "'DM Sans', system-ui, sans-serif",
-                  background:    "rgba(255,255,255,0.15)",
-                  border:        "1.5px solid rgba(255,255,255,0.70)",
+                  background:    "rgba(255,255,255,0.12)",
+                  border:        "1.5px solid rgba(255,255,255,0.65)",
                   color:         "#FFFFFF",
                   letterSpacing: "0.12em",
                   boxShadow:     "0 4px 20px rgba(0,0,0,0.30)",
                 }}
               >
-                Begin Your Journey
+                Request a Free Trial
               </Link>
             </motion.div>
 

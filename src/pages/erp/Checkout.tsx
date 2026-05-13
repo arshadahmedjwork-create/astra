@@ -44,13 +44,13 @@ const Checkout = () => {
                     delivery_date: new Date(Date.now() + 86400000).toISOString().split('T')[0] // Next day
                 }])
                 .select()
-                .single();
+                .maybeSingle();
 
             if (orderError) throw orderError;
 
             // 2. Create Order Items
             const orderItems = items.map(item => ({
-                order_id: order.id,
+                order_id: order?.id,
                 product_id: item.id,
                 quantity: item.quantity,
                 unit_price: item.price

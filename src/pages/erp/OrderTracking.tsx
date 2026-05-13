@@ -12,6 +12,7 @@ import {
     MapPin,
     Navigation
 } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/lib/supabase';
 import ERPLayout from '@/components/erp/ERPLayout';
 import { Button } from '@/components/ui/button';
@@ -22,6 +23,7 @@ import { useCallback } from 'react';
 
 const OrderTracking = () => {
     const { orderId } = useParams();
+    const { toast } = useToast();
     const [order, setOrder] = useState<Order | null>(null);
     const [driver, setDriver] = useState<Driver | null>(null);
     const [loading, setLoading] = useState(true);
@@ -36,17 +38,18 @@ const OrderTracking = () => {
                     order_items (*, products(name))
                 `)
                 .eq('id', orderId)
-                .single();
+                .maybeSingle();
 
             if (error) throw error;
             setOrder(data);
-            if (data.drivers) setDriver(data.drivers);
+            if (data?.drivers) setDriver(data.drivers);
         } catch (error) {
-            console.error('Error fetching order:', error);
+            const err = error as Error;
+            toast({ title: 'Error', description: err.message || 'Something went wrong. Please try again.', variant: 'destructive' });
         } finally {
             setLoading(false);
         }
-    }, [orderId]);
+    }, [orderId, toast]);
 
     const subscribeToDriverUpdates = useCallback(() => {
         return supabase

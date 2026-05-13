@@ -11,10 +11,6 @@ const AdminPayments = () => {
     const [loading, setLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState('');
 
-    useEffect(() => {
-        fetchPayments();
-    }, [fetchPayments]);
-
     const fetchPayments = useCallback(async () => {
         setLoading(true);
         try {
@@ -46,6 +42,10 @@ const AdminPayments = () => {
             setLoading(false);
         }
     }, []);
+
+    useEffect(() => {
+        fetchPayments();
+    }, [fetchPayments]);
 
     const filteredPayments = payments.filter(payment =>
         payment.transaction_id?.toLowerCase().includes(searchQuery.toLowerCase()) ||

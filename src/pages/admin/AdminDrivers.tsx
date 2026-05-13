@@ -27,10 +27,6 @@ const AdminDrivers = () => {
         status: 'inactive'
     });
 
-    useEffect(() => {
-        fetchDrivers();
-    }, [fetchDrivers]);
-
     const fetchDrivers = useCallback(async () => {
         setLoading(true);
         try {
@@ -48,6 +44,10 @@ const AdminDrivers = () => {
             setLoading(false);
         }
     }, []);
+
+    useEffect(() => {
+        fetchDrivers();
+    }, [fetchDrivers]);
 
     const handleSave = async () => {
         try {

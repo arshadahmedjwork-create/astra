@@ -14,10 +14,6 @@ const AdminCustomers = () => {
     const [searchQuery, setSearchQuery] = useState('');
     const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
 
-    useEffect(() => {
-        fetchCustomers();
-    }, [fetchCustomers]);
-
     const fetchCustomers = useCallback(async () => {
         setLoading(true);
         try {
@@ -51,6 +47,10 @@ const AdminCustomers = () => {
             setLoading(false);
         }
     }, []);
+
+    useEffect(() => {
+        fetchCustomers();
+    }, [fetchCustomers]);
 
     const filteredCustomers = customers.filter(c =>
         c.full_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -95,14 +95,14 @@ const AdminCustomers = () => {
                         <tbody>
                             {loading ? (
                                 <tr>
-                                    <td colSpan={4} className="px-4 py-8 text-center text-muted-foreground">
+                                    <td colSpan={5} className="px-4 py-8 text-center text-muted-foreground">
                                         <Loader2 className="w-6 h-6 animate-spin mx-auto mb-2" />
                                         Loading customers...
                                     </td>
                                 </tr>
                             ) : filteredCustomers.length === 0 ? (
                                 <tr>
-                                    <td colSpan={4} className="px-4 py-8 text-center text-muted-foreground">No customers found.</td>
+                                    <td colSpan={5} className="px-4 py-8 text-center text-muted-foreground">No customers found.</td>
                                 </tr>
                             ) : (
                                 filteredCustomers.map((customer) => (

@@ -302,7 +302,7 @@ const Register = () => {
                     marriage_date: additional.maritalStatus === 'Married' ? additional.marriageDate || null : null,
                 })
                 .select()
-                .single();
+                .maybeSingle();
 
             if (customerError) {
                 if (customerError.message?.includes('mobile')) {
@@ -316,14 +316,14 @@ const Register = () => {
 
             // Send registration SMS
             try {
-                await sendRegistrationSms(basic.mobile, customerData.customer_id);
+                await sendRegistrationSms(basic.mobile, customerData?.customer_id);
             } catch (smsError) {
                 console.error('Failed to send registration SMS:', smsError);
             }
 
             // Insert address
             await supabase.from('addresses').insert({
-                customer_id: customerData.id,
+                customer_id: customerData?.id,
                 state: address.state,
                 city: address.city,
                 door_no: address.doorNo || null,
@@ -338,12 +338,13 @@ const Register = () => {
 
             toast({
                 title: 'Registration Successful! 🎉',
-                description: `Welcome to Astra Dairy! Your Customer ID is ${customerData.customer_id}`,
+                description: `Welcome to Astra Dairy! Your Customer ID is ${customerData?.customer_id}`,
             });
 
             navigate('/erp/login');
-        } catch (err) {
-            toast({ title: 'Error', description: 'Something went wrong. Please try again.', variant: 'destructive' });
+        } catch (error) {
+            const err = error as Error;
+            toast({ title: 'Error', description: err.message || 'Something went wrong. Please try again.', variant: 'destructive' });
         }
         setLoading(false);
     };

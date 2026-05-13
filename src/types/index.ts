@@ -37,7 +37,19 @@ export interface Product {
     image_url: string | null;
     is_sample: boolean;
     purchase_type?: 'daily' | 'subscription' | 'both';
+    stock_quantity?: number;
+    active: boolean;
 }
+
+// Supabase join shapes — the DB can return nested relations as partial objects
+// or omit them entirely. Using typed union avoids the unsafe `any`.
+type CustomerJoin = {
+    full_name: string;
+    mobile: string;
+    customer_id: string;
+} | null | undefined;
+
+type ProductJoin = Partial<Product> | null | undefined;
 
 export interface Order {
     id: string;
@@ -49,6 +61,8 @@ export interface Order {
     driver_id?: string;
     order_items?: OrderItem[];
     drivers?: Driver;
+    created_at: string;
+    customers?: CustomerJoin;
 }
 
 export interface OrderItem {
@@ -58,9 +72,7 @@ export interface OrderItem {
     quantity: number;
     unit_price: number;
     total_price: number;
-    products?: {
-        name: string;
-    };
+    products?: { name: string } | null;
 }
 
 export interface Driver {
@@ -71,6 +83,7 @@ export interface Driver {
     status?: 'active' | 'inactive';
     current_lat?: number;
     current_lng?: number;
+    tracking_active?: boolean;
 }
 
 export interface Subscription {
@@ -82,7 +95,10 @@ export interface Subscription {
     quantity: number;
     start_date: string;
     end_date?: string;
-    products?: Product;
+    total_price: number;
+    created_at: string;
+    products?: ProductJoin;
+    customers?: CustomerJoin;
 }
 
 export interface Payment {
@@ -93,11 +109,7 @@ export interface Payment {
     mode: 'wallet' | 'upi' | 'card' | 'cod';
     status: 'completed' | 'failed' | 'pending' | 'refunded';
     payment_date: string;
-    customers?: {
-        customer_id: string;
-        full_name: string;
-        mobile: string;
-    };
+    customers?: CustomerJoin;
 }
 
 export interface SampleRequest {

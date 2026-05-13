@@ -27,11 +27,6 @@ const AdminAllOrders = () => {
     const [newDriverData, setNewDriverData] = useState({ full_name: '', phone: '', vehicle_no: '' });
     const { toast } = useToast();
 
-    useEffect(() => {
-        fetchAllOrders();
-        fetchDrivers();
-    }, [fetchAllOrders, fetchDrivers]);
-
     const fetchDrivers = useCallback(async () => {
         const { data } = await supabase.from('drivers').select('*').eq('status', 'active');
         if (data) setDrivers(data);
@@ -60,6 +55,11 @@ const AdminAllOrders = () => {
             setLoading(false);
         }
     }, []);
+
+    useEffect(() => {
+        fetchAllOrders();
+        fetchDrivers();
+    }, [fetchAllOrders, fetchDrivers]);
 
     const handleQuickAddDriver = async () => {
         if (!newDriverData.full_name || !newDriverData.phone) {
