@@ -129,7 +129,6 @@ const HeroSection = () => {
             loop
             playsInline
             preload="metadata"
-            poster={heroBg}
             aria-hidden="true"
             style={{ filter: "brightness(1.08) contrast(1.05)" }}
           >
