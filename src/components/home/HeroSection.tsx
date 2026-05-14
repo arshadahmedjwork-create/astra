@@ -15,7 +15,7 @@ import bottlePasteurised from "@/assets/bottle-pasteurised.png";
 import bottleHomogenised from "@/assets/bottle-homogenised.png";
 
 // ── Static hero image — poster + reduced-motion fallback ──
-import heroBg from "@/assets/hero-misty-farm-bg.jpg";
+// Removed heroBg import as per user request to avoid thumbnails
 
 /* ─────────────────────────────────────────────────────────────
    SCROLL TIMELINE  (container = 550 vh)
@@ -124,13 +124,14 @@ const HeroSection = () => {
         >
           <video
             className="hero-bg-video pointer-events-none absolute inset-0 h-full w-full object-cover"
-            autoPlay={!prefersReducedMotion}
+            autoPlay
             muted
             loop
             playsInline
-            preload="metadata"
+            preload="auto"
+            poster="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7"
             aria-hidden="true"
-            style={{ filter: "brightness(1.08) contrast(1.05)" }}
+            style={{ filter: "brightness(1.08) contrast(1.05)", backgroundColor: "transparent" }}
           >
             {/* WebM first for better LCP on Chrome/Firefox */}
             <source src="/assets/video/astra-hero-bg.webm" type="video/webm" />
