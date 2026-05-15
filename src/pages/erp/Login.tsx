@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Hash, ArrowRight, ArrowLeft, RefreshCw, Loader2, Lock, Eye, EyeOff, Milk, Leaf, Droplets, ShieldCheck } from 'lucide-react';
+import { Phone, ArrowRight, ArrowLeft, RefreshCw, Loader2, Milk, Leaf, Droplets, ShieldCheck } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -12,8 +12,7 @@ import { sendOtp, verifyOtp } from '@/lib/msg91';
 import { InputOTP, InputOTPGroup, InputOTPSlot, InputOTPSeparator } from '@/components/ui/input-otp';
 import astraLogo from '@/assets/astra-logo.png';
 
-type LoginStep = 'login' | 'otp' | 'reset_password';
-
+type LoginStep = 'login' | 'otp';
 /* ── Trust badge ── */
 const TrustBadge = ({ icon: Icon, text, delay }: {
     icon: React.ElementType; text: string; delay: number;
@@ -32,9 +31,6 @@ const TrustBadge = ({ icon: Icon, text, delay }: {
 const Login = () => {
     const [step, setStep] = useState<LoginStep>('login');
     const [identity, setIdentity] = useState('');
-    const [password, setPassword] = useState('');
-    const [newPassword, setNewPassword] = useState('');
-    const [showPassword, setShowPassword] = useState(false);
     const [otp, setOtp] = useState('');
     const [loading, setLoading] = useState(false);
     const [resendTimer, setResendTimer] = useState(0);
@@ -54,39 +50,9 @@ const Login = () => {
         return () => clearInterval(interval);
     }, [resendTimer]);
 
-    const handleLogin = async () => {
+    const handleSendOtp = async () => {
         if (!identity.trim()) {
-            toast({ title: 'Invalid input', description: 'Please enter your mobile number or Account ID.', variant: 'destructive' });
-            return;
-        }
-        if (!password) {
-            toast({ title: 'Missing Password', description: 'Please enter your password.', variant: 'destructive' });
-            return;
-        }
-
-        setLoading(true);
-        try {
-            const isMobile = /^\d{10}$/.test(identity.trim());
-            const customer = isMobile
-                ? await login(identity.trim(), password)
-                : await loginByCustomerId(identity.trim().toUpperCase(), password);
-
-            if (customer) {
-                toast({ title: 'Login successful!', description: `Welcome back, ${customer.full_name}!` });
-                navigate('/erp/dashboard');
-            } else {
-                toast({ title: 'Login failed', description: 'Incorrect credentials. Please try again.', variant: 'destructive' });
-            }
-        } catch (error) {
-            toast({ title: 'Login error', description: 'Verification failed.', variant: 'destructive' });
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    const handleForgotPassword = async () => {
-        if (!identity.trim()) {
-            toast({ title: 'Enter Identity', description: 'Please enter your mobile number or Account ID first.', variant: 'destructive' });
+            toast({ title: 'Enter Identity', description: 'Please enter your mobile number.', variant: 'destructive' });
             return;
         }
 
@@ -108,13 +74,25 @@ const Login = () => {
                     return;
                 }
                 targetMobile = data.mobile;
+            } else {
+                const { data } = await supabase
+                    .from('customers')
+                    .select('mobile')
+                    .eq('mobile', targetMobile)
+                    .maybeSingle();
+
+                if (!data) {
+                    toast({ title: 'User not found', description: 'Could not find a user with this mobile number.', variant: 'destructive' });
+                    setLoading(false);
+                    return;
+                }
             }
 
             setMobile(targetMobile);
             await sendOtp(targetMobile);
             setStep('otp');
             setResendTimer(30);
-            toast({ title: 'OTP Sent', description: 'Enter the code sent to your mobile to reset your password.' });
+            toast({ title: 'OTP Sent', description: 'Enter the code sent to your mobile to login.' });
         } catch (error) {
             toast({ title: 'Error', description: 'Failed to send OTP.', variant: 'destructive' });
         } finally {
@@ -128,41 +106,22 @@ const Login = () => {
         try {
             const isValid = await verifyOtp(mobile, otp);
             if (isValid) {
-                setStep('reset_password');
+                const isMobile = /^\d{10}$/.test(identity.trim());
+                const customer = isMobile
+                    ? await login(identity.trim())
+                    : await loginByCustomerId(identity.trim().toUpperCase());
+
+                if (customer) {
+                    toast({ title: 'Login successful!', description: `Welcome back, ${customer.full_name}!` });
+                    navigate('/erp/dashboard');
+                } else {
+                    toast({ title: 'Login failed', description: 'Could not complete login.', variant: 'destructive' });
+                }
             } else {
                 toast({ title: 'Invalid OTP', description: 'The code is incorrect.', variant: 'destructive' });
             }
         } catch (error) {
             toast({ title: 'Error', description: 'Verification failed.', variant: 'destructive' });
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    const handleResetPassword = async () => {
-        if (newPassword.length < 6) {
-            toast({ title: 'Weak Password', description: 'Password must be at least 6 characters.', variant: 'destructive' });
-            return;
-        }
-
-        setLoading(true);
-        try {
-            const bcrypt = await import('bcryptjs');
-            const salt = await bcrypt.genSalt(10);
-            const hash = await bcrypt.hash(newPassword, salt);
-
-            const { error } = await supabase
-                .from('customers')
-                .update({ password_hash: hash })
-                .eq('mobile', mobile);
-
-            if (error) throw error;
-
-            toast({ title: 'Success', description: 'Password reset successfully. Please login with your new password.' });
-            setStep('login');
-            setPassword('');
-        } catch (error) {
-            toast({ title: 'Error', description: 'Failed to reset password.', variant: 'destructive' });
         } finally {
             setLoading(false);
         }
@@ -278,13 +237,11 @@ const Login = () => {
                         transition={{ delay: 0.15, duration: 0.5 }}
                     >
                         <h1 className="text-3xl font-extrabold text-foreground tracking-tight mb-1.5">
-                            {step === 'login' ? 'Welcome Back' :
-                             step === 'otp' ? 'Verification' : 'Reset Password'}
+                            {step === 'login' ? 'Welcome Back' : 'Verification'}
                         </h1>
                         <p className="text-sm text-muted-foreground font-medium">
                             {step === 'login' ? 'Sign in to manage your dairy subscriptions' :
-                             step === 'otp' ? 'Enter the 6-digit code sent to your mobile' :
-                             'Choose a new secure password'}
+                             'Enter the 6-digit code sent to your mobile'}
                         </p>
                     </motion.div>
 
@@ -301,56 +258,26 @@ const Login = () => {
                             >
                                 <div className="space-y-5">
                                     <div className="space-y-1.5">
-                                        <Label htmlFor="identity" className="text-sm font-bold ml-0.5">Mobile Number or Account ID</Label>
+                                        <Label htmlFor="identity" className="text-sm font-bold ml-0.5">Mobile Number</Label>
                                         <div className="relative group">
-                                            <Hash className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground w-[18px] h-[18px] transition-colors group-focus-within:text-primary" />
+                                            <Phone className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground w-[18px] h-[18px] transition-colors group-focus-within:text-primary" />
                                             <Input
                                                 id="identity"
-                                                placeholder="e.g. 9876543210 or AST-XXXXXX"
+                                                placeholder="Enter your number"
                                                 value={identity}
                                                 onChange={(e) => setIdentity(e.target.value)}
+                                                onKeyDown={(e) => e.key === 'Enter' && handleSendOtp()}
                                                 className="pl-11 h-[52px] bg-secondary/30 border-none rounded-xl text-base font-semibold focus-visible:ring-primary focus-visible:bg-card transition-all"
                                             />
                                         </div>
                                     </div>
 
-                                    <div className="space-y-1.5">
-                                        <div className="flex items-center justify-between">
-                                            <Label htmlFor="password" className="text-sm font-bold ml-0.5">Password</Label>
-                                            <button
-                                                onClick={handleForgotPassword}
-                                                className="text-xs font-bold text-primary hover:underline underline-offset-4"
-                                            >
-                                                Forgot Password?
-                                            </button>
-                                        </div>
-                                        <div className="relative group">
-                                            <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground w-[18px] h-[18px]" />
-                                            <Input
-                                                id="password"
-                                                type={showPassword ? 'text' : 'password'}
-                                                placeholder="••••••••"
-                                                value={password}
-                                                onChange={(e) => setPassword(e.target.value)}
-                                                onKeyDown={(e) => e.key === 'Enter' && handleLogin()}
-                                                className="pl-11 pr-11 h-[52px] bg-secondary/30 border-none rounded-xl text-base font-semibold focus-visible:ring-primary focus-visible:bg-card transition-all"
-                                            />
-                                            <button
-                                                type="button"
-                                                onClick={() => setShowPassword(!showPassword)}
-                                                className="absolute right-3.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-primary transition-colors"
-                                            >
-                                                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-                                            </button>
-                                        </div>
-                                    </div>
-
                                     <Button
-                                        onClick={handleLogin}
-                                        disabled={loading || !identity.trim() || !password}
+                                        onClick={handleSendOtp}
+                                        disabled={loading || !identity.trim()}
                                         className="w-full forest-gradient text-primary-foreground rounded-2xl h-[52px] font-black text-base shadow-lg shadow-primary/20 hover:scale-[1.02] active:scale-[0.98] transition-all gap-2 mt-1"
                                     >
-                                        {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Login Now'}
+                                        {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Get OTP'}
                                         {!loading && <ArrowRight className="w-5 h-5" />}
                                     </Button>
                                 </div>
@@ -393,49 +320,19 @@ const Login = () => {
                                             disabled={loading || otp.length !== 6}
                                             className="w-full forest-gradient text-primary-foreground rounded-2xl h-[52px] font-black text-base shadow-lg shadow-primary/20 hover:scale-[1.02] transition-all"
                                         >
-                                            {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Verify & Reset'}
+                                            {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Verify & Login'}
                                         </Button>
 
                                         <div className="flex items-center justify-between px-1 pt-1">
                                             <button onClick={() => setStep('login')} className="text-xs font-bold text-muted-foreground hover:text-primary flex items-center gap-1 transition-colors">
                                                 <ArrowLeft className="w-3.5 h-3.5" /> Back
                                             </button>
-                                            <button onClick={handleForgotPassword} disabled={resendTimer > 0 || loading} className={`text-xs font-bold flex items-center gap-1 ${resendTimer > 0 ? 'text-muted-foreground' : 'text-primary'}`}>
+                                            <button onClick={handleSendOtp} disabled={resendTimer > 0 || loading} className={`text-xs font-bold flex items-center gap-1 ${resendTimer > 0 ? 'text-muted-foreground' : 'text-primary'}`}>
                                                 <RefreshCw className={`w-3 h-3 ${loading ? 'animate-spin' : ''}`} />
                                                 {resendTimer > 0 ? `${resendTimer}s` : 'Resend'}
                                             </button>
                                         </div>
                                     </div>
-                                </div>
-                            </motion.div>
-                        )}
-
-                        {step === 'reset_password' && (
-                            <motion.div
-                                key="reset-step"
-                                initial={{ opacity: 0, y: 18 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                className="bg-card rounded-3xl border border-border p-7 shadow-xl"
-                            >
-                                <div className="space-y-5">
-                                    <div className="space-y-1.5">
-                                        <Label htmlFor="newPassword" className="text-sm font-bold ml-0.5">New Password</Label>
-                                        <Input
-                                            id="newPassword"
-                                            type="password"
-                                            placeholder="Min 6 characters"
-                                            value={newPassword}
-                                            onChange={(e) => setNewPassword(e.target.value)}
-                                            className="h-[52px] bg-secondary/30 border-none px-4 rounded-xl text-base font-semibold focus-visible:ring-primary focus-visible:bg-card transition-all"
-                                        />
-                                    </div>
-                                    <Button
-                                        onClick={handleResetPassword}
-                                        disabled={loading || newPassword.length < 6}
-                                        className="w-full forest-gradient text-primary-foreground rounded-2xl h-[52px] font-black text-base shadow-lg shadow-primary/20 hover:scale-[1.02] transition-all"
-                                    >
-                                        {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Update Password'}
-                                    </Button>
                                 </div>
                             </motion.div>
                         )}
